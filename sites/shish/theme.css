@@ -1,0 +1,33 @@
+/* shish — a terminal. Warm paper/ink, orange prompt, sharp corners,
+   monospace headings, faint scanlines behind the title. */
+:root {
+  --bg:          light-dark(#fbfaf6, #131317);
+  --bg-raised:   light-dark(#ffffff, #1a1a20);
+  --bg-sunken:   light-dark(#f2f0ea, #0f0f13);
+  --bg-code:     light-dark(#f4f2ec, #1b1b22);
+  --fg:          light-dark(#1d1c1a, #e7e5e0);
+  --fg-muted:    light-dark(#5c5952, #a9a69f);
+  --fg-faint:    light-dark(#8a867d, #7b776f);
+  --line:        light-dark(#e2e0d8, #2a2a33);
+  --line-strong: light-dark(#cbc8bd, #3c3c47);
+  --accent:      light-dark(#b4531f, #e08a4e);
+  --accent-fg:   #ffffff;
+  --accent-soft: light-dark(#f3e3d7, #33251c);
+
+  --font-display: var(--mono);
+  --heading-tracking: -0.03em;
+  --radius: 4px;
+
+  --mark-bg: var(--accent);
+  --mark-fg: #fff;
+  --mark-pad: 0.22em 0.4em;
+  --hero-bg: repeating-linear-gradient(0deg, transparent 0 3px,
+             color-mix(in srgb, var(--fg) 3.5%, transparent) 3px 4px);
+  --h2-rule: 1px dashed var(--line-strong);
+}
+
+.doc h1::before { content: "$ "; color: var(--accent); }
+.doc h2::before { content: "# "; color: var(--accent); }
+.hero h1::after { content: "_"; color: var(--accent); animation: blink 1.1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .hero h1::after { animation: none; } }

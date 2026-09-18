@@ -1,0 +1,31 @@
+/* qjs-modules — the standard library. Rose on warm stone, built from
+   blocks: heavy top-rules on cards, a tiled hero, a dense API reference. */
+:root {
+  --bg:          light-dark(#fcfaf9, #17131a);
+  --bg-raised:   light-dark(#ffffff, #201a24);
+  --bg-sunken:   light-dark(#f4efee, #120f15);
+  --bg-code:     light-dark(#f7f2f1, #201a24);
+  --fg:          light-dark(#221a1e, #efe6ea);
+  --fg-muted:    light-dark(#6b5a62, #b3a0aa);
+  --fg-faint:    light-dark(#988790, #80707a);
+  --line:        light-dark(#ebe1e3, #2e2431);
+  --line-strong: light-dark(#d8c8cd, #443548);
+  --accent:      light-dark(#b0286b, #f472b6);
+  --accent-fg:   light-dark(#ffffff, #1a0a12);
+  --accent-soft: light-dark(#f8e3ee, #40162f);
+
+  --t-kw:  light-dark(#b0286b, #f9a8d4);
+  --t-fn:  light-dark(#2563a8, #7cc0ff);
+  --t-str: light-dark(#0a7d43, #8ee0a8);
+
+  --radius: 6px;
+  --mark-fg: var(--accent);
+  --hero-bg: linear-gradient(135deg, color-mix(in srgb, var(--accent) 7%, transparent) 25%, transparent 25% 50%,
+             color-mix(in srgb, var(--accent) 7%, transparent) 50% 75%, transparent 75%) 0 0 / 28px 28px;
+  --card-bg: var(--bg-raised);
+}
+
+.card { border-top: 4px solid var(--accent); }
+.doc h1 { border-left: 6px solid var(--accent); padding-left: 0.8rem; }
+.navgroup h3 { color: var(--accent); }
+.hero { padding-left: 1.5rem; padding-right: 1.5rem; }

@@ -1,0 +1,34 @@
+<section class="hero">
+  <div>
+    <span class="eyebrow">__EYEBROW__</span>
+    <h1>{{NAME}}: __HEADLINE__</h1>
+    <p class="lede">__LEDE__</p>
+    <div class="cta">
+      <a class="btn primary" href="getting-started.html">Get started</a>
+      <a class="btn" href="{{GITHUB}}" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+  <x-code lang="__LANG__">
+    __SAMPLE__
+  </x-code>
+</section>
+
+<main>
+  <section class="section">
+    <h2>Why {{NAME}}</h2>
+    <p class="sub">__WHY__</p>
+    <div class="grid">
+      <article class="card"><span class="ico">01</span><h3>__POINT_1__</h3><p>__POINT_1_TEXT__</p></article>
+      <article class="card"><span class="ico">02</span><h3>__POINT_2__</h3><p>__POINT_2_TEXT__</p></article>
+      <article class="card"><span class="ico">03</span><h3>__POINT_3__</h3><p>__POINT_3_TEXT__</p></article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Install</h2>
+    <x-code lang="sh">
+      git clone {{GITHUB}}.git
+      cd {{NAME}}
+    </x-code>
+  </section>
+</main>

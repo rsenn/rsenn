@@ -1,0 +1,10 @@
+/* __NAME__ — imprint. Override tokens once with light-dark(light, dark);
+   see tools/site/README.md "Theming" for the full token and hook list. */
+:root {
+  --accent:      light-dark(__ACCENT_L__, __ACCENT_D__);
+  --accent-fg:   light-dark(#ffffff, #0d1114);
+  --accent-soft: light-dark(__SOFT_L__, __SOFT_D__);
+
+  /* --bg / --fg / --line ... tint the neutrals toward the accent hue */
+  /* --radius: 8px;  --font-display: var(--sans);  --hero-bg: none; */
+}

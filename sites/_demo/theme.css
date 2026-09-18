@@ -1,0 +1,10 @@
+/* _demo — imprint. Override tokens once with light-dark(light, dark);
+   see tools/site/README.md "Theming" for the full token and hook list. */
+:root {
+  --accent:      light-dark(#0b7c72, #79b7b1);
+  --accent-fg:   light-dark(#ffffff, #0d1114);
+  --accent-soft: light-dark(#e2efee, #102422);
+
+  /* --bg / --fg / --line ... tint the neutrals toward the accent hue */
+  /* --radius: 8px;  --font-display: var(--sans);  --hero-bg: none; */
+}

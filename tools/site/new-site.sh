@@ -4,14 +4,18 @@
 # in landing.html on purpose: they need writing, not substituting.
 #
 #   tools/site/new-site.sh <name> --tagline TEXT --description TEXT \
-#       [--repo owner/name] [--mark TEXT] [--license TEXT] [--accent '#rrggbb']
+#       [--repo owner/name] [--mark TEXT] [--license TEXT] [--accent '#rrggbb'] [--art]
+#
+# --art also copies the example artwork (templates/art/: logo, decor sprites,
+# live wallpaper + script, dot-matrix font sheet) and enables it in the config.
 set -eu
 here=$(cd "$(dirname "$0")" && pwd)
 root=$(cd "$here/../.." && pwd)
 
 name=${1:?usage: new-site.sh <name> --tagline TEXT --description TEXT}; shift
-repo=rsenn/$name; mark='{ }'; license=MIT; accent='#0b7c72'; tagline=; desc=
+repo=rsenn/$name; mark='{ }'; license=MIT; accent='#0b7c72'; tagline=; desc=; art=0
 while [ $# -gt 0 ]; do
+  [ "$1" = --art ] && { art=1; shift; continue; }
   case $1 in
     --repo) repo=$2 ;; --mark) mark=$2 ;; --license) license=$2 ;;
     --accent) accent=$2 ;; --tagline) tagline=$2 ;; --description) desc=$2 ;;
@@ -38,6 +42,14 @@ for f in site.config.js landing.html theme.css favicon.svg; do
       -e "s|__SOFT_L__|$soft_l|g" -e "s|__SOFT_D__|$soft_d|g" \
       "$here/templates/$f" > "$dest/$f"
 done
+if [ "$art" = 1 ]; then
+  mkdir -p "$dest/art"
+  cp "$here"/templates/art/* "$dest/art/"
+  rm -f "$dest/art/make-dotfont.py"
+  sed -i '/\/\/ART-START/,/\/\/ART-END/{s|^  // |  |;/ART-START/d;/ART-END/d}' "$dest/site.config.js"
+else
+  sed -i '/\/\/ART-START/d;/\/\/ART-END/d' "$dest/site.config.js"
+fi
 echo "created $dest"
 echo "next: add '$name=/path/to/checkout' to sites.local, fill the __PLACEHOLDERS__ in landing.html, then"
 echo "      node tools/site/build.js $name"

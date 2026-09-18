@@ -1,0 +1,8 @@
+<!-- Logo. Inlined into the page header, so it may use CSS variables:
+     style="fill:var(--accent)" follows the site theme (and light/dark),
+     currentColor follows the text colour. Keep it square-ish; it is shown
+     at the height of the brand text (see --logo-h). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="logo">
+  <circle cx="24" cy="32" r="18" style="fill:var(--accent)"/>
+  <rect x="26" y="14" width="32" height="32" rx="4" transform="rotate(12 42 30)" style="fill:none;stroke:currentColor;stroke-width:5"/>
+</svg>

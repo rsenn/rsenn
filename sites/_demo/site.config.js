@@ -1,15 +1,15 @@
 /**
- * Site definition for __NAME__ -> https://rsenn.github.io/__NAME__/
+ * Site definition for _demo -> https://rsenn.github.io/_demo/
  * See tools/site/README.md for every option.
  */
 export default {
-  repo: '__REPO__',
+  repo: 'rsenn/_demo',
   branch: 'main',
-  name: '__NAME__',
-  mark: '__MARK__',
-  tagline: '__TAGLINE__',
-  description: '__DESCRIPTION__',
-  license: '__LICENSE__',
+  name: '_demo',
+  mark: '{ }',
+  tagline: 'artwork demo',
+  description: 'Example logo, decoration sprites, live wallpaper and dot-matrix font.',
+  license: 'MIT',
   search: false,               // true once there are more than ~15 doc pages
 
   // examples: {},             // generate examples.html from the checkout's examples/
@@ -17,14 +17,12 @@ export default {
   // files: [{ src: 'build/wasm/app.wasm', out: 'assets/app.wasm', optional: true }],
   // siteLinks: ['play.html'], // markdown links to these stay on the site
 
-  //ART-START (all optional; new-site.sh --art enables it and copies templates/art/)
-  // art: {
-  //   logo: 'art/logo.svg',
-  //   decor: 'art/decor.svg',
-  //   wallpaper: { svg: 'art/wallpaper.svg', script: 'art/wallpaper.js', pages: 'all', opacity: 0.35 },
-  //   font: { sheet: 'art/dotmatrix.svg', cols: 16, rows: 6, first: 32, upper: true },
-  // },
-  //ART-END
+  art: {
+    logo: 'art/logo.svg',
+    decor: 'art/decor.svg',
+    wallpaper: { svg: 'art/wallpaper.svg', script: 'art/wallpaper.js', pages: 'all', opacity: 0.35 },
+    font: { sheet: 'art/dotmatrix.svg', cols: 16, rows: 6, first: 32, upper: true },
+  },
 
   topnav: [
     ['Get started', 'getting-started.html'],

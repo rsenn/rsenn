@@ -1,0 +1,35 @@
+<!-- Live wallpaper: ONE svg, several <g> groups. The site inlines it behind the
+     page (fixed, slice-fitted, aria-hidden), so shapes may use CSS variables
+     (style="fill:var(--accent)") and follow light/dark. wallpaper.js gets the
+     groups by id. Author in viewBox units; the visible part depends on the
+     window shape (ctx.bounds() tells the script what is on screen). -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+  <g id="circles" class="shapes">
+    <circle cx="388" cy="464" r="24" style="fill:none;stroke:var(--accent);stroke-width:3"/>
+    <circle cx="228" cy="608" r="14" style="fill:var(--accent);opacity:.55"/>
+    <circle cx="828" cy="656" r="14" style="fill:var(--accent);opacity:.55"/>
+    <circle cx="1119" cy="279" r="14" style="fill:none;stroke:var(--accent);stroke-width:3"/>
+    <circle cx="256" cy="504" r="14" style="fill:var(--accent);opacity:.55"/>
+    <circle cx="223" cy="306" r="30" style="fill:var(--accent);opacity:.55"/>
+    <circle cx="1208" cy="494" r="14" style="fill:none;stroke:var(--accent);stroke-width:3"/>
+    <circle cx="1238" cy="186" r="14" style="fill:var(--accent);opacity:.55"/>
+    <circle cx="1371" cy="702" r="18" style="fill:var(--accent);opacity:.55"/>
+  </g>
+  <g id="squares" class="shapes">
+    <rect x="1261" y="659" width="26" height="26" rx="3" style="fill:none;stroke:var(--fg-faint);stroke-width:3"/>
+    <rect x="181" y="286" width="58" height="58" rx="3" style="fill:var(--fg-faint);opacity:.45"/>
+    <rect x="1220" y="196" width="26" height="26" rx="3" style="fill:none;stroke:var(--fg-faint);stroke-width:3"/>
+    <rect x="938" y="207" width="44" height="44" rx="3" style="fill:var(--fg-faint);opacity:.45"/>
+    <rect x="1249" y="375" width="26" height="26" rx="3" style="fill:none;stroke:var(--fg-faint);stroke-width:3"/>
+    <rect x="291" y="655" width="34" height="34" rx="3" style="fill:var(--fg-faint);opacity:.45"/>
+    <rect x="842" y="159" width="34" height="34" rx="3" style="fill:none;stroke:var(--fg-faint);stroke-width:3"/>
+  </g>
+  <g id="triangles" class="shapes">
+    <polygon points="228,609 270,681 186,681" style="fill:var(--accent);opacity:.4"/>
+    <polygon points="1367,262 1391,304 1343,304" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5"/>
+    <polygon points="1493,588 1524,642 1462,642" style="fill:var(--accent);opacity:.4"/>
+    <polygon points="743,520 774,574 712,574" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5"/>
+    <polygon points="1028,402 1070,474 986,474" style="fill:var(--accent);opacity:.4"/>
+    <polygon points="608,228 639,282 577,282" style="fill:var(--accent-soft);stroke:var(--accent);stroke-width:2.5"/>
+  </g>
+</svg>

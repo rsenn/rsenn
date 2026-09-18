@@ -1,0 +1,43 @@
+<section class="hero">
+  <div>
+    <span class="eyebrow">artwork demo</span>
+    <h1>{{NAME}}: shapes that merge.</h1>
+    <p class="lede">Every piece of artwork on this page comes from four optional files in
+       <code>sites/_demo/art/</code>: a logo, decoration sprites, a live wallpaper with its
+       script, and a dot-matrix font sheet.</p>
+    <div class="cta">
+      <a class="btn primary" href="getting-started.html">Get started</a>
+      <a class="btn" href="{{GITHUB}}" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+  <x-code lang="js">
+    // art: {
+    //   logo:      'art/logo.svg',
+    //   decor:     'art/decor.svg',
+    //   wallpaper: { svg: 'art/wallpaper.svg', script: 'art/wallpaper.js' },
+    //   font:      { sheet: 'art/dotmatrix.svg', cols: 16, rows: 6 },
+    // }
+  </x-code>
+</section>
+
+<main>
+  <section class="section">
+    <h2>What each file does</h2>
+    <p class="sub">All optional. Leave a key out and that feature is simply absent.</p>
+    <div class="grid">
+      <article class="card"><span class="ico">01</span><h3>logo.svg</h3><p>Inlined into the header, so it follows the theme colours and light/dark.</p></article>
+      <article class="card"><span class="ico">02</span><h3>decor.svg</h3><p>Sprites for bullets, horizontal rules and button frames.</p></article>
+      <article class="card"><span class="ico">03</span><h3>wallpaper.svg + .js</h3><p>Groups of shapes behind the page; the script moves them.</p></article>
+      <article class="card"><span class="ico">04</span><h3>dotmatrix.svg</h3><p>One cell per character; drawn wherever the site asks for the font.</p></article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Bullets come from decor.svg</h2>
+    <ul class="checks">
+      <li><strong>Tinted</strong> — single-colour art takes the accent colour, in light and dark.</li>
+      <li><strong>Sized</strong> — relative to the text, so it scales with the font.</li>
+      <li><strong>Optional</strong> — no <code>bullet</code> symbol, no change.</li>
+    </ul>
+  </section>
+</main>

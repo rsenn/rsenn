@@ -69,6 +69,9 @@
   --card-bg: var(--bg-raised);
   --card-shadow: none;
   --h2-rule: 1px solid var(--line);
+  --logo-h: 1.7rem;              /* height of the header logo (config.art.logo) */
+  --wallpaper-opacity: 0.35;     /* live background (config.art.wallpaper) */
+  --wallpaper-veil: 78%;         /* how opaque the reading column is over it */
 }
 
 :root[data-theme="light"] { color-scheme: light; }
@@ -130,6 +133,23 @@ a:hover { text-decoration-color: currentColor; }
 .topnav { display: flex; gap: 1.25rem; flex-wrap: wrap; margin-left: auto; font-size: 0.92rem; }
 .topnav a { color: var(--fg-muted); text-decoration: none; }
 .topnav a:hover { color: var(--accent); }
+
+.brand .logo { display: inline-flex; height: var(--logo-h); margin-right: 0.5rem; vertical-align: middle; }
+.brand .logo svg { height: 100%; width: auto; }
+
+/* ---------------------------------------------------------- live wallpaper */
+/* The svg is inlined so its shapes can use var(--accent) etc. It sits behind
+   everything; the page background moves from body to html to stay visible. */
+
+.wallpaper { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; opacity: var(--wallpaper-opacity); }
+.wallpaper svg { display: block; width: 100%; height: 100%; }
+html:has(.wallpaper) { background: var(--bg); }
+body:has(.wallpaper) { background: transparent; }
+.wallpaper ~ .layout .doc {
+  background: color-mix(in srgb, var(--bg) var(--wallpaper-veil), transparent);
+  border-radius: var(--radius);
+  padding: 0.25rem 1.25rem 1rem;
+}
 
 /* ------------------------------------------------------------------ search */
 

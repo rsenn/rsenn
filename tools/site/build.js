@@ -22,8 +22,10 @@
  *
  * Optional per site: client-side search (config.search), an examples page
  * generated from the project's examples/ directory (config.examples),
- * hand-written extra pages such as a playground (config.pages) and
- * byte-for-byte copied files such as a wasm build (config.files).
+ * hand-written extra pages such as a playground (config.pages),
+ * byte-for-byte copied files such as a wasm build (config.files), and
+ * artwork (config.art: logo, decoration sprites, live wallpaper, glyph-sheet
+ * font - see README "Artwork").
  *
  * Everything is relative-path linked so a site works both at
  * https://rsenn.github.io/<name>/ and from a local file:// checkout.
@@ -140,7 +142,11 @@ function resolveSrc(opts) {
 
 function listSites() {
   if (typeof fs.readdirSync !== 'function') return [];
-  return fs.readdirSync(SITES).filter(n => exists(SITES + '/' + n + '/site.config.js')).sort();
+  // sites/_* (the artwork demo) are buildable by name but not part of --list/--all
+  return fs
+    .readdirSync(SITES)
+    .filter(n => !n.startsWith('_') && exists(SITES + '/' + n + '/site.config.js'))
+    .sort();
 }
 
 const opts = parseArgs(ARGS);
@@ -219,6 +225,152 @@ function linkFor(page, href) {
   return GITHUB + '/' + kind + '/' + BRANCH + '/' + target + frag;
 }
 
+/* ------------------------------------------------------------------ art */
+
+/* Everything optional. All paths are relative to the site dir (sites/<name>/):
+ *
+ *   art: {
+ *     logo: 'art/logo.svg',                       // inlined in the header
+ *     decor: 'art/decor.svg',                     // <symbol> sprites -> bullets, rules, buttons
+ *     wallpaper: { svg: 'art/wallpaper.svg',      // ONE svg, several <g> groups
+ *                  script: 'art/wallpaper.js',    // animates it (Wallpaper.register)
+ *                  pages: 'all',                  // 'all' | 'landing' | 'docs'
+ *                  opacity: 0.35 },
+ *     font: { sheet: 'art/dotmatrix.svg',         // one cell per character
+ *             cols: 16, rows: 6, cell: [8, 8],    // cell optional for svg (from viewBox)
+ *             first: 32, upper: true,             // code of the first cell; fold to upper case
+ *             apply: ['.hero h1', '.doc h1'] },   // what to draw with it
+ *   }
+ */
+const ART = CONFIG.art || {};
+const TINTS = { accent: '--accent', fg: '--fg', muted: '--fg-muted', faint: '--fg-faint', line: '--line-strong' };
+
+/** Make an svg file inlinable in HTML: no prolog, doctype or comments. */
+const cleanSvg = text =>
+  text.replace(/<\?xml[\s\S]*?\?>/g, '').replace(/<!DOCTYPE[\s\S]*?>/gi, '').replace(/<!--[\s\S]*?-->/g, '').trim();
+
+const attr = (attrs, name) => {
+  const m = attrs.match(new RegExp('(?:^|\\s)' + name + '\\s*=\\s*"([^"]*)"'));
+  return m ? m[1] : null;
+};
+
+const artFile = rel => {
+  if (!exists(SITE_DIR + '/' + rel)) fail('art: missing file ' + SITE_DIR + '/' + rel);
+  return read(SITE_DIR + '/' + rel);
+};
+
+const LOGO = ART.logo ? cleanSvg(artFile(ART.logo)) : null;
+
+const WALLPAPER = ART.wallpaper
+  ? (() => {
+      const w = { pages: 'all', ...ART.wallpaper };
+      let svg = cleanSvg(artFile(w.svg));
+      const open = svg.match(/^<svg\b([^>]*)>/);
+      if (!open || !attr(open[1], 'viewBox')) fail('art: ' + w.svg + ' needs an <svg viewBox="…">');
+      const attrs = open[1]
+        .replace(/\s(?:width|height|preserveAspectRatio)\s*=\s*"[^"]*"/g, '')
+        .replace(/\s+$/, '');
+      svg = '<svg' + attrs + ' preserveAspectRatio="xMidYMid slice" focusable="false">' + svg.slice(open[0].length);
+      w.inline = svg;
+      w.code = w.script ? artFile(w.script) : null;
+      return w;
+    })()
+  : null;
+
+const wallpaperOn = cls => WALLPAPER && (WALLPAPER.pages === 'all' || (WALLPAPER.pages === 'landing') === (cls === 'landing'));
+
+/** The <symbol id> sprites of decor.svg as standalone svg images. */
+function readSymbols(text) {
+  const out = {};
+  for (const m of cleanSvg(text).matchAll(/<symbol\b([^>]*)>([\s\S]*?)<\/symbol>/g)) {
+    const id = attr(m[1], 'id');
+    const vb = attr(m[1], 'viewBox');
+    if (!id || !vb) fail('art: every decor <symbol> needs id and viewBox (' + (id || '?') + ')');
+    const [, , vw, vh] = vb.trim().split(/[\s,]+/).map(Number);
+    const w = +attr(m[1], 'width') || vw, h = +attr(m[1], 'height') || vh;
+    const tint = attr(m[1], 'data-tint');
+    if (tint && !TINTS[tint]) fail('art: data-tint must be one of ' + Object.keys(TINTS).join(', ') + ' (' + id + ')');
+    const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" width="' + w + '" height="' + h + '">' + m[2] + '</svg>';
+    out[id] = {
+      w, h, tint, svg,
+      slice: +attr(m[1], 'data-slice') || 8,
+      color: attr(m[1], 'data-color'),
+      uri: 'url("data:image/svg+xml,' + encodeURIComponent(svg) + '")',
+    };
+  }
+  return out;
+}
+
+/** CSS for decor sprites and the glyph font, generated per site into assets/art.css. */
+function artCss() {
+  let css = '/* generated by tools/site/build.js from config.art - do not edit */\n';
+
+  if (ART.decor) {
+    const sym = readSymbols(artFile(ART.decor));
+    // single-colour art (data-tint) is used as a mask painted with a theme token
+    const paint = (s, size, rep) => {
+      const geom = 'center / ' + size + ' ' + rep;
+      return s.tint
+        ? 'background-color:var(' + TINTS[s.tint] + ');-webkit-mask:' + s.uri + ' ' + geom + ';mask:' + s.uri + ' ' + geom + ';'
+        : 'background:' + s.uri + ' ' + geom + ';';
+    };
+
+    if (sym.bullet)
+      css += `.doc ul:not(.checks) { list-style: none; }
+.doc ul:not(.checks) > li { position: relative; }
+.doc ul:not(.checks) > li::before { content: ""; position: absolute; left: -1.2rem; top: 0.55em; width: 0.75em; height: 0.75em; ${paint(sym.bullet, 'contain', 'no-repeat')} }
+.checks li::before { content: ""; top: 0.5em; width: 0.85em; height: 0.85em; ${paint(sym.bullet, 'contain', 'no-repeat')} }
+`;
+
+    if (sym.rule) {
+      const r = sym.rule;
+      css += `.doc hr { border: 0; height: ${r.h}px; ${paint(r, 'auto 100%', 'repeat-x').replace('center /', 'left center /')} }
+.landing .section { border-top: 0; position: relative; }
+.landing .section::before { content: ""; position: absolute; left: 0; right: 0; top: 0; height: ${r.h}px; ${paint(r, 'auto 100%', 'repeat-x').replace('center /', 'left center /')} }
+`;
+    }
+
+    for (const [id, sel] of [['btn', '.btn'], ['btn-primary', '.btn.primary']]) {
+      const b = sym[id];
+      if (!b) continue;
+      if (b.tint) console.log('warning: art: ' + id + ' cannot be tinted (9-slice); using it as authored');
+      css += `${sel} { border: ${b.slice}px solid transparent; border-image: ${b.uri} ${b.slice} fill / ${b.slice}px stretch; background: none; padding: 0.15rem 0.75rem;${b.color ? ' color: ' + b.color + ';' : ''} }
+`;
+    }
+  }
+
+  if (ART.font) {
+    const f = FONT;
+    css += `:root { --dm-sheet: url("${f.file}"); --dm-cols: ${f.cols}; --dm-rows: ${f.rows}; --dm-aspect: ${+(f.cell[0] / f.cell[1]).toFixed(4)}; }
+.dm { display: inline-block; width: calc(1em * var(--dm-aspect)); height: 1em; vertical-align: -0.12em; background: currentColor;
+  -webkit-mask: var(--dm-sheet) no-repeat; mask: var(--dm-sheet) no-repeat;
+  -webkit-mask-size: calc(var(--dm-cols) * 1em * var(--dm-aspect)) calc(var(--dm-rows) * 1em); mask-size: calc(var(--dm-cols) * 1em * var(--dm-aspect)) calc(var(--dm-rows) * 1em);
+  -webkit-mask-position: calc(var(--c) * -1em * var(--dm-aspect)) calc(var(--r) * -1em); mask-position: calc(var(--c) * -1em * var(--dm-aspect)) calc(var(--r) * -1em); }
+.dm-word { white-space: nowrap; }
+.dm-on { word-spacing: 0.3em; text-transform: none; letter-spacing: 0; }
+`;
+  }
+  return css;
+}
+
+/* font metrics, resolved once; an svg sheet may omit `cell` and derive it from its viewBox */
+const FONT = ART.font
+  ? (() => {
+      const f = { first: 32, upper: false, apply: ['.brand-name', '.hero h1', '.doc h1', '.play .playhead h1'], ...ART.font };
+      if (!f.cols || !f.rows) fail('art.font needs cols and rows');
+      if (!f.cell) {
+        const vb = f.sheet.endsWith('.svg') && attr((cleanSvg(artFile(f.sheet)).match(/^<svg\b([^>]*)>/) || [, ''])[1], 'viewBox');
+        if (!vb) fail('art.font.cell is required for a non-svg sheet (or an svg without viewBox)');
+        const [, , vw, vh] = vb.trim().split(/[\s,]+/).map(Number);
+        f.cell = [vw / f.cols, vh / f.rows];
+      }
+      f.file = f.sheet.slice(f.sheet.lastIndexOf('/') + 1);
+      return f;
+    })()
+  : null;
+
+const HAS_ART_CSS = !!(ART.decor || ART.font);
+
 /* ------------------------------------------------------------- html shell */
 
 function sidebar(page) {
@@ -258,7 +410,19 @@ function shell({ title, root, body, cls, head }) {
 <script src="${root}assets/search.js"></script>
 `
     : '';
+  const artCssLink = HAS_ART_CSS ? `<link rel="stylesheet" href="${root}assets/art.css">\n` : '';
   const theme = HAS_THEME ? `<link rel="stylesheet" href="${root}assets/theme.css">\n` : '';
+  const brandMark = LOGO
+    ? `<span class="logo" aria-hidden="true">${LOGO}</span>`
+    : `<span class="mark">${escAttr(CONFIG.mark || '')}</span>`;
+  const wall = wallpaperOn(cls)
+    ? `<div class="wallpaper" aria-hidden="true"${WALLPAPER.opacity != null ? ` style="--wallpaper-opacity:${+WALLPAPER.opacity}"` : ''}>${WALLPAPER.inline}</div>\n`
+    : '';
+  const artScripts =
+    (wall ? `<script src="${root}assets/wallpaper-host.js"></script>\n` + (WALLPAPER.code ? `<script src="${root}assets/wallpaper.js"></script>\n` : '') : '') +
+    (FONT
+      ? `<script>window.DOTFONT=${JSON.stringify({ sheet: root + 'assets/' + FONT.file, cols: FONT.cols, rows: FONT.rows, first: FONT.first, upper: FONT.upper, apply: FONT.apply })};</script>\n<script src="${root}assets/dotfont.js"></script>\n`
+      : '');
 
   return `<!doctype html>
 <html lang="en">
@@ -268,12 +432,12 @@ function shell({ title, root, body, cls, head }) {
 <title>${escAttr(title)}</title>
 <meta name="description" content="${escAttr(NAME + ' — ' + TAGLINE + '. ' + (CONFIG.description || ''))}">
 <link rel="stylesheet" href="${root}assets/base.css">
-${theme}<link rel="icon" href="${root}assets/favicon.svg" type="image/svg+xml">
+${artCssLink}${theme}<link rel="icon" href="${root}assets/favicon.svg" type="image/svg+xml">
 <script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
 ${head || ''}</head>
 <body class="${cls}" data-site="${escAttr(opts.site)}" data-root="${root}">
-<header class="topbar">
-  <a class="brand" href="${root}index.html"><span class="mark">${escAttr(CONFIG.mark || '')}</span> ${escAttr(NAME)}</a>${search}
+${wall}<header class="topbar">
+  <a class="brand" href="${root}index.html">${brandMark} <span class="brand-name">${escAttr(NAME)}</span></a>${search}
   <nav class="topnav">
     ${topnav}
     <a href="${GITHUB}" target="_blank" rel="noopener">GitHub</a>
@@ -285,7 +449,7 @@ ${body}
   <p>${escAttr(NAME)} — ${escAttr(CONFIG.license || '')}. Built from the repo's own markdown by
      <a href="${ENGINE_URL}">rsenn/rsenn tools/site</a>.</p>
 </footer>
-${searchScripts}<script>
+${searchScripts}${artScripts}<script>
 document.querySelector('.themetoggle').addEventListener('click', function () {
   var d = document.documentElement;
   var dark = d.dataset.theme ? d.dataset.theme === 'dark'
@@ -484,7 +648,18 @@ if (CONFIG.search) {
 
 write(OUT + '/assets/base.css', read(SELF + '/base/base.css'));
 if (HAS_THEME) write(OUT + '/assets/theme.css', read(SITE_DIR + '/theme.css'));
-write(OUT + '/assets/favicon.svg', read(SITE_DIR + '/favicon.svg'));
+if (HAS_ART_CSS) write(OUT + '/assets/art.css', artCss());
+if (WALLPAPER) {
+  write(OUT + '/assets/wallpaper-host.js', read(SELF + '/base/wallpaper-host.js'));
+  if (WALLPAPER.code) write(OUT + '/assets/wallpaper.js', WALLPAPER.code);
+}
+if (FONT) {
+  write(OUT + '/assets/dotfont.js', read(SELF + '/base/dotfont.js'));
+  copy(SITE_DIR + '/' + FONT.sheet, OUT + '/assets/' + FONT.file);
+}
+if (exists(SITE_DIR + '/favicon.svg')) write(OUT + '/assets/favicon.svg', read(SITE_DIR + '/favicon.svg'));
+else if (LOGO) write(OUT + '/assets/favicon.svg', LOGO.includes('xmlns=') ? LOGO : LOGO.replace(/^<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"'));
+else fail('site has neither favicon.svg nor art.logo');
 write(OUT + '/.nojekyll', '');
 
 console.log(

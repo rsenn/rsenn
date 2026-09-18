@@ -52,6 +52,7 @@ tools/site/new-site.sh <name> --tagline … --description … --accent '#rrggbb'
 | `examples` | `{}` adds `examples.html` built from the checkout's `examples/` (options: `dir out title exts skip maxBytes`) |
 | `pages` | hand-written extra pages `{out, body, title, cls}` (playground …); `body` is a file in the site dir |
 | `files` | copied verbatim: `{src, out}` from the checkout, or `{site, out}` from the site dir; `optional: true` tolerates absence |
+| `art` | logo, decoration sprites, live wallpaper, glyph-sheet font — see *Artwork* below |
 | `siteLinks` | markdown link targets that stay on the site instead of going to github.com |
 
 `landing.html` placeholders: `{{NAME}} {{REPO}} {{GITHUB}} {{TAGLINE}}`.
@@ -76,6 +77,74 @@ existing themes each add a pseudo-element or two (`$ ` before shish headings,
 Landing markup has two supported vocabularies: the two-column hero
 (`.hero .eyebrow .lede .section .grid .card .split .checks .note`) and the
 centred one (`.hero.hero-center .tagline .badges .cards .promise .demo .start`).
+
+## Artwork (all optional)
+
+A site can carry its own artwork. Every piece is a file in `sites/<name>/art/`,
+named in `config.art`; leave a key out and the feature is absent. A working
+example of all four is `sites/_demo/` (`node tools/site/build.js _demo`; it is
+not part of `--list`/`--all`), and `new-site.sh <name> --art` starts a new site
+from the same files (`tools/site/templates/art/`).
+
+```js
+art: {
+  logo: 'art/logo.svg',
+  decor: 'art/decor.svg',
+  wallpaper: { svg: 'art/wallpaper.svg', script: 'art/wallpaper.js', pages: 'all', opacity: 0.35 },
+  font: { sheet: 'art/dotmatrix.svg', cols: 16, rows: 6, cell: [8, 8], first: 32, upper: true,
+          apply: ['.brand-name', '.hero h1', '.doc h1'] },
+}
+```
+
+**logo.svg** is inlined in the header instead of the text `mark`, at height
+`--logo-h`. Because it is inline it can use theme colours:
+`style="fill:var(--accent)"`, `currentColor`. It also becomes the favicon when
+the site has no `favicon.svg` — but a favicon cannot see CSS variables, so give
+a logo that uses them a separate `favicon.svg`.
+
+**decor.svg** is one file with `<symbol id viewBox>` sprites; the build turns
+them into `assets/art.css`:
+
+| id | used for | notes |
+|----|----------|-------|
+| `bullet` | `ul` bullets in docs, `.checks` items | ~16×16, scales with the text |
+| `rule` | `hr` and the rule above landing sections | a tile repeated along x; its height is the rule's height |
+| `btn` | `.btn` frame | 9-slice; `data-slice="8"` = corner size in svg units |
+| `btn-primary` | `.btn.primary` frame | `data-color="#fff"` sets the label colour |
+
+`data-tint="accent|fg|muted|faint|line"` paints a symbol in that theme colour
+(only its silhouette is used, so it follows light/dark). Without `data-tint` the
+symbol is used exactly as drawn, colours included. Buttons are never tinted (CSS
+cannot 9-slice a mask), so draw them in real colours.
+
+**wallpaper.svg** is ONE svg whose `<g id="…">` groups the script animates. It
+is inlined behind the page (`position: fixed`, `preserveAspectRatio="slice"`,
+`aria-hidden`), so shapes may use CSS variables and follow the theme. `pages`
+is `'all'`, `'landing'` or `'docs'`; `--wallpaper-opacity` and
+`--wallpaper-veil` (how opaque the reading column stays over it) are tokens a
+theme can set. The `viewBox` is required.
+
+**wallpaper.js** is a classic script that calls `Wallpaper.register(ctx => …)`.
+`ctx`: `svg`, `groups`, `width`/`height`, `reduced`, `bounds()` (the part of the
+viewBox on screen), `rand()` (seeded, reproducible), `css(name)`,
+`frame((timeMs, dtSeconds) => …)` (paused in hidden tabs, called once under
+`prefers-reduced-motion`). The example moves every child of `<g class="shapes">`:
+neighbours attract, overlapping shapes merge (areas add), oversized ones burst,
+absorbed ones respawn at the edge. Without a script the wallpaper is a still
+picture.
+
+**font.sheet** is a glyph sheet: one equal cell per character, in code order from
+`first`, `cols` per row, drawn as **transparent background + opaque glyphs**
+(the site paints them with CSS `mask` in the text colour). SVG or PNG. For an
+SVG the `cell` size is derived from its `viewBox`; for a PNG give `cell: [w, h]`.
+`upper: true` folds lower case onto upper case for all-caps fonts. `apply` lists
+the CSS selectors to draw with it (default: brand name, hero title, doc titles).
+It is a progressive enhancement: the text stays real text (`aria-label`, search,
+copy) and is only swapped for glyphs once the sheet has loaded; characters
+outside the sheet stay ordinary text. Glyph height is `1em`, so change
+`font-size` on a selector to scale it. `templates/art/make-dotfont.py` renders a
+Linux console (PSF) font as a dot-matrix sheet; the demo sheet is such a
+placeholder.
 
 ## Publishing model
 

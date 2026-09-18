@@ -1,0 +1,76 @@
+R:
+  library: r
+  prefix: R
+  device: 0204/10
+  gates:
+    "1":
+      pins:
+        "1":
+          direction: pas
+          x: -5.08
+          y: 0
+        "2":
+          direction: pas
+          x: 5.08
+          y: 0
+R-H:
+  library: r
+  prefix: R
+  device: 0204/10
+  gates:
+    "1":
+      pins:
+        "1":
+          direction: pas
+          x: -5.08
+          y: 0
+        "2":
+          direction: pas
+          x: 5.08
+          y: 0
+L:
+  library: l
+  prefix: L
+  device: 03/10
+  gates:
+    "1":
+      pins:
+        "1":
+          direction: pas
+          x: 0
+          y: 7.62
+        "2":
+          direction: pas
+          x: 0
+          y: -7.62
+C:
+  library: c
+  prefix: C
+  device: 050-025X075
+  gates:
+    G$1:
+      pins:
+        "1":
+          direction: pas
+          x: 0
+          y: 5.08
+        "2":
+          direction: pas
+          x: 0
+          y: -5.08
+CPOL:
+  library: c
+  prefix: C
+  device: E2.5-5
+  gates:
+    G$1:
+      pins:
+        "-":
+          direction: pas
+          x: 0
+          y: -5.08
+        +:
+          direction: pas
+          x: 0
+          y: 5.08
+

@@ -1,0 +1,777 @@
+# Knowledge-source manifest for the mcu-firmware-engineer skill.
+#
+# Purpose: every place we've actually gone to find out HOW to implement
+# something (chip capabilities/peripherals/pinout/registers, a driver
+# contract, a library convention, a board detail) gets one entry here —
+# not just PIC datasheets, though those are the most common case. This
+# is a living, hand-editable index: add an entry whenever a source
+# actually helped answer a real question during real work, don't
+# pre-populate it speculatively.
+#
+# Lookup order when a question comes up ("how does peripheral X work",
+# "what's the register/flag for Y"):
+#   1. Check this file for an existing entry covering the topic/chip.
+#   2. If a datasheet is listed but its `path` is missing on disk,
+#      download it into ~/Dokumente/Microchip/ (see `datasheet` entries'
+#      `path` convention below) and read it from there.
+#   3. If nothing here covers it: consult MLA (registers/flags/contract
+#      ONLY, per the `mla` entry below — never copy its source, never
+#      its identifier style) or a general web search (vendor app notes,
+#      tutorials, tech blogs like Hackaday, private sites like Roman
+#      Black's). If a web source is actually used to figure something
+#      out, add an entry for it here (download it if practical, or link
+#      the URL) BEFORE moving on — don't let a real source of expertise
+#      go unrecorded.
+#
+# Schema per entry (hand-editable, keep it this shape):
+#   id:          short stable slug, referenced from elsewhere if needed
+#   category:    datasheet | compiler-doc | app-note | library | project
+#                | book | blog | forum | tutorial | reference-only | other
+#   title:       real document/page title
+#   topic:       chip(s)/peripheral(s)/subject this actually covers
+#   path:        local file path, if downloaded/present (omit if not)
+#   url:         source URL, if known/applicable (omit if purely local)
+#   relevance:   WHY this is listed - what task/question it answered,
+#                or the general reason it's kept around
+#   status:      present | missing-needs-download | linked-only |
+#                confidential-generalized-only
+#   added:       YYYY-MM-DD this entry was added
+#
+# `category: reference-only` + `status: confidential-generalized-only`
+# marks a source that is NOT ours to distribute or quote (e.g. a former
+# employer's copyrighted production firmware): no path/url is recorded
+# here, its filenames/product name are never written into this skill,
+# and its actual source/comments/identifiers must never be copied or
+# paraphrased. What WAS extracted is only generalized engineering
+# principles, written in this skill's own words, kept in a separate file
+# per the entry's `relevance` note - never in this manifest itself.
+
+datasheets_dir: ~/Dokumente/Microchip/
+datasheets_dir_note: >
+  ~/Dokumente/Microchip/ holds ~173 Microchip PDFs total (datasheets,
+  app notes, compiler/tool guides). Most chip datasheets are sensibly
+  named (e.g. pic18f25k50.pdf); many app notes are only named by
+  Microchip document number (e.g. 00002749A.pdf) and haven't been
+  individually catalogued below yet - only add an entry here once a
+  specific document has actually been consulted for something, per the
+  step-by-step workflow. If a needed chip datasheet isn't in this
+  directory, download it there and add an entry.
+
+entries:
+  - id: pic18f25k50-datasheet
+    category: datasheet
+    title: "PIC18(L)F2X45K50 Data Sheet"
+    topic: "PIC18F25K50 - main picstick_25k50 target chip: peripherals, registers, pinout, USB module, config words"
+    path: ~/Dokumente/Microchip/pic18f25k50.pdf
+    relevance: "Primary MCU for the pictest project's picstick_25k50 board (miditest, etc.)"
+    status: present
+    added: 2026-08-28
+
+  - id: pic18f2550-datasheet
+    category: datasheet
+    title: "PIC18F2455/2550/4455/4550 Data Sheet"
+    topic: "PIC18F2550 - USB-capable pictest/lc-meter target chip"
+    path: ~/Dokumente/Microchip/pic18f2550.pdf
+    relevance: "One of pictest's/lc-meter's build-matrix chips; also the target of the USB-Stack/USB-uC projects below"
+    status: present
+    added: 2026-08-28
+
+  - id: pic18f252-datasheet
+    category: datasheet
+    title: "PIC18FXX2 Data Sheet"
+    topic: "PIC18F252 - pictest/lc-meter target chip (no USB, no onboard comparator quirks of the K50)"
+    path: ~/Dokumente/Microchip/pic18f252.pdf
+    relevance: "One of pictest's/lc-meter's build-matrix chips"
+    status: present
+    added: 2026-08-28
+
+  - id: pic16f876a-datasheet
+    category: datasheet
+    title: "PIC16F87XA Data Sheet"
+    topic: "PIC16F876A - pic14 (14-bit core) target chip, pictest/lc-meter"
+    path: ~/Dokumente/Microchip/pic16f876a.pdf
+    relevance: "One of pictest's/lc-meter's build-matrix chips; the pic14/SDCC target used to isolate the DEVICE_EMIT_CONFIG_WORD linker bug"
+    status: present
+    added: 2026-08-28
+
+  - id: pic12f1840-datasheet
+    category: datasheet
+    title: "PIC12F1840 (41441B)"
+    topic: "PIC12F1840 - small pic14 part referenced as a hypothetical future lib/spi.c backend target"
+    path: "~/Dokumente/Microchip/PIC12F1840 - 41441B.pdf"
+    relevance: "Considered (not yet implemented) as an SPI_USE_HW backend target in lib/spi.h - excluded there because its SDCC header only exposes SSP1xxx-prefixed register names"
+    status: present
+    added: 2026-08-28
+
+  - id: pcd8544-datasheet
+    category: datasheet
+    title: "PCD8544 (Nokia 5110 LCD controller) datasheet"
+    topic: "PCD8544 LCD controller - full instruction set, addressing, bias/Vop/temp-coefficient commands"
+    path: /home/roman/Downloads/PCD8544.PDF
+    relevance: "Ground truth for lib/pcd8544.[ch]'s full low-level command-set driver in pictest (miditest project) - every instruction's byte encoding was derived and cross-checked against this"
+    status: present
+    added: 2026-08-28
+
+  - id: xc8-user-guide
+    category: compiler-doc
+    title: "MPLAB XC8 C Compiler User Guide (legacy v1.x)"
+    topic: "XC8 v1.x (HI-TECH-derived) compiler usage, pragmas, memory qualifiers, command-line options"
+    path: ~/Dokumente/Microchip/MPLAB_XC8_C_Compiler_User_Guide.pdf
+    relevance: >
+      Reference for legacy-XC8-specific behavior (the `interrupt isr()`
+      keyword form, `--chip=`/`.p1` toolchain shape) when porting lib/
+      code across SDCC/XC8. This symlink resolves to v1.45's own copy —
+      v1.x has a confirmed real codegen bug (see SKILL.md's clock/PLL
+      bring-up section: the INTOSC+PLL enable sequence never actually
+      locks PLLRDY under v1.45, though the identical source works fine
+      under v2.x/v4.x) — don't use v1.x as the default reference for new
+      work, prefer xc8-v4-user-guide-pic below unless specifically
+      debugging legacy-v1.x-only behavior.
+    status: present
+    added: 2026-08-28
+
+  - id: xc8-v4-user-guide-pic
+    category: compiler-doc
+    title: "MPLAB XC8 C Compiler User Guide for PIC (v4.00, Clang-based)"
+    topic: >
+      Modern XC8 (v2.x+/v4.x) compiler usage for PIC targets: the
+      __interrupt() attribute specifier (single-vector and dual-priority
+      high_priority/low_priority forms, __base()/__flags() variants),
+      __XC8_VERSION and other predefined macros, -mdfp= device family
+      pack usage, PIC-specific pragmas/qualifiers. This is the compiler
+      generation actually used for PIC18 dual-priority-interrupt work
+      going forward (see xc8-user-guide above for why legacy v1.x is
+      disfavored).
+    path: /opt/microchip/xc8/v4.00/docs/MPLAB_XC8_C_Compiler_User_Guide_for_PIC.pdf
+    relevance: >
+      Authoritative source for the __interrupt(high_priority)/
+      __interrupt(low_priority) dual-vector ISR syntax (section "Writing
+      Interrupt Functions for Devices with Multiple Vectors") and for
+      confirming __interrupt()'s attribute-placement rule (must precede
+      the function name) - both verified hands-on against real
+      PIC18F25K50 silicon. Read via `pdftotext -layout` for text search;
+      Table 3-1/Figure-style content in other Microchip PDFs has needed
+      the `Read` tool's `pages` parameter (image-accurate) instead when
+      text extraction garbled a table - the same caution likely applies
+      here for any dense table in this doc.
+    status: present
+    added: 2026-09-03
+
+  - id: sdcc-manual
+    category: compiler-doc
+    title: "SDCC Compiler User Guide (sdccman.pdf, v3.9.0)"
+    topic: >
+      SDCC usage: pic14/pic16 port specifics, __interrupt/__critical/
+      __at() qualifiers, command-line options, --use-non-free, linker
+      (gplink) integration, --ivt-loc and other pic16-port flags.
+    path: /mnt/data/Dokumente/eBooks/sdccman.pdf
+    relevance: >
+      Best available on-disk SDCC manual, but it's a symlink to SDCC
+      v3.9.0's own copy - noticeably older than this skill's actual
+      default toolchain (sdcc-4.6.0, see Toolchains table above), and
+      SDCC 4.6.0 ships NO manual PDF of its own (only README.txt/
+      INSTALL.txt under share/doc/sdcc/ plus ucsim's HTML docs under
+      share/doc/ucsim/). Treat this as a general syntax/behavior
+      reference, not a guarantee of exact 4.6.0 behavior - cross-check
+      anything version-sensitive (a new flag, a changed default) against
+      README.txt/INSTALL.txt in the actual 4.6.0 install, or empirically
+      (compile a minimal test and inspect the .asm/.lst output) before
+      trusting this PDF for a 4.6.0-specific claim. No newer sdccman.pdf
+      was found anywhere on this machine as of 2026-09-03 - if one shows
+      up later (e.g. bundled with a future SDCC install), replace this
+      entry's path rather than adding a second one.
+    status: present
+    added: 2026-09-03
+
+  - id: mla
+    category: library
+    title: "Microchip Libraries for Applications (MLA) v2013-06-15"
+    topic: "Higher-level peripheral driver examples (USB, graphics, MDD/SD card, TCP/IP, MiWi, etc.) for PIC10-32"
+    path: /opt/microchip/mla/v2013_06_15/
+    relevance: >
+      LEARNING-ONLY source, never a code source: read to understand which
+      registers/flags a peripheral driver has to touch and the contract
+      it implements (e.g. init sequence, buffer ownership, interrupt
+      handshake). Never copy source from here directly - it uses a
+      Pascal-Case-mixed-with-underscores identifier style inconsistent
+      with this codebase's lib/ conventions, and its drivers are far more
+      general/configurable than these projects want (YAGNI risk) - only
+      port the minimal register-level contract actually needed for the
+      task at hand.
+    status: present
+    added: 2026-08-28
+
+  - id: usb-stack-jdrazi
+    category: project
+    title: "USB_Stack (John Izzard's PIC18 USB stack)"
+    topic: "USB device stack for PIC18F2550/25K50-family chips - CDC-ACM, HID, MIDI streaming class examples"
+    path: /mnt/data/Projects/USB-Stack/USB_Stack/
+    url: "found via hackaday.com"
+    relevance: >
+      Used instead of MLA's USB stack for pictest's USB-CDC/USB-MIDI work
+      (miditest's planned USB bridge, per src/miditest.md §1/§4) -
+      referenced directly for usb_cdc_acm.c (CDC bridge) and the
+      MIDI_Controller.c example (USB-MIDI streaming class descriptor/
+      endpoint handling) on the exact PIC18F25K50 target.
+    status: present
+    added: 2026-08-28
+
+  - id: reference-appliance-firmware
+    category: reference-only
+    title: "(confidential - not recorded here)"
+    topic: "PIC18F252 appliance control firmware: HI-TECH C/SDCC-portable, PID heater control, calibrated ADC, EEPROM-backed presets, RAM-mapped LCD driver - a real production, long-service-life (10+ year warranty) codebase"
+    relevance: >
+      Studied once (2026-08-28) purely to extract generalized engineering
+      principles - written up in hard-won-lessons.md (this skill's own
+      directory) in this skill's own words. No source, comments,
+      identifiers, filenames, product name, or employer name from it may
+      ever be copied, quoted, or written into this skill or any project
+      under it. Do not re-open or re-read the original codebase to add
+      more to hard-won-lessons.md without the user explicitly asking -
+      it is not a general-purpose reference to browse.
+    status: confidential-generalized-only
+    added: 2026-08-28
+
+  - id: usb-uc-bootloader-jdrazi
+    category: project
+    title: "USB_uC (John Izzard's USB MSD bootloader)"
+    topic: "USB mass-storage-device bootloader for PIC18F-family chips"
+    path: /mnt/data/Projects/USB-uC/USB_uC.X/
+    url: "found via hackaday.com"
+    relevance: >
+      The bootloader miditest (and similar programs) are meant to be
+      flashed under. Its main.c fixes the app region at
+      PROG_REGION_START=0x2000 (vectors at 0x0000/0x0008/0x0018 GOTO
+      PROG_REGION_START[+0x08/+0x18]) - this is exactly why pictest's
+      build matrix compiles each program twice, CODE_OFFSET=0x0000 (bare
+      ICSP/debug flashing) and CODE_OFFSET=0x2000 (bootloader-relocated,
+      loaded onto the running bootloader via USB MSD) in the same run.
+      Same author/source as usb-stack-jdrazi above (license headers read
+      "Copyright (C) 2017-2021 John Izzard" - "Johnny Drazi" in the id/
+      title above is a corrected misattribution from an earlier session).
+    status: present
+    added: 2026-08-28
+
+  - id: picstick-25k50-board
+    category: project
+    title: "picstick_25k50 (kaza007 fork of the Pinguino PIC18F45K50 board, shrunk to 28-pin)"
+    topic: "picstick_25k50 board hardware design: schematic/board files, BOM, construction photos, pinout image"
+    path: /mnt/data/Projects/rsenn/picstick_25k50/
+    url: "https://github.com/kaza007/picstick_25k50"
+    relevance: >
+      Main USB-capable target board (pictest's miditest/rgbtest already
+      run on it). pictest/picstick.md (the load-bearing pin-mapping doc)
+      was cross-checked directly against this repo's
+      picstick_25k50_v1.sch netlist, not just the vendor pinout JPEG
+      (which has confirmed-wrong labels). This repo's own README notes
+      the board originally shipped with the Pinguino bootloader
+      (Bootloader_v4.14_18f25k50_INTOSC.hex) - NOT the same bootloader as
+      usb-uc-bootloader-jdrazi above; their app-region offsets have not
+      been confirmed to match, don't assume CODE_OFFSET=0x2000 is
+      correct for a board still running the original Pinguino bootloader.
+    status: present
+    added: 2026-08-29
+
+  - id: roman-black-bresenham-timing
+    category: blog
+    title: "Zero Error Bresenham Timing Algorithm for Microcontrollers"
+    topic: >
+      Applying Bresenham's line algorithm to timer-tick accumulation so a
+      binary timer overflow (256/65536 ticks) can generate an exact
+      real-world period (e.g. 1 second) at any crystal speed, with zero
+      cumulative drift - one accumulator variable, add the tick count each
+      overflow, fire+subtract the target once the accumulator reaches it,
+      carry the remainder forward as the correction for next time.
+    url: "https://www.romanblack.com/one_sec.htm"
+    relevance: >
+      This is the actual origin/rationale of pictest's own
+      `bresenham.h` (`BRESENHAM_DECL`/`BRESENHAM_INC8`/`BRESENHAM_COND`/
+      `BRESENHAM_SUB`) - the project's standard timebase idiom, used in
+      `miditest.c` and `rgbtest.c` to derive an exact 1ms tick from
+      Timer0 overflows regardless of crystal frequency. Read this before
+      touching or re-deriving that macro set, or before building an
+      equivalent timebase on a new target - it explains *why* the
+      accumulate/compare/subtract-remainder shape is correct (zero
+      cumulative error) rather than just what the macros do.
+    status: present
+    added: 2026-08-29
+
+  - id: roman-black-integer-degree
+    category: blog
+    title: "Fast Integer Degree Algorithm (XY vector to compass degree)"
+    topic: >
+      Converting an XY vector to a 0-360 degree value without ArcTan()/
+      ArcCos(): a cheap 16-bit multiply+divide single-quadrant estimate
+      (degree = y*45/x, ~4 deg error), a byte-comparison error-compensation
+      pass tightening it to ~1 deg, then quadrant mapping via sign flags.
+      ~196 bytes ROM on a PIC12F675.
+    url: "https://www.romanblack.com/integer_degree.htm"
+    relevance: >
+      Reference for any future pictest/lc-meter work needing a direction/
+      angle from an XY pair (accelerometer tilt, joystick, vector-based
+      control) without paying for real trig on an 8-bit part - not yet
+      used by any project here, kept for when it's needed.
+    status: present
+    added: 2026-08-29
+
+  - id: roman-black-dtmf-algorithm
+    category: blog
+    title: "Black DTMF Decoding Algorithm (period-measurement, no FFT/Goertzel)"
+    topic: >
+      Decoding DTMF tones by measuring waveform period via comparator
+      zero-crossing + crystal-accurate timing, not FFT/Goertzel - a HI-LO
+      debounce (each half-period must be >=90% stable) rejects noise while
+      also giving crude pattern sync; two decode strategies shown (weighted
+      spectrum-style scoring over 30 periods, then a faster "triplet"
+      pattern match over sequences of 3 consecutive periods). ~25 bytes RAM
+      + 318 bytes ROM on a PIC12F675, no external crystal/specialty IC.
+    url: "https://www.romanblack.com/DTMF/DTMF_alg.htm"
+    relevance: >
+      Reference algorithm for detecting DTMF (or any characteristic-
+      frequency tone) on the smallest/cheapest PICs this project's build
+      matrix already targets (12f1840-class parts) - relevant if a future
+      project needs telephone/remote-control tone decoding without an
+      external DTMF decoder chip.
+    status: present
+    added: 2026-08-29
+
+  - id: roman-black-dtmf-remote-example
+    category: project
+    title: "DTMF_remote.c (worked example of the triplet DTMF algorithm)"
+    topic: >
+      Complete PIC12F675 (8MHz, EasyPIC6 board) firmware: DTMF-controlled
+      relay (key '1' on, key '0' off) built directly on the triplet
+      algorithm from roman-black-dtmf-algorithm above - comp_debounce()
+      (220us stability sync), decode_triplets() (score sequences of 3
+      periods against known DTMF patterns, threshold >60), make_beeps()
+      for feedback.
+    url: "https://www.romanblack.com/DTMF/DTMF_remote.c"
+    relevance: >
+      A complete, working reference implementation of the DTMF triplet
+      algorithm end-to-end (not just the theory page) - read this first if
+      actually implementing DTMF decoding rather than just recalling the
+      technique.
+    status: present
+    added: 2026-08-29
+
+  - id: roman-black-btc-sound
+    category: blog
+    title: "BTc (Binary Time Constant) 1-bit sound encoding"
+    topic: >
+      Encoding audio to 1 bit/sample for single-GPIO-pin playback by
+      modeling an RC charging curve with a BINARY time constant (distance/2,
+      /4, /8 - a right-shift, not the electrical 63.2%/0.632 float
+      multiply) so the whole encode+decode is 8-bit add/subtract/shift, no
+      floating point. Source waveform is pre-scaled to the center half of
+      the output range; encoding picks whichever of the two possible next
+      bits moves the running RC-model value closer to the target sample.
+    url: "https://www.romanblack.com/BTc_alg.htm"
+    relevance: >
+      Reference for cheap voice/sound-effect playback from a single PIC
+      pin (no DAC, no PWM audio codec, no floating point) - relevant if a
+      future project wants talking-device-style audio feedback on an
+      8-bit part.
+    status: present
+    added: 2026-08-29
+
+  - id: roman-black-picthread
+    category: blog
+    title: "PIC-thread: cooperative multitasking via THREAD_START/BREAK/END macros"
+    topic: >
+      Three macros (THREAD_START(), THREAD_BREAK, THREAD_END()) that turn
+      sequential C code into a cooperative-multitasking "thread" using a
+      per-thread sequence-number array (seq[]) to resume at the right
+      THREAD_BREAK each pass through the main loop - plus two alternative
+      scheduling styles (timeslice via TMR0/TMR1, and loop-frequency/modulo
+      threading for tasks that only need to run every Nth pass).
+    url: "https://www.romanblack.com/PICthread.htm"
+    relevance: >
+      A lightweight cooperative-multitasking pattern worth considering
+      before reaching for a real RTOS on an 8-bit part with tight RAM -
+      not yet used by any project here (pictest/lc-meter currently use
+      plain flat main-loop polling + ISRs), but the natural next step if a
+      project's main loop ever needs genuinely independent concurrent
+      tasks without an ISR-driven state machine per task.
+    status: present
+    added: 2026-08-29
+
+  - id: pcd8544-datasheet
+    category: datasheet
+    title: "PCD8544 - 48 x 84 pixels matrix LCD controller/driver (Nokia 5110)"
+    topic: >
+      PCD8544 LCD controller chip driven by pictest/lib/pcd8544.c and
+      lib/lcd5110.c - DDRAM addressing (X/Y address counter, horizontal
+      vs vertical mode, 6x 8-row banks), instruction set, and the SDIN
+      pin being the chip's only data line (input-only, no data-output
+      pin at all).
+    path: ~/Dokumente/Microchip/PCD8544.pdf
+    url: "https://raw.githubusercontent.com/EleonoreMizo/pedalevite/master/doc/datasheets/Philips%20PCD8544%20-%20IC,%2048x84%20pixels%20matrix%20LCD%20controller%20(Nokia%205110).pdf"
+    relevance: >
+      Answered how a font glyph taller/shorter than one 8-row bank must
+      be written to this chip (both addressing modes only auto-wrap at
+      the FULL panel boundary - X=83 or Y=5 - never at an arbitrary
+      glyph-sized sub-boundary, per Section 7.7/Table 1) and confirmed
+      the chip has no read-back path at all (no SDOUT pin in the pinning
+      table), independent of whether the host MCU's own SPI peripheral
+      supports full-duplex.
+    status: present
+    added: 2026-08-29
+
+  - id: mdb-user-guide
+    category: compiler-doc
+    title: "Microchip Debugger (MDB) User's Guide (DS50002102F)"
+    topic: >
+      MPLAB X's command-line debugger, `mdb` - invocation (mdb.bat /
+      mdb.sh, per-OS paths in Table 1-2), the "entering commands" vs.
+      "running a command file" workflows, and the core command set:
+      Device, Hwtool (SIM for the built-in software simulator, plus
+      ICD3/ICD4/PICkit3/4/Snap/REAL ICE/PM3/EDBG for real hardware),
+      Program (load a .cof/.elf/.hex - a .cof/.elf is needed for
+      symbolic debugging, plain .hex is programming-only), Reset,
+      Break (by source line or address), Watch, Run, Step/Next, Print
+      (read a variable/SFR by name), Stim (register/pin stimulus
+      injection via an .scl file), Quit. Chapter 2's command-class
+      reference covers the full list beyond this core set.
+    path: ~/Dokumente/Microchip/MDBUserGuide.pdf
+    url: "https://developerhelp.microchip.com/xwiki/bin/view/software-tools/ides/x/debugging/mdb/"
+    relevance: >
+      Read directly (WebFetch to the doc URL above timed out twice;
+      the same PDF ships locally with every MPLAB X install, e.g.
+      /opt/microchip/mplabx/v5.50/docs/MDBUserGuide.pdf - check there
+      first, it's always present, no network needed) to work out the
+      exact command-file syntax used for lc-meter's tests/run_mdb_sim.sh
+      simulator round-trip (see hard-won-lessons.md's "MCU firmware
+      design-verification / simulator round-trip" section for the
+      pattern this produced). The two load-bearing facts NOT obviously
+      stated up front: `Hwtool SIM` selects the built-in software
+      simulator (no physical debug probe needed) as a first-class
+      option alongside real hardware tools, and `Print <variable>`
+      genuinely reads live simulated device memory by symbol name once
+      a .cof/.elf with debug symbols has been programmed and run - this
+      is the actual mechanism for a scripted "did the firmware compute
+      the right answer" check with no real chip.
+    status: present
+    added: 2026-08-28
+
+  - id: mdb-readme
+    category: compiler-doc
+    title: "Readme for MDB.htm (MDB release notes, per-MPLABX-version)"
+    topic: >
+      Version-specific MDB release notes and known issues, more
+      up-to-date than the printed User's Guide per the User's Guide's
+      own "Recommended Reading" section. Ships alongside MDBUserGuide.pdf
+      in every MPLAB X install's docs/ folder.
+    path: "/opt/microchip/mplabx/v5.50/docs/Readme for MDB.htm"
+    relevance: >
+      Not yet actually needed for anything encountered so far (the
+      User's Guide alone was sufficient to get tests/run_mdb_sim.sh
+      working), but the User's Guide explicitly says to check this
+      first for anything that looks like a version-specific quirk
+      before assuming a bug in this skill's own usage. Installed at
+      this same relative path (docs/Readme for MDB.htm) under each of
+      the v5.35/v5.50/v6.35 MPLAB X installs on this machine, not just
+      v5.50.
+    status: present
+    added: 2026-08-28
+
+  - id: insider-debug-tool
+    category: project
+    title: "INSIDER - 1-bit in-circuit debugger (E.E. Atanasios Melimopoulos, pic.insider@gmail.com)"
+    topic: >
+      A DIY hardware ICD alternative for 8-bit PIC10/12/16/18: a separate
+      PIC16F628-based debug pod talks to the target over a SINGLE spare
+      I/O pin (any pin, any port, shareable with low-importance user
+      hardware like a LED/pushbutton) via a self-clocking 512cyc/256cyc
+      pulse-width-coded 1-bit link, instead of ICD's fixed RB6/RB7 2-bit
+      interface. Target-side integration is a small assembly bootstrap
+      (~160 words on 12F6xx, ~170 on 16Fxx, ~400 on 18Fxx) placed at the
+      end of program memory plus two macros (`INSIDER`, `BREAK nn`)
+      dropped at the reset init and at each breakpoint site; PC side is
+      plain Hyperterminal at 38400bps, no MPLAB plug-in. Up to 256
+      breakpoints (mask/unmask/trace by group), view/edit DATA/SFR RAM,
+      read/write ports, EEPROM dump, W/STATUS edit, rerun from
+      breakpoint (18Fxxxx also supports rerun-from-arbitrary-address).
+    path: /mnt/data/Projects/pictest/insider/
+    url: "local copy at /mnt/data/Projects/rsenn/insider/ (git-tracked, same author's files, lowercase-renamed - e.g. bootstrap/18fdbug.asm vs Bootstrap/18FDBUG_v1r1.asm - otherwise the same content byte-for-byte per file, not yet diffed further than that)"
+    relevance: >
+      Investigated 2026-08-29 as a candidate single-pin hardware/software
+      breakpoint debugger for pictest-style PIC targets, as an
+      alternative or complement to the `mdb` *simulator* round-trip above
+      (INSIDER debugs the REAL chip on real hardware; mdb's Hwtool SIM
+      never touches silicon) and to a real ICD when RB6/RB7 aren't free.
+      Full protocol doc: `Source/INSIDER_Protocol.txt`; full command/
+      concept doc: `INSIDER_User_Manual_en.pdf` (rsenn copy:
+      `INSIDER_User_Manual.pdf`) — both read in full during this pass.
+      **Portability finding (see SKILL.md's "Debug tools" section for
+      the full writeup)**: the target-side bootstrap is genuinely
+      assembly-only — its 1-bit link is bit-banged with fixed,
+      cycle-counted delay loops (tuned per a `DBN` speed-multiplier EQU)
+      that only work because MPASM emits deterministic per-instruction
+      cycle counts; this cannot be reproduced by C codegen from either
+      SDCC or XC8, so a straight "convert to C" port is not viable — it
+      would have to re-become hand-tuned asm delay primitives anyway.
+      Also confirmed: the raw `.asm` files in both `insider/Bootstrap/`
+      copies are CRLF text that has been flattened/rewrapped (multiple
+      MPASM statements and their trailing `;` comments run together onto
+      one text line, with no reliable column boundary between code and
+      comment) — NOT valid one-instruction-per-line MPASM as they sit;
+      the matching `.lst` files (e.g. `Bootstrap/18FDBUG_v1r1.lst`,
+      present for the 18F variant only) show the true, correctly
+      one-instruction-per-line source and are the better reference to
+      restore proper formatting from before attempting to assemble
+      anything here. The `Source/DEMO1_*.asm` integration examples
+      confirm the toolchain dependency directly: they use MPASM-specific
+      `LIST P=<chip>`, `#include <P18F4620.INC>`-style vendor headers,
+      and `CONFIG` directives — i.e. genuine MPASMX syntax, the
+      assembler XC8 v1.x bundles/still supports (per this skill's
+      Toolchains table), NOT XC8 v2.x/v4.x's `pic-as` (GNU/LLVM-MC
+      syntax, incompatible directives) and not directly gpasm/SDCC's
+      pic14/pic16 assembler backend without a syntax check of its own.
+    status: present
+    added: 2026-08-29
+
+  - id: mdb-online-help
+    category: compiler-doc
+    title: "MDB online help (MDBX_SA.jar)"
+    topic: >
+      Full comprehensive MDB command reference as an installed Java
+      help viewer (double-click to open) - per the User's Guide,
+      potentially more up-to-date than either the PDF or the release
+      notes.
+    path: "/opt/microchip/mplabx/v5.50/docs/MDB_Help/MDBX_SA.jar"
+    relevance: >
+      Not yet opened/consulted - the printed User's Guide already
+      answered everything needed for the lc-meter simulator round-trip.
+      Listed here as the next place to check if a command's exact
+      syntax/behavior isn't fully covered by mdb-user-guide above.
+    status: present
+    added: 2026-08-28
+
+  - id: gpsim-source
+    category: project
+    title: "gpsim 0.32.1 full source tree"
+    topic: >
+      The GNUPIC simulator's own source, not just the installed Debian
+      binary - CLI command implementations (src/, e.g. what `x`/`dump`/
+      `symbol`/`step`/`break` actually do), the module system
+      (src/modules.cc + extras/), and every simulatable peripheral
+      module's source, including ones NOT built into the installed
+      package (see gpsim-lcd-module below).
+    path: /mnt/data/Projects/gpsim-0.32.1
+    url: "https://sourceforge.net/projects/gpsim/"
+    relevance: >
+      Read extras/ subdirectory listing (dht11, ds1820, ds1307, solar,
+      lcd, graphic_lcd) against the installed package's actual `module
+      list` output (module library libgpsim_extras) to determine which
+      extras the Debian gpsim package was actually built with -
+      confirmed dht11/ds1820/ds1307/solar landed (matching DS1307/
+      DS1820/DS18B20/DS18S20/Solar/dht11 module types gpsim reports),
+      but extras/lcd and extras/graphic_lcd did NOT - see
+      gpsim-lcd-module below. Also confirmed real command syntax
+      (`load <file>.cod`, symbol names load with a leading underscore,
+      `x <symbol>` only shows one byte, a loaded .stc command file's
+      own directory becomes gpsim's cwd) by reading src/ and by direct
+      hands-on testing (see lc-meter's tests/run_gpsim_sim.sh /
+      TODO.md's "Second simulator investigated: gpsim" for the full
+      writeup) since gpsim's installed man/help text is thin.
+    status: present
+    added: 2026-08-28
+
+  - id: gpsim-lcd-module
+    category: reference-only
+    title: "gpsim's extras/lcd - HD44780-style character-LCD simulation module (not installed)"
+    topic: >
+      gpsim ships real source for a simulated alphanumeric character
+      LCD module (extras/lcd/lcd.cc + lcdgui.cc, GTK-rendered) and a
+      separate SED1520-based 100x32 graphic LCD (extras/graphic_lcd/,
+      a different, unrelated chip) - a real match for lc-meter's own
+      HD44780 hardware (LC_meter_HD44780) if it were available.
+    path: /mnt/data/Projects/gpsim-0.32.1/extras/lcd
+    relevance: >
+      Confirmed NOT present in the installed Debian gpsim package
+      (`module library libgpsim_modules` + `module library
+      libgpsim_extras` then `module list` shows no `lcd` type at all,
+      only DS1307/DS1820/DS18B20/DS18S20/Solar/dht11 from extras/ -
+      extras/lcd and extras/graphic_lcd were not built into it). Using
+      it would require building gpsim from the local source tree
+      (gpsim-source above) with extras/lcd enabled - not yet done, a
+      real open item if a future project wants to visually/
+      programmatically verify LCD output inside gpsim rather than only
+      reading result variables back via symbol.
+    status: present
+    added: 2026-08-28
+
+  - id: gpsim-readme-modules
+    category: compiler-doc
+    title: "gpsim README.MODULES / README (Debian package docs)"
+    topic: >
+      gpsim's module system (`module library`/`module load`/`module
+      list`/`attach`/`node`) and its built-in USART peripheral
+      simulation (listed as a core feature: "Simulating UART of the
+      controller... connect two instances of the simulator together...
+      or to serial port of the host machine").
+    path: /usr/share/doc/gpsim/README.MODULES.gz
+    relevance: >
+      Confirmed the `attach`/`node`/`module load usart <name>` pattern
+      for wiring a simulated USART module to a CPU's real TX/RX pins -
+      considered as a round-trip mechanism (decode a test firmware's
+      real serial output inside the simulator) before settling on the
+      simpler symbol-readback approach (`Print`/`x`) for lc-meter's
+      tests/ - kept here since a future project without debug-symbol
+      access (plain .hex only) would need this UART path instead.
+    status: present
+    added: 2026-08-28
+
+  - id: gpsim-regression-harness
+    category: project
+    title: "gpsim's own regression/ test suite - a real precedent for scripting gpsim in a test harness"
+    topic: >
+      gpsim ships its own working test suite under regression/ (e.g.
+      regression/breakpoints/) - real, runnable proof of how to
+      orchestrate gpsim from a shell script, not a design guess. Each
+      test dir has a .asm (built via gpasm -c, linked via gplink -s
+      <chip>.lkr into .cod+.hex), a .stc script, and a Makefile `sim`
+      target. Shared regression/make.regression's sim_%: %.cod rule
+      runs `gpsim -i -I $(STARTUP_STC) -D STC="$<"` against a shared
+      startup.stc (`load STC` / `run` / `quit`). The top-level
+      regression/rt.sh runs `make <target> > LOGFILE` then `grep -e
+      "FAILED" -e "PASSED" $LOGFILE` - pass/fail is a stdout-text grep,
+      not an exit code. Pass/fail signal comes from an unconditional
+      `.assert "'*** PASSED <msg>'"` (or FAILED) placed at the exact
+      program point that means success, via four macros in
+      /usr/share/gputils/header/coff.inc wrapping a generic `.direct`
+      COD directive: `.assert`, `.sim`, `.print`, `.log`. Assembly-only
+      (or SDCC inline-asm) - not usable from a .stc script alone.
+      **CORRECTED 2026-08-29** after actually reading
+      gpsim-0.32.2/src/cod.cc:483-530 (not just coff.inc's macro names/
+      comments, which is all the first pass checked): only `.assert`
+      (`'a'`) works as documented (becomes a `break asrt <addr>, <msg>`
+      breakpoint). `.print`/`.log` (`'f'`/`'l'`) are unimplemented
+      stubs - parsed, accepted, switch-case bodies empty, do nothing.
+      `.sim` (`'e'`) does NOT run its command "when this PC is reached"
+      - it ignores its address field entirely and runs once,
+      unconditionally, at .cod-load time (same `add_command` call
+      gpasm's own startup-script handling uses) - so `.sim "quit"` at a
+      firmware "done" point does not work as a self-terminating
+      checkpoint, it just quits immediately on load. The directive type
+      that DOES run an arbitrary gpsim command exactly when a specific
+      instruction executes without halting - the real "printf
+      checkpoint" primitive - is `'c'`/`'C'` (CommandAssertion,
+      src/breakpoints.cc:2166-2210), but it has NO macro in coff.inc.
+      **CONFIRMED 2026-08-29** (same pass, via gputils-1.5.2 source at
+      /mnt/data/Projects/gputils-1.5.2/gpasm/directive.c:_do_direct,
+      line 2643, and util.c:coerce_str1, line 587): `.direct`'s first
+      argument accepts ANY single-character string literal, coerced to
+      its raw byte value with no whitelist restricting it to the four
+      letters coff.inc's own macros happen to use - so a hand-written
+      `.checkpoint macro x \n .direct "c", x \n endm`, used as
+      `.checkpoint "myvar"` right after an instruction, DOES print
+      myvar's live value at that exact point without halting the run
+      (lowercase 'c' -> bPost=true, runs after the instruction; 'C' for
+      before). This is a real, confirmed firmware-push mechanism for
+      mid-run round-tripping - but not yet exercised end-to-end (no
+      test has actually driven a .checkpoint-instrumented build through
+      gpsim). Until that's done, the proven fallback for round-tripping
+      a live value out of firmware under test remains the host-pull
+      approach (write a global, halt, read it back via mdb's `Print`/
+      gpsim's bare-symbol evaluation) - not a firmware-push mechanism,
+      but the one with real mileage here.
+    path: /mnt/data/Projects/gpsim-0.32.2/regression/
+    relevance: >
+      Investigated 2026-08-29 (via a fork) specifically to answer "how
+      do we orchestrate gpsim from a shell script for pictest/lc-meter
+      design-verification tests" - this is the answer: grep-the-log
+      against an .assert-based PASSED/FAILED marker, not exit-code
+      checking or manual step-counting. Confirms (independently of the
+      build/sdcc.mk work done the same session) that gplink writes a
+      .cod file as a side effect of every link with no extra flag
+      needed - matches gpsim-source's earlier finding above.
+      **Real gotchas found by actually RUNNING gpsim, not just reading
+      source, not yet fully resolved:**
+      (1) `-i` only suppresses the GUI attempt, it does NOT mean "exit
+      when the script ends" - gpsim always drops to its interactive
+      prompt (reading stdin) after a startup command file finishes,
+      success or failure, unless that file itself runs `quit`.
+      (2) a failed `load` aborts the REST of that command file
+      (quit_parse=1/YYABORT in parse.yy) and falls straight to the
+      interactive prompt - any run/quit lines after a bad load never
+      execute; always confirm the .cod exists first.
+      (3) **closing stdin (`</dev/null`) does NOT make gpsim exit
+      cleanly on EOF** - empirically observed busy-looping printing the
+      prompt (4.9MB in 15s) until `timeout` killed it. Any test-harness
+      invocation of gpsim MUST be wrapped in `timeout` as a hard safety
+      net, not rely on stdin redirection or an expected `quit` alone.
+      (4) default verbosity is very high once any breakpoint/trace
+      fires (full per-instruction register read/write logging,
+      sim.verbosity Integer symbol, default 1) - a same-session
+      `sim.verbosity = 0` assignment was tried and did NOT visibly
+      suppress the flood in limited testing; the `-S disable` CLI flag
+      (disables source-line loading, documented as speeding up
+      regression runs) is the more likely correct lever but is
+      UNTESTED - don't treat verbosity control as solved.
+      (5) a minimal hand-written single-.assert test file (no GLOBAL
+      declarations, no separate UDATA/CODE sections) built/loaded
+      cleanly but did not visibly print PASSED, while the real
+      regression/breakpoints/breakpoints.asm (GLOBAL-declared, proper
+      sections, errorlevel -302) DID register the assert correctly per
+      the `break` listing but then hit the verbosity flood from (4) and
+      never exited in 15s - root cause of the discrepancy between the
+      two files is UNRESOLVED. Whoever uses this next should isolate a
+      minimal GLOBAL-declared single-assert test file before trusting
+      the pattern for real pictest/lc-meter test firmware, and
+      separately confirm SDCC's own .o/.cod output (not just
+      gpasm-assembled .asm, which is all that was tested here) actually
+      round-trips through gplink the same way real project code does -
+      this pass only tested hand-written gpasm source, not an SDCC
+      build.
+    status: present
+    added: 2026-08-29
+
+  - id: gputils-source
+    category: project
+    title: "gputils 1.5.2 full source (gpasm/gplink/gpdasm/gplib/gpstrip)"
+    topic: >
+      The GNU PIC utilities gpasm/gplink source - assembler directive
+      implementation (gpasm/directive.c), COFF/.cod writing
+      (gpasm/coff.c), used to check exactly what a gpasm directive
+      accepts/does rather than inferring from gpsim's or coff.inc's
+      side of the contract alone.
+    path: /mnt/data/Projects/gputils-1.5.2/
+    url: "https://sourceforge.net/projects/gputils/"
+    relevance: >
+      Consulted 2026-08-29 to answer whether gpasm's `.direct` directive
+      (the mechanism behind coff.inc's .assert/.sim/.print/.log macros,
+      see gpsim-regression-harness above) accepts an arbitrary
+      single-character type beyond those four - confirmed yes via
+      directive.c:_do_direct + util.c:coerce_str1, no whitelist. Other
+      installs also present on this machine if 1.5.2 ever needs
+      cross-checking: /mnt/data/opt/gputils-1.5.0,
+      /mnt/data/opt/gputils-20230706 (not yet inspected).
+    status: present
+    added: 2026-08-29
+
+  - id: ucsim-no-pic-support
+    category: compiler-doc
+    title: "uCsim (SDCC's bundled simulator) - confirmed NO PIC support"
+    topic: >
+      uCsim, distributed inside sdcc-4.6.0/sim/ucsim, is SDCC's own
+      general micro-controller simulator - but its supported target
+      list (src/sims/: avr, f8, i8048, i8085, m6800, m6809, m68hc08,
+      m68hc11, m68hc12, mos6502, oisc, p1516, pblaze, pdk, rxk, s51
+      (8051/MCS51), st7, stm8, tlcs, xa, z80) has NO PIC10/12/14/16/18
+      support at all - confirmed by listing src/sims/ directly, not
+      just reading marketing copy (its own README.md's feature list
+      names "MCS51... 8080, 8085, XA, Z80... AVN" etc. but never PIC).
+    path: /mnt/data/Projects/sdcc-4.6.0/sim/ucsim
+    url: "http://www.ucsim.hu"
+    relevance: >
+      Definitive negative finding: don't reach for uCsim for a PIC
+      project under this skill - SDCC's own pic14/pic16 backends were
+      always meant to be paired with gpsim for simulation, never
+      uCsim (which exists for SDCC's *other* target families - 8051,
+      Z80, STM8, AVR, etc). Checked directly while investigating
+      simulator options for lc-meter's tests/ round-trip work (see
+      TODO.md) so this doesn't get re-investigated from scratch next
+      time a PIC-simulation question comes up.
+    status: present
+    added: 2026-08-28

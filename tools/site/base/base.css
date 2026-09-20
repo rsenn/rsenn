@@ -135,7 +135,7 @@ a:hover { text-decoration-color: currentColor; }
 .topnav a:hover { color: var(--accent); }
 
 .brand .logo { display: inline-flex; height: var(--logo-h); margin-right: 0.5rem; vertical-align: middle; }
-.brand .logo svg { height: 100%; width: auto; }
+.brand .logo svg, .brand .logo img { height: 100%; width: auto; }
 
 /* ---------------------------------------------------------- live wallpaper */
 /* The svg is inlined so its shapes can use var(--accent) etc. It sits behind

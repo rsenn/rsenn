@@ -178,6 +178,7 @@ const GITHUB = 'https://github.com/' + REPO;
 const BRANCH = CONFIG.branch || 'main';
 const NAME = CONFIG.name || opts.site;
 const TAGLINE = CONFIG.tagline;
+const SEP = CONFIG.sep ?? ' — ';                  // title / footer separator (a site may ban the em dash)
 
 /* ------------------------------------------------------------------ nav */
 
@@ -230,7 +231,9 @@ function linkFor(page, href) {
 /* Everything optional. All paths are relative to the site dir (sites/<name>/):
  *
  *   art: {
- *     logo: 'art/logo.svg',                       // inlined in the header
+ *     logo: 'art/logo.svg',                       // inlined in the header (or a .png/.webp: <img>)
+ *     assets: ['art/sprites'],                    // dirs copied to assets/<name>/ (wallpaper.svg may
+ *                                                 // reference them as href="@/assets/sprites/x.png")
  *     decor: 'art/decor.svg',                     // <symbol> sprites -> bullets, rules, buttons
  *     wallpaper: { svg: 'art/wallpaper.svg',      // ONE svg, several <g> groups
  *                  script: 'art/wallpaper.js',    // animates it (Wallpaper.register)
@@ -259,7 +262,9 @@ const artFile = rel => {
   return read(SITE_DIR + '/' + rel);
 };
 
-const LOGO = ART.logo ? cleanSvg(artFile(ART.logo)) : null;
+const LOGO_RASTER = ART.logo && !/\.svg$/i.test(ART.logo);   // png/webp/jpg logo: shown with <img>
+const LOGO = ART.logo && !LOGO_RASTER ? cleanSvg(artFile(ART.logo)) : null;
+const LOGO_FILE = LOGO_RASTER ? 'logo' + ART.logo.slice(ART.logo.lastIndexOf('.')) : null;
 
 const WALLPAPER = ART.wallpaper
   ? (() => {
@@ -289,7 +294,8 @@ function readSymbols(text) {
     const [, , vw, vh] = vb.trim().split(/[\s,]+/).map(Number);
     const w = +attr(m[1], 'width') || vw, h = +attr(m[1], 'height') || vh;
     const tint = attr(m[1], 'data-tint');
-    if (tint && !TINTS[tint]) fail('art: data-tint must be one of ' + Object.keys(TINTS).join(', ') + ' (' + id + ')');
+    if (tint && !TINTS[tint] && !/^--[\w-]+$/.test(tint))
+      fail('art: data-tint must be one of ' + Object.keys(TINTS).join(', ') + ' or a --custom-property (' + id + ')');
     const svg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="' + vb + '" width="' + w + '" height="' + h + '">' + m[2] + '</svg>';
     out[id] = {
       w, h, tint, svg,
@@ -311,7 +317,7 @@ function artCss() {
     const paint = (s, size, rep) => {
       const geom = 'center / ' + size + ' ' + rep;
       return s.tint
-        ? 'background-color:var(' + TINTS[s.tint] + ');-webkit-mask:' + s.uri + ' ' + geom + ';mask:' + s.uri + ' ' + geom + ';'
+        ? 'background-color:var(' + (TINTS[s.tint] || s.tint) + ');-webkit-mask:' + s.uri + ' ' + geom + ';mask:' + s.uri + ' ' + geom + ';'
         : 'background:' + s.uri + ' ' + geom + ';';
     };
 
@@ -412,11 +418,13 @@ function shell({ title, root, body, cls, head }) {
     : '';
   const artCssLink = HAS_ART_CSS ? `<link rel="stylesheet" href="${root}assets/art.css">\n` : '';
   const theme = HAS_THEME ? `<link rel="stylesheet" href="${root}assets/theme.css">\n` : '';
-  const brandMark = LOGO
-    ? `<span class="logo" aria-hidden="true">${LOGO}</span>`
-    : `<span class="mark">${escAttr(CONFIG.mark || '')}</span>`;
+  const brandMark = LOGO_RASTER
+    ? `<span class="logo" aria-hidden="true"><img src="${root}assets/${LOGO_FILE}" alt=""></span>`
+    : LOGO
+      ? `<span class="logo" aria-hidden="true">${LOGO}</span>`
+      : `<span class="mark">${escAttr(CONFIG.mark || '')}</span>`;
   const wall = wallpaperOn(cls)
-    ? `<div class="wallpaper" aria-hidden="true"${WALLPAPER.opacity != null ? ` style="--wallpaper-opacity:${+WALLPAPER.opacity}"` : ''}>${WALLPAPER.inline}</div>\n`
+    ? `<div class="wallpaper" aria-hidden="true"${WALLPAPER.opacity != null ? ` style="--wallpaper-opacity:${+WALLPAPER.opacity}"` : ''}>${WALLPAPER.inline.split('@/').join(root)}</div>\n`
     : '';
   const artScripts =
     (wall ? `<script src="${root}assets/wallpaper-host.js"></script>\n` + (WALLPAPER.code ? `<script src="${root}assets/wallpaper.js"></script>\n` : '') : '') +
@@ -430,7 +438,7 @@ function shell({ title, root, body, cls, head }) {
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${escAttr(title)}</title>
-<meta name="description" content="${escAttr(NAME + ' — ' + TAGLINE + '. ' + (CONFIG.description || ''))}">
+<meta name="description" content="${escAttr(NAME + SEP + TAGLINE + '. ' + (CONFIG.description || ''))}">
 <link rel="stylesheet" href="${root}assets/base.css">
 ${artCssLink}${theme}<link rel="icon" href="${root}assets/favicon.svg" type="image/svg+xml">
 <script>try{var t=localStorage.getItem('theme');if(t)document.documentElement.dataset.theme=t}catch(e){}</script>
@@ -446,7 +454,7 @@ ${wall}<header class="topbar">
 </header>
 ${body}
 <footer class="sitefoot">
-  <p>${escAttr(NAME)} — ${escAttr(CONFIG.license || '')}. Built from the repo's own markdown by
+  <p>${escAttr(NAME)}${SEP}${escAttr(CONFIG.license || '')}. Built from the repo's own markdown by
      <a href="${ENGINE_URL}">rsenn/rsenn tools/site</a>.</p>
 </footer>
 ${searchScripts}${artScripts}<script>
@@ -495,7 +503,7 @@ ${edit}</main>
 ${toc(headings)}
 </div>`;
 
-  write(OUT + '/' + page.out, shell({ title: pageTitle + ' — ' + NAME, root, body, cls: 'has-sidebar' }));
+  write(OUT + '/' + page.out, shell({ title: pageTitle + SEP + NAME, root, body, cls: 'has-sidebar' }));
 }
 
 function buildPage(page) {
@@ -529,9 +537,11 @@ function expandCode(html) {
 }
 
 /** Placeholders first: they also appear inside <x-code>, where expansion
- * would otherwise scatter them across highlight spans. */
+ * would otherwise scatter them across highlight spans.
+ * {{svg:art/foo.svg}} inlines an svg file from the site dir (CSS variables work). */
 function fill(html) {
   return html
+    .replace(/\{\{svg:([^}\s]+)\}\}/g, (m, rel) => cleanSvg(artFile(rel)).split('@/').join(''))   // inline an illustration from the site dir
     .replace(/\{\{GITHUB\}\}/g, GITHUB)
     .replace(/\{\{REPO\}\}/g, REPO)
     .replace(/\{\{NAME\}\}/g, NAME)
@@ -542,7 +552,7 @@ function buildLanding() {
   write(
     OUT + '/index.html',
     shell({
-      title: NAME + ' — ' + TAGLINE,
+      title: NAME + SEP + TAGLINE,
       root: '',
       body: expandCode(fill(read(SITE_DIR + '/landing.html'))),
       cls: 'landing',
@@ -556,7 +566,7 @@ function buildExtraPage({ out, body, title, cls }) {
   write(
     OUT + '/' + out,
     shell({
-      title: title + ' — ' + NAME,
+      title: title + SEP + NAME,
       root: '../'.repeat(depth),
       body: expandCode(fill(read(SITE_DIR + '/' + body))),
       cls: cls || 'page',
@@ -649,6 +659,14 @@ if (CONFIG.search) {
 write(OUT + '/assets/base.css', read(SELF + '/base/base.css'));
 if (HAS_THEME) write(OUT + '/assets/theme.css', read(SITE_DIR + '/theme.css'));
 if (HAS_ART_CSS) write(OUT + '/assets/art.css', artCss());
+if (LOGO_RASTER) copy(SITE_DIR + '/' + ART.logo, OUT + '/assets/' + LOGO_FILE);
+for (const dir of ART.assets || []) {          // e.g. 'art/sprites' -> assets/sprites/*
+  const base = dir.slice(dir.lastIndexOf('/') + 1);
+  if (!exists(SITE_DIR + '/' + dir)) fail('art.assets: missing dir ' + SITE_DIR + '/' + dir);
+  for (const name of fs.readdirSync(SITE_DIR + '/' + dir).sort())
+    if (!fs.statSync(SITE_DIR + '/' + dir + '/' + name).isDirectory())
+      copy(SITE_DIR + '/' + dir + '/' + name, OUT + '/assets/' + base + '/' + name);
+}
 if (WALLPAPER) {
   write(OUT + '/assets/wallpaper-host.js', read(SELF + '/base/wallpaper-host.js'));
   if (WALLPAPER.code) write(OUT + '/assets/wallpaper.js', WALLPAPER.code);
@@ -658,6 +676,7 @@ if (FONT) {
   copy(SITE_DIR + '/' + FONT.sheet, OUT + '/assets/' + FONT.file);
 }
 if (exists(SITE_DIR + '/favicon.svg')) write(OUT + '/assets/favicon.svg', read(SITE_DIR + '/favicon.svg'));
+else if (LOGO_RASTER) fail('a raster art.logo needs a separate favicon.svg in the site dir');
 else if (LOGO) write(OUT + '/assets/favicon.svg', LOGO.includes('xmlns=') ? LOGO : LOGO.replace(/^<svg\b/, '<svg xmlns="http://www.w3.org/2000/svg"'));
 else fail('site has neither favicon.svg nor art.logo');
 write(OUT + '/.nojekyll', '');

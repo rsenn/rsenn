@@ -5,7 +5,7 @@
  * file, then the site's own script, which calls Wallpaper.register(fn).
  * fn(ctx) runs once after the DOM is ready; see templates/art/wallpaper.js.
  *
- *   ctx.svg, ctx.groups, ctx.width, ctx.height, ctx.reduced
+ *   ctx.svg, ctx.groups (only <g id> elements), ctx.width, ctx.height, ctx.reduced
  *   ctx.bounds()   visible part of the viewBox {x,y,w,h} (the svg is fitted
  *                  with preserveAspectRatio="slice", so some of it is cropped)
  *   ctx.rand()     seeded PRNG (mulberry32): same sequence on every load
@@ -43,7 +43,10 @@
       raf = 0;
       var dt = last ? Math.min((now - last) / 1000, 0.05) : 0;
       last = now;
-      frames.forEach(function (fn) { fn(now, dt); });
+      frames.slice().forEach(function (fn) {
+        try { fn(now, dt); }
+        catch (e) { console.error('wallpaper script failed, its animation stops:', e); frames.splice(frames.indexOf(fn), 1); }
+      });
       if (!document.hidden) raf = requestAnimationFrame(tick);
     }
 

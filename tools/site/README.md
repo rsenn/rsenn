@@ -54,6 +54,7 @@ tools/site/new-site.sh <name> --tagline … --description … --accent '#rrggbb'
 | `files` | copied verbatim: `{src, out}` from the checkout, or `{site, out}` from the site dir; `optional: true` tolerates absence |
 | `art` | logo, decoration sprites, live wallpaper, glyph-sheet font — see *Artwork* below |
 | `siteLinks` | markdown link targets that stay on the site instead of going to github.com |
+| `sep` | separator in `<title>`, description and footer (default `' — '`; shish uses `' | '`) |
 
 `landing.html` placeholders: `{{NAME}} {{REPO}} {{GITHUB}} {{TAGLINE}}`.
 
@@ -132,6 +133,18 @@ viewBox on screen), `rand()` (seeded, reproducible), `css(name)`,
 neighbours attract, overlapping shapes merge (areas add), oversized ones burst,
 absorbed ones respawn at the edge. Without a script the wallpaper is a still
 picture.
+
+**Raster artwork.** Not everything has to be SVG. `art.logo` may be a `.png`/`.webp`
+(shown with `<img>`; then also give the site a `favicon.svg`). `art.assets:
+['art/sprites']` copies a folder of images to `assets/sprites/`, and inside
+`wallpaper.svg` (and `{{svg:…}}` inlines) a `href="@/assets/sprites/x.png"` means
+"site root", so sprites work at any page depth. A wallpaper can therefore be
+built from transparent PNG characters (`<image>` elements) animated by the same
+script API; see `sites/shish/_mascots/` (retired shish artwork: sprites cut out of AI-generated concept
+sheets by `make-sprites.py`, which flood-fills the paper colour from each crop
+box and keeps the outlined shapes). `data-tint` also accepts any custom
+property, e.g. `data-tint="--teal"`. In `landing.html`, `{{svg:art/foo.svg}}`
+inlines an illustration from the site dir.
 
 **font.sheet** is a glyph sheet: one equal cell per character, in code order from
 `first`, `cols` per row, drawn as **transparent background + opaque glyphs**

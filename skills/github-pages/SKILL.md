@@ -164,6 +164,19 @@ placeholders (say so). When they hand files over, check before building:
 - font sheet: transparent background, opaque glyphs, equal cells, code order from
   `first`; ask if it is caps-only (`upper`) and what `cols`/`rows`/cell size are
 
+**Artwork from an image generator (Gemini, Ideogram, Recraft ...).** The user
+cannot draw SVG, so the usual route is: they generate *concept sheets* (several
+characters on one plain cream/white background, flat kawaii/pastel style), then
+1. copy the sheets to `sites/<name>/art/source/` (provenance),
+2. list crop boxes in `art/make-sprites.py` (copy `sites/shish/art/make-sprites.py`),
+   run it, and look at the result on a dark and a light background before going on,
+3. build `wallpaper.svg` from `<image href="@/assets/sprites/…">` actors (see
+   `sites/shish/art/`), with `art.assets: ['art/sprites']` in the config.
+Sprites cut from a sheet are small (~150 px); they look right as a background at
+~1.5-2x but soft beyond that. For sharper results ask for **one character per
+image at 2K on a plain background**, same style prompt. Ask before inventing
+scenes: the user's own puns (see sites/shish beats) are the point.
+
 Preview needs a *foreground* tab for animation (background tabs pause the loop by
 design); to test the script logic headlessly, drive its `frame` callback by hand.
 

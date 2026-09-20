@@ -1,7 +1,7 @@
 <section class="playhead">
   <h1>Playground</h1>
   <p>This is shish itself, compiled to WebAssembly (<b>188 KB</b>), running in
-     your browser. Nothing is sent anywhere — the shell, its in-memory
+     your browser. Nothing is sent anywhere: the shell, its in-memory
      filesystem and your commands never leave the tab.</p>
 </section>
 
@@ -41,7 +41,7 @@ uname -s</textarea>
     <p class="fineprint">Each run is one <code>shish -c &lt;script&gt;</code>. The
        filesystem persists between runs on this page; reloading resets it.
        There are no processes in a browser, so pipelines between two external
-       commands and background jobs cannot work — everything that runs
+       commands and background jobs cannot work: everything that runs
        in-process does. See <a href="docs/wasm.html">WebAssembly</a>.</p>
   </div>
 </div>
@@ -79,7 +79,7 @@ deploy   production</textarea>
     <textarea id="fmt-out" class="playsrc term" readonly spellcheck="false"></textarea>
     <p class="fineprint" id="fmt-status">This is <code>shformat</code> (the same parser as
        <code>shish</code>, reused for pretty-printing) in a separate,
-       ~70 KB WASM module with no interpreter in it at all — it only
+       ~70 KB WASM module with no interpreter in it at all: it only
        parses and re-prints. A syntax error is reported here instead of
        reformatted output.</p>
   </div>
@@ -127,12 +127,12 @@ echo "average: $avg"</textarea>
   <div class="playcol">
     <label for="ast-tree">AST (click a node to collapse it)</label>
     <div id="ast-tree" class="term asttree"></div>
-    <p class="fineprint">This is <code>shparse2ast</code>'s JSON tree — node
+    <p class="fineprint">This is <code>shparse2ast</code>'s JSON tree: node
        names are POSIX Shell Command Language grammar rules, not shish's
        internal C enum names. "rename" is a visitor over this same JSON:
        it finds the declaring assignment and every <code>$name</code>/
        <code>${name}</code> reference (using each node's <code>loc</code>),
-       then splices the new name into the <b>original source text</b> —
+       then splices the new name into the <b>original source text</b>:
        nothing is re-generated from the tree, so formatting outside the
        renamed spans is untouched.</p>
   </div>

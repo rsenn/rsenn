@@ -1,0 +1,271 @@
+<section class="hero hero-center bestiary-head">
+  <h1><span class="word">bestiary</span></h1>
+  <p class="tagline">One mascot for every builtin. Some live inside the binary, some are only
+     here for the company &mdash; each badge says which, straight from
+     <a href="docs/builtins.html">the builtins page</a>.</p>
+</section>
+
+<section>
+  <h2>Frequently used</h2>
+  <p class="fineprint">The everyday commands.</p>
+  <div class="cast beasts">
+    <figure class="beast">
+      <img src="assets/sprites/b-cd.png" alt="Mascot for cd" loading="lazy">
+      <figcaption>cd <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> cd ~/docs<br># change directory</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-echo.png" alt="Mascot for echo" loading="lazy">
+      <figcaption>echo <span class="badge yes">built in (default set)</span></figcaption>
+      <div class="panel"><b>shish$</b> echo &quot;hello shish&quot;<br># display text</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-pwd.png" alt="Mascot for pwd" loading="lazy">
+      <figcaption>pwd <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> pwd<br># print working directory</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-export.png" alt="Mascot for export" loading="lazy">
+      <figcaption>export <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> export MY_VAR=&quot;value&quot;<br># set environment variable</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-history.png" alt="Mascot for history" loading="lazy">
+      <figcaption>history <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> history<br># show command history</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-alias.png" alt="Mascot for alias" loading="lazy">
+      <figcaption>alias <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> alias m=&#x27;make&#x27;<br># create shortcut</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-unset.png" alt="Mascot for unset" loading="lazy">
+      <figcaption>unset <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> unset MY_VAR<br># remove variable</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-exit.png" alt="Mascot for exit" loading="lazy">
+      <figcaption>exit <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> exit<br># exit shell</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-kill.png" alt="Mascot for kill" loading="lazy">
+      <figcaption>kill <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> kill 1234<br># terminate process</div>
+    </figure>
+  </div>
+</section>
+<section>
+  <h2>Special builtins</h2>
+  <p class="fineprint">Assignments, options, control: the shell language itself.</p>
+  <div class="cast beasts">
+    <figure class="beast">
+      <img src="assets/sprites/b-eval.png" alt="Mascot for eval" loading="lazy">
+      <figcaption>eval <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> eval &quot;echo $HOME&quot;<br># run a string as code</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-exit-sign.png" alt="Mascot for exit" loading="lazy">
+      <figcaption>exit <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> exit 0<br># exit with status 0</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-export-box.png" alt="Mascot for export" loading="lazy">
+      <figcaption>export <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> export MY_VAR=&quot;val&quot;<br># the same, by crate</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-set.png" alt="Mascot for set" loading="lazy">
+      <figcaption>set <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> set -o vi<br># options on and off</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-shift.png" alt="Mascot for shift" loading="lazy">
+      <figcaption>shift <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> shift 2<br># drop two positional parameters</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-readonly.png" alt="Mascot for readonly" loading="lazy">
+      <figcaption>readonly <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> readonly MY_CONST<br># no more changes</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-source.png" alt="Mascot for . (source)" loading="lazy">
+      <figcaption>. (source) <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> . script.sh<br># run a file in this shell</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-true.png" alt="Mascot for true" loading="lazy">
+      <figcaption>true <span class="badge yes">built in (default set)</span></figcaption>
+      <div class="panel"><b>shish$</b> true &amp;&amp; echo yes<br># always succeeds</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-false.png" alt="Mascot for false" loading="lazy">
+      <figcaption>false <span class="badge yes">built in (default set)</span></figcaption>
+      <div class="panel"><b>shish$</b> false || echo no<br># always fails</div>
+    </figure>
+  </div>
+</section>
+<section>
+  <h2>Everything else</h2>
+  <p class="fineprint">Utilities that a container image would otherwise need coreutils for &mdash; and two guests (<code>tee</code>, <code>readlink</code>) that shish does not build in.</p>
+  <div class="cast beasts">
+    <figure class="beast">
+      <img src="assets/sprites/b-tee.png" alt="Mascot for tee" loading="lazy">
+      <figcaption>tee <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> echo &quot;data&quot; | tee out.txt<br># sends data to stdout and out.txt</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-cat.png" alt="Mascot for cat" loading="lazy">
+      <figcaption>cat <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> cat long_file.txt<br># displays contents of long_file.txt</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-rm.png" alt="Mascot for rm" loading="lazy">
+      <figcaption>rm <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> rm temp_file<br># removes temp_file</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-mkdir.png" alt="Mascot for mkdir" loading="lazy">
+      <figcaption>mkdir <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> mkdir new_project<br># creates new_project directory</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-mktemp.png" alt="Mascot for mktemp" loading="lazy">
+      <figcaption>mktemp <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> mktemp<br># creates a unique temporary file</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-rmdir.png" alt="Mascot for rmdir" loading="lazy">
+      <figcaption>rmdir <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> rmdir empty_dir<br># removes empty_dir</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-printf.png" alt="Mascot for printf" loading="lazy">
+      <figcaption>printf <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> printf &quot;User: %s, Date: %s\n&quot; &quot;$USER&quot; &quot;$(date)&quot;<br># formatted output</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-readlink.png" alt="Mascot for readlink" loading="lazy">
+      <figcaption>readlink <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> readlink link.so<br># shows target of a symbolic link</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/b-which.png" alt="Mascot for which" loading="lazy">
+      <figcaption>which <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> which ls<br># finds the executable for ls</div>
+    </figure>
+  </div>
+</section>
+<section>
+  <h2>The second sketchbook</h2>
+  <p class="fineprint">More drawings of the everyday tools &mdash; some built in, most only here for the company.</p>
+  <div class="cast beasts">
+    <figure class="beast">
+      <img src="assets/sprites/u-less.png" alt="Mascot for less" loading="lazy">
+      <figcaption>less <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> less /var/log/syslog<br># a pager that reads slowly</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-tail.png" alt="Mascot for tail" loading="lazy">
+      <figcaption>tail <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> tail -f app.log<br># follow the roll</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-grep.png" alt="Mascot for grep" loading="lazy">
+      <figcaption>grep <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> grep ERROR app.log<br># the magnifying filter</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-errors.png" alt="Mascot for error log" loading="lazy">
+      <figcaption>error log <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> grep ERROR app.log<br># what the filter catches</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-waterpipe.png" alt="Mascot for waterpipe" loading="lazy">
+      <figcaption>waterpipe <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> grep ERROR app.log | waterpipe<br># filter the noise, keep the smoke</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-sort.png" alt="Mascot for sort" loading="lazy">
+      <figcaption>sort <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> sort names.txt<br># blocks in alphabetical order</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-cabinet.png" alt="Mascot for file cabinet" loading="lazy">
+      <figcaption>file cabinet <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> sort names.txt &gt; cabinet<br># alphabetical, and filed</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-smokepipe.png" alt="Mascot for smoking pipe" loading="lazy">
+      <figcaption>smoking pipe <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> sort names.txt | smoking pipe<br># ceci n&#x27;est pas une pipe, either</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-kill.png" alt="Mascot for kill" loading="lazy">
+      <figcaption>kill <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> kill -9 1234<br># the reaper visits</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-chown.png" alt="Mascot for chown" loading="lazy">
+      <figcaption>chown <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> chown alice:staff report.pdf<br># ownership transferred</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-chmod.png" alt="Mascot for chmod" loading="lazy">
+      <figcaption>chmod <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> chmod 755 project/<br># rwx for the owner</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-catpipe.png" alt="Mascot for cat | cat" loading="lazy">
+      <figcaption>cat | cat <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> cat notes.txt | cat<br># two cats, one pipe</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-tee.png" alt="Mascot for tee" loading="lazy">
+      <figcaption>tee <span class="badge no">not a builtin</span></figcaption>
+      <div class="panel"><b>shish$</b> echo data | tee a.txt b.txt<br># one stream, two files</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-rm.png" alt="Mascot for rm" loading="lazy">
+      <figcaption>rm <span class="badge extra">built in (extra set)</span></figcaption>
+      <div class="panel"><b>shish$</b> rm -rf build/<br># sweep it up</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-echo.png" alt="Mascot for echo" loading="lazy">
+      <figcaption>echo <span class="badge yes">built in (default set)</span></figcaption>
+      <div class="panel"><b>shish$</b> echo hello<br># hello, hello, hello ...</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-cd.png" alt="Mascot for cd" loading="lazy">
+      <figcaption>cd <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> cd ~/mountain<br># a slow trip to a signpost</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-hash.png" alt="Mascot for hash" loading="lazy">
+      <figcaption>hash <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> hash sha256 file.iso<br># a1b2#c3d4#</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-eval.png" alt="Mascot for eval" loading="lazy">
+      <figcaption>eval <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> eval &quot;$(ssh-agent)&quot;<br># a string becomes code</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-export.png" alt="Mascot for export" loading="lazy">
+      <figcaption>export <span class="badge yes">built in</span></figcaption>
+      <div class="panel"><b>shish$</b> export MY_VAR=1<br># ships to every child process</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-heredoc.png" alt="Mascot for here-document" loading="lazy">
+      <figcaption>here-document <span class="badge extra">shell syntax</span></figcaption>
+      <div class="panel"><b>shish$</b> cat &lt;&lt;EOF<br># a rope and a stethoscope</div>
+    </figure>
+    <figure class="beast">
+      <img src="assets/sprites/u-parser.png" alt="Mascot for parser" loading="lazy">
+      <figcaption>parser <span class="badge extra">shell syntax</span></figcaption>
+      <div class="panel"><b>shish$</b> cat &lt;&lt;EOF | parser<br># the parser eats the branch</div>
+    </figure>
+  </div>
+</section>

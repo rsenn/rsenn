@@ -1,0 +1,20 @@
+<!-- shish decoration sprites (see tools/site/README.md, "Artwork").
+     bullet: the four-point sparkle from the concept sheets, tinted with the accent.
+     rule:   a run of teal pipe with flanges - the same pipe piece as in the pictures.
+     btn:    soft rounded frame in the sheets' brown ink, on cream paper.
+     Buttons are used as drawn, so their colours (and the label colour) are fixed. -->
+<svg xmlns="http://www.w3.org/2000/svg">
+  <symbol id="bullet" viewBox="0 0 16 16" data-tint="accent">
+    <path d="M8 0Q9.4 6.6 16 8Q9.4 9.4 8 16Q6.6 9.4 0 8Q6.6 6.6 8 0Z"/>
+  </symbol>
+  <symbol id="rule" viewBox="0 0 56 12" data-tint="--teal">
+    <rect x="0" y="4" width="56" height="4"/>
+    <rect x="22" y="1" width="8" height="10" rx="2"/>
+  </symbol>
+  <symbol id="btn" viewBox="0 0 24 24" data-slice="9" data-color="#3b2a22">
+    <rect x="1.6" y="1.6" width="20.8" height="20.8" rx="8" fill="#fffaf0" stroke="#5b4536" stroke-width="1.6"/>
+  </symbol>
+  <symbol id="btn-primary" viewBox="0 0 24 24" data-slice="9" data-color="#ffffff">
+    <rect x="1.6" y="1.6" width="20.8" height="20.8" rx="8" fill="#c8592b" stroke="#5b4536" stroke-width="1.6"/>
+  </symbol>
+</svg>

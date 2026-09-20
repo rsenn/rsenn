@@ -1,0 +1,119 @@
+<!-- shish live wallpaper, built from the Gemini concept sheets (art/source/).
+     Characters are transparent PNG sprites (art/sprites/, cut out by make-sprites.py);
+     "@/" in a href is the site root. Library in <defs>, cloned into the stage by wallpaper.js:
+       actors  w-cat w-fish w-whale w-hookah w-tobacco w-shell w-dec w-chmod w-chown w-duo w-folder
+       pipe    w-pipe (flow path for the little data packets)   fx  w-sparkle
+       data-wag="deg,speed" data-pivot="x y"   sway around a pivot (feet)
+       data-mood="happy|sad"                    two faces of one creature, cross-faded by the beat
+       .emit data-kind="smoke|steam|bubble|sparkle|note|drop"   particle source -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900">
+<style>
+  .flow{fill:none;stroke:none}
+  .wisp{fill:none;stroke:var(--teal);stroke-width:4;stroke-linecap:round}
+  .bub{fill:var(--teal-soft);stroke:var(--teal);stroke-width:2.5}
+  .bubhi{fill:none;stroke:var(--bg);stroke-width:2.5;stroke-linecap:round}
+  .panel{fill:var(--teal-soft);stroke:none}
+  .cap{font:500 32px var(--mono);fill:var(--fg)}
+  .sub{font:400 28px var(--mono);fill:var(--fg-muted)}
+</style>
+<defs>
+  <g id="w-cat"><g data-wag="2.4,1.4" data-pivot="0 130"><image href="@/assets/sprites/cat.png" x="-138" y="-119" width="276" height="249"/></g></g>
+  <g id="w-fish"><g data-wag="3,2.2" data-pivot="0 130"><image href="@/assets/sprites/fish.png" x="-101" y="11" width="202" height="118"/></g></g>
+  <g id="w-whale"><g data-wag="1.6,0.8" data-pivot="0 130"><image href="@/assets/sprites/whale.png" x="-196" y="-35" width="392" height="191"/></g></g>
+  <g id="w-hookah"><g data-wag="1.4,1.1" data-pivot="0 130"><image href="@/assets/sprites/hookah.png" x="-131" y="-113" width="263" height="243"/></g>
+    <g class="emit" data-kind="bubble" data-x="20" data-y="90" data-h="60"/></g>
+  <g id="w-tobacco"><g data-wag="1.2,1.0" data-pivot="0 130"><image href="@/assets/sprites/tobacco.png" x="-176" y="-50" width="352" height="180"/></g>
+    <g class="emit" data-kind="smoke" data-x="-104" data-y="-6"/></g>
+  <g id="w-shell"><g data-wag="2.0,1.6" data-pivot="0 130"><image href="@/assets/sprites/shell.png" x="-180" y="-140" width="360" height="270"/></g>
+    <g class="emit" data-kind="smoke" data-x="-70" data-y="-100"/></g>
+  <g id="w-dec"><g data-wag="0.8,0.9" data-pivot="0 130"><image href="@/assets/sprites/dec.png" x="-223" y="-179" width="447" height="309"/></g></g>
+  <g id="w-chmod"><g data-wag="2.4,1.5" data-pivot="0 130"><image href="@/assets/sprites/chmod.png" x="-184" y="-149" width="369" height="279"/></g></g>
+  <g id="w-chown"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/chown.png" x="-142" y="-138" width="285" height="268"/></g></g>
+  <g id="w-duo"><g data-wag="2.6,1.6" data-pivot="-125 130"><image href="@/assets/sprites/chmod-green.png" x="-230" y="-87" width="211" height="217"/></g><g data-wag="2.2,1.2" data-pivot="120 130"><image href="@/assets/sprites/chown-blue.png" x="-21" y="-83" width="283" height="213"/></g></g>
+  <g id="w-folder"><g data-wag="2.0,1.4" data-pivot="0 130"><g data-mood="sad"><image href="@/assets/sprites/folder-sad.png" x="-162" y="-132" width="325" height="262"/></g><g data-mood="happy"><image href="@/assets/sprites/folder.png" x="-164" y="-138" width="329" height="268"/></g></g></g>
+  <g id="w-pipe"><path class="flow" d="M-330 64H330"/><image href="@/assets/sprites/pipe.png" x="-76" y="18" width="153" height="92"/></g>
+  <g id="w-sparkle"><g class="emit" data-kind="sparkle" data-x="240" data-y="-10"/><g class="emit" data-kind="sparkle" data-x="170" data-y="-90"/></g>
+
+  <g id="w-b-cd"><g data-wag="1.8,1.4" data-pivot="0 130"><image href="@/assets/sprites/b-cd.png" x="-227" y="-120" width="454" height="250"/></g></g>
+  <g id="w-b-echo"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-echo.png" x="-198" y="-111" width="396" height="241"/></g></g>
+  <g id="w-b-pwd"><g data-wag="1.8,1.6" data-pivot="0 130"><image href="@/assets/sprites/b-pwd.png" x="-210" y="-120" width="420" height="250"/></g></g>
+  <g id="w-b-export"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-export.png" x="-257" y="-107" width="513" height="237"/></g></g>
+  <g id="w-b-history"><g data-wag="1.8,1.6" data-pivot="0 130"><image href="@/assets/sprites/b-history.png" x="-237" y="-120" width="474" height="250"/></g></g>
+  <g id="w-b-alias"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/b-alias.png" x="-256" y="-114" width="511" height="244"/></g></g>
+  <g id="w-b-unset"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-unset.png" x="-140" y="-120" width="280" height="250"/></g></g>
+  <g id="w-b-exit"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-exit.png" x="-228" y="-120" width="455" height="250"/></g></g>
+  <g id="w-b-kill"><g data-wag="1.8,1.6" data-pivot="0 130"><image href="@/assets/sprites/b-kill.png" x="-220" y="-120" width="439" height="250"/></g></g>
+  <g id="w-b-eval"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-eval.png" x="-222" y="-120" width="444" height="250"/></g></g>
+  <g id="w-b-exit-sign"><g data-wag="1.8,1.4" data-pivot="0 130"><image href="@/assets/sprites/b-exit-sign.png" x="-273" y="-120" width="546" height="250"/></g></g>
+  <g id="w-b-export-box"><g data-wag="1.8,1.4" data-pivot="0 130"><image href="@/assets/sprites/b-export-box.png" x="-280" y="-95" width="560" height="225"/></g></g>
+  <g id="w-b-set"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-set.png" x="-280" y="0" width="560" height="130"/></g></g>
+  <g id="w-b-shift"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-shift.png" x="-135" y="-120" width="269" height="250"/></g></g>
+  <g id="w-b-readonly"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/b-readonly.png" x="-124" y="-120" width="248" height="250"/></g></g>
+  <g id="w-b-source"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-source.png" x="-280" y="-69" width="560" height="199"/></g></g>
+  <g id="w-b-true"><g data-wag="1.8,1.4" data-pivot="0 130"><image href="@/assets/sprites/b-true.png" x="-119" y="-120" width="237" height="250"/></g></g>
+  <g id="w-b-false"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-false.png" x="-148" y="-120" width="296" height="250"/></g></g>
+  <g id="w-b-tee"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-tee.png" x="-260" y="-109" width="520" height="239"/></g></g>
+  <g id="w-b-cat"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/b-cat.png" x="-155" y="-98" width="310" height="228"/></g></g>
+  <g id="w-b-rm"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-rm.png" x="-187" y="-102" width="373" height="232"/></g></g>
+  <g id="w-b-mkdir"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-mkdir.png" x="-239" y="-109" width="478" height="239"/></g></g>
+  <g id="w-b-mktemp"><g data-wag="1.8,1.4" data-pivot="0 130"><image href="@/assets/sprites/b-mktemp.png" x="-98" y="-116" width="195" height="246"/></g></g>
+  <g id="w-b-rmdir"><g data-wag="1.8,1.0" data-pivot="0 130"><image href="@/assets/sprites/b-rmdir.png" x="-262" y="-111" width="524" height="241"/></g></g>
+  <g id="w-b-printf"><g data-wag="1.8,1.1" data-pivot="0 130"><image href="@/assets/sprites/b-printf.png" x="-197" y="-109" width="393" height="239"/></g></g>
+  <g id="w-b-readlink"><g data-wag="1.8,1.2" data-pivot="0 130"><image href="@/assets/sprites/b-readlink.png" x="-275" y="-100" width="550" height="230"/></g></g>
+  <g id="w-b-which"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/b-which.png" x="-168" y="-111" width="336" height="241"/></g></g>
+<!-- BEGIN second-sketchbook -->
+<!-- second sketchbook (utility-*.jpeg) -->
+  <g id="w-u-cat"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-cat.png" x="-125" y="-84" width="250" height="214"/></g></g>
+  <g id="w-u-less"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-less.png" x="-125" y="-62" width="250" height="192"/></g></g>
+  <g id="w-u-tail"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-tail.png" x="-125" y="51" width="250" height="78"/></g></g>
+  <g id="w-u-cat2"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-cat2.png" x="-125" y="-102" width="250" height="232"/></g></g>
+  <g id="w-u-errors"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-errors.png" x="-125" y="13" width="250" height="116"/></g></g>
+  <g id="w-u-waterpipe"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-waterpipe.png" x="-125" y="-67" width="250" height="197"/></g></g>
+  <g id="w-u-stack"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-stack.png" x="-124" y="-99" width="249" height="229"/></g></g>
+  <g id="w-u-cabinet"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-cabinet.png" x="-103" y="-105" width="206" height="235"/></g></g>
+  <g id="w-u-sort"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-sort.png" x="-125" y="-84" width="250" height="214"/></g></g>
+  <g id="w-u-smokepipe"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-smokepipe.png" x="-125" y="50" width="250" height="79"/></g><g class="emit" data-kind="smoke" data-x="-105" data-y="58"/></g>
+  <g id="w-u-heredoc"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-heredoc.png" x="-125" y="3" width="250" height="126"/></g></g>
+  <g id="w-u-parser"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-parser.png" x="-125" y="-38" width="250" height="168"/></g></g>
+  <g id="w-u-grep"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-grep.png" x="-68" y="-10" width="136" height="140"/></g></g>
+  <g id="w-u-sort-mid"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-sort.png" x="-81" y="-10" width="163" height="140"/></g></g>
+  <g id="w-u-pipe-glass"><path class="flow" d="M-330 64H330"/><image href="@/assets/sprites/u-pipe-glass.png" x="-200" y="30" width="400" height="66"/></g>
+  <g id="w-u-pipe-steel"><path class="flow" d="M-330 64H330"/><image href="@/assets/sprites/u-pipe-steel.png" x="-200" y="27" width="400" height="73"/></g>
+  <g id="w-u-kill"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-kill.png" x="-280" y="-113" width="560" height="243"/></g></g>
+  <g id="w-u-chown"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-chown.png" x="-280" y="-118" width="560" height="248"/></g></g>
+  <g id="w-u-chmod"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-chmod.png" x="-260" y="-120" width="521" height="250"/></g></g>
+  <g id="w-u-catpipe"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-catpipe.png" x="-280" y="-73" width="560" height="203"/></g></g>
+  <g id="w-u-tee"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-tee.png" x="-252" y="-120" width="504" height="250"/></g></g>
+  <g id="w-u-rm"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-rm.png" x="-175" y="-119" width="351" height="249"/></g></g>
+  <g id="w-u-echo"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-echo.png" x="-107" y="-120" width="214" height="250"/></g></g>
+  <g id="w-u-hash"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-hash.png" x="-238" y="-120" width="476" height="250"/></g></g>
+  <g id="w-u-eval"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-eval.png" x="-157" y="-120" width="314" height="250"/></g></g>
+  <g id="w-u-export"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-export.png" x="-280" y="-98" width="560" height="228"/></g></g>
+  <g id="w-u-less-solo"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-less.png" x="-161" y="-120" width="323" height="250"/></g></g>
+  <g id="w-u-tail-solo"><g data-wag="1.8,1.3" data-pivot="0 130"><image href="@/assets/sprites/u-tail.png" x="-280" y="-46" width="560" height="176"/></g></g>
+  <g id="w-u-cd"><g data-wag="1.8,1.3" data-pivot="-110 130"><image href="@/assets/sprites/u-cd.png" x="-219" y="-70" width="218" height="200"/></g><g data-wag="1.8,1.3" data-pivot="120 130"><image href="@/assets/sprites/u-signpost.png" x="45" y="-89" width="150" height="219"/></g></g>
+<!-- END second-sketchbook -->
+</defs>
+
+<!-- bubbles and sparkles, drifting up -->
+<g id="wp-ambient">
+  <g data-x="567" data-y="666"><path d="M0 -24Q4.3 -4.3 24 0Q4.3 4.3 0 24Q-4.3 4.3 -24 0Q-4.3 -4.3 0 -24Z" style="fill:var(--teal);stroke:none"/></g>
+  <g data-x="347" data-y="438"><circle r="24" class="bub"/><path d="M-12.0 -2.4A13.2 13.2 0 0 1 -1.2 -13.2" class="bubhi"/></g>
+  <g data-x="1361" data-y="654"><circle r="9" class="bub"/><path d="M-4.5 -0.9A5.0 5.0 0 0 1 -0.5 -5.0" class="bubhi"/></g>
+  <g data-x="1320" data-y="73"><path d="M0 -18Q3.2 -3.2 18 0Q3.2 3.2 0 18Q-3.2 3.2 -18 0Q-3.2 -3.2 0 -18Z" style="fill:var(--accent);stroke:none"/></g>
+  <g data-x="611" data-y="624"><circle r="13" class="bub"/><path d="M-6.5 -1.3A7.2 7.2 0 0 1 -0.7 -7.2" class="bubhi"/></g>
+  <g data-x="472" data-y="794"><circle r="24" class="bub"/><path d="M-12.0 -2.4A13.2 13.2 0 0 1 -1.2 -13.2" class="bubhi"/></g>
+  <g data-x="1187" data-y="622"><path d="M0 -18Q3.2 -3.2 18 0Q3.2 3.2 0 18Q-3.2 3.2 -18 0Q-3.2 -3.2 0 -18Z" style="fill:var(--teal);stroke:none"/></g>
+  <g data-x="893" data-y="714"><circle r="13" class="bub"/><path d="M-6.5 -1.3A7.2 7.2 0 0 1 -0.7 -7.2" class="bubhi"/></g>
+  <g data-x="554" data-y="710"><circle r="13" class="bub"/><path d="M-6.5 -1.3A7.2 7.2 0 0 1 -0.7 -7.2" class="bubhi"/></g>
+</g>
+
+<!-- the stage: source | pipe | sink, and the terminal-style caption panel -->
+<g id="wp-stage">
+  <g id="wp-src"/>
+  <g id="wp-pipe"/>
+  <g id="wp-sink"/>
+  <g id="wp-fx"/>
+  <g id="wp-cap"><rect id="wp-panel" class="panel" rx="14"/><text id="wp-cmd" class="cap"/><text id="wp-sub" class="sub"/></g>
+</g>
+</svg>

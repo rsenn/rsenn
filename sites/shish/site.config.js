@@ -17,6 +17,12 @@ export default {
   license: 'GPL v2',
   search: false,
 
+  // Title/footer separator: this site does not use the em dash.
+  sep: ' | ',
+
+  // No artwork block: the look is type. Title font VT323 (SIL OFL) ships from fonts/ (see files below).
+  // Retired mascot artwork and the dot-matrix experiment live in _mascots/ and art/, not built.
+
   // Header links; hrefs are site-relative (the engine prefixes the root).
   topnav: [
     ['Get started', 'getting-started.html'],
@@ -52,7 +58,9 @@ export default {
   ],
 
   // Hand-written pages, not generated from markdown.
-  pages: [{ out: 'play.html', body: 'play.html', title: 'Playground', cls: 'play' }],
+  pages: [
+    { out: 'play.html', body: 'play.html', title: 'Playground', cls: 'play' },
+  ],
 
   // Copied byte-for-byte out of the project checkout / this site dir.
   // `optional` skips a missing file (the wasm build is not always present).
@@ -62,6 +70,8 @@ export default {
     { src: 'build/emscripten-all/shutil.js', out: 'assets/shutil.js' },
     { src: 'build/emscripten-all/shutil.wasm', out: 'assets/shutil.wasm' },
     { site: 'shutil-client.js', out: 'assets/shutil-client.js' },
+    { site: 'fonts/vt323.woff2', out: 'assets/vt323.woff2' },
+    { site: 'fonts/OFL.txt', out: 'assets/OFL-VT323.txt' },
   ],
 
   // Markdown links to these paths stay site-local instead of going to github.com.

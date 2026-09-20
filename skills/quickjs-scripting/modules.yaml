@@ -1,0 +1,146 @@
+# quickjs-scripting: index of the modules/libraries a portable script may use.
+#
+# Every entry answers: does it run on my target runtimes (compatibility), where
+# is its documentation (doc), where is its implementation (source), and why
+# would a script want it (use). To extend the index see "Adding a module" in
+# SKILL.md. Paths are relative to the owning project's root (see `projects`).
+#
+# compatibility  space-separated tokens = the runtimes where the SAME import +
+#                the documented API subset works (checked with
+#                scripts/portable-check.sh, not copied from a spec):
+#                  quickjs  qjsm (the rsenn QuickJS fork with qjs-modules)
+#                  node     Node.js
+#                  bun      Bun
+#                  deno     Deno (needs deno-import-map.json for bare names)
+#                  browser  any current browser, without a bundler
+#                A token means "works". A module that only exists on some
+#                runtimes lists only those, e.g. `quickjs` for native bindings.
+# import         module specifier per runtime; when they differ, that is the
+#                only place a script has to know the runtime.
+# kind           js = pure JS module, native = C/C++ module (.so or built into qjsm)
+# use            why and for what a script should use it
+# notes          verified gotchas, each was observed on the date in `verified`
+# verified       date and versions the compatibility line was last checked with
+
+schema: 1
+verified_with: "qjsm 2026-09-16 build (installed /usr/local/bin/qjsm), node 23.11, bun 1.3, deno 2.5"
+
+projects:
+  qjs-modules:
+    path: ~/Projects/plot-cv/quickjs/qjs-modules
+    doc: [doc/js, doc/native]           # <name>.md per module; doc/api-compatibility.md classifies all of them
+    source: [lib, "quickjs-*.c"]
+    about: "Standard-library layer: Node/Bun/WHATWG-style fs, process, streams, url, events, child_process, sockets, sqlite, xml, yaml, ..."
+  qjs-lws:
+    path: ~/Projects/plot-cv/quickjs/qjs-lws
+    doc: [doc/js, doc/native]
+    about: "libwebsockets: HTTP/WebSocket client and server, TLS, timers"
+  qjs-ffi:
+    path: ~/Projects/plot-cv/quickjs/qjs-ffi
+    doc: [doc]
+    about: "libffi: call C functions and build JS-to-C callbacks at runtime"
+  qjs-opencv:
+    path: ~/Projects/plot-cv/qjs-opencv
+    doc: [doc]
+    about: "OpenCV bindings: images (Mat), video capture, drawing, contours, algorithms"
+  qjs-glfw:
+    path: ~/Projects/plot-cv/quickjs/qjs-glfw
+    doc: [doc]
+    about: "GLFW windows, input, monitors, OpenGL contexts"
+  qjs-nanovg:
+    path: ~/Projects/plot-cv/quickjs/qjs-nanovg
+    doc: [doc]
+    about: "NanoVG 2D vector graphics on OpenGL"
+  qjs-sound:
+    path: ~/Projects/plot-cv/quickjs/qjs-sound
+    doc: [doc]
+    about: "Audio: PortAudio, PortMidi, libsndfile, aubio, rubberband, soundtouch, STK"
+  qjs-debugger:
+    path: ~/Projects/plot-cv/quickjs/qjs-debugger
+    doc: [README.md, doc]
+    about: "qjsm-debugger: gdb-style source-level debugger for qjsm (not a script-importable module)"
+
+modules:
+  fs:
+    project: qjs-modules
+    kind: js
+    compatibility: quickjs node bun deno
+    import: { quickjs: fs, node: "node:fs", bun: "node:fs", deno: "node:fs" }
+    doc: doc/js/fs.md
+    source: lib/fs.js
+    use: >
+      Synchronous file and directory access in scripts: readFileSync,
+      writeFileSync, appendFileSync, existsSync, statSync, readdirSync
+      (withFileTypes, recursive), mkdirSync, rmSync, renameSync, copyFileSync,
+      realpathSync, plus fd-level open/read/write and watch(). The default
+      choice for file I/O. Callback and stream forms exist; promises live in
+      fsPromises.
+    notes:
+      - "readFileSync(path) without an encoding returns an ArrayBuffer on quickjs, a Buffer on node/bun/deno. Pass 'utf8' for text; wrap binary results as new Uint8Array(x)."
+      - "existsSync() returns undefined, not false, for a missing path (lib/fs.js:802 has no `return false`). Write `!!fs.existsSync(p)` if the result is compared or printed."
+      - "fs.promises is undefined on quickjs; use fsPromises (below)."
+      - "Bare 'fs' works on quickjs, node and bun; deno needs the import map (or the node: prefix, which quickjs cannot resolve)."
+
+  fsPromises:
+    project: qjs-modules
+    kind: js
+    compatibility: quickjs node bun deno
+    import: { quickjs: fsPromises, node: "node:fs/promises", bun: "node:fs/promises", deno: "node:fs/promises" }
+    doc: doc/js/fsPromises.md
+    source: lib/fsPromises.js
+    use: >
+      Promise-returning file API (readFile, writeFile, appendFile, readdir,
+      stat, mkdir, rm, open() handle, watch() async iterator) for scripts that
+      are already async. Each function wraps the matching *Sync function of fs.
+    notes:
+      - "Only named exports on quickjs: write `import * as fsp from ...`, never `import fsp from ...` (there is no default export)."
+      - "The specifier differs ('fsPromises' vs 'fs/promises') and quickjs cannot alias it; keep the import in one small file of your script and swap that file per runtime, or use the fs *Sync functions."
+      - "The installed /usr/local/lib/quickjs/fsPromises.js (2026-09-13) is older than the repo's lib/fsPromises.js: readFile(path, 'utf8') resolved to undefined there. Probe before relying on it: qjsm -e \"import('fsPromises').then(m=>m.readFile('/etc/hostname','utf8')).then(console.log)\""
+
+  perf_hooks:
+    project: qjs-modules
+    kind: js
+    compatibility: quickjs node bun deno
+    import: { quickjs: perf_hooks, node: "node:perf_hooks", bun: "node:perf_hooks", deno: "node:perf_hooks" }
+    doc: doc/js/perf_hooks.md
+    source: lib/perf_hooks.js
+    use: >
+      High-resolution timing: performance.now() in milliseconds and
+      performance.timeOrigin. Use it for benchmarks and elapsed-time logging.
+    notes:
+      - "quickjs has no global `performance`; import { performance } from 'perf_hooks'. Browsers, node, bun and deno all have the global, so a browser-portable form is `const perf = globalThis.performance ?? (await import('perf_hooks')).performance`."
+      - "Only now() and timeOrigin exist on quickjs: no marks, measures or PerformanceObserver."
+
+  process:
+    project: qjs-modules
+    kind: js
+    compatibility: quickjs node bun deno
+    import: { quickjs: process, node: "node:process", bun: "node:process", deno: "node:process" }
+    doc: doc/js/process.md
+    source: lib/process.js
+    use: >
+      The Node-style process object: argv, env, cwd(), chdir(), exit(), pid,
+      platform, stdin/stdout/stderr. Use it for command-line arguments, the
+      environment and the exit status, so a script does not touch std/os.
+    notes:
+      - "process.argv is [runtime, script, ...args] on all four runtimes (argv.slice(2) are the user's arguments). process.argv0 is the runtime name ('qjsm', 'node', 'bun', 'deno')."
+      - "A `process` global exists on quickjs, node, bun and deno; there is none in a browser."
+      - "Exit with process.exit(n). process.exitCode is undefined by default on every runtime and its assignment was not verified on quickjs."
+      - "std.exit / os.* from quickjs' std and os modules do the same job but are quickjs-only: keep them out of portable scripts."
+
+  child_process:
+    project: qjs-modules
+    kind: native
+    compatibility: quickjs node bun deno
+    import: { quickjs: child_process, node: "node:child_process", bun: "node:child_process", deno: "node:child_process" }
+    doc: doc/native/child-process.md
+    source: quickjs-child-process.c        # module name child_process, built into qjsm
+    use: >
+      Run other programs: exec/execSync (through the shell), spawn/spawnSync
+      (no shell), kill(pid, signal), and the ChildProcess class (pid, exitcode,
+      wait(), kill()). Use it to drive tools from a script.
+    notes:
+      - "On quickjs (2026-09-16 build) execSync and spawnSync run the child on the script's own stdout/stderr and return only { pid, status, signal }: no stdout/stderr capture. node, bun and deno return { status, stdout: Buffer, stderr: Buffer, ... }."
+      - "Passing { stdio: 'pipe', encoding: 'utf8' } to spawnSync threw 'not a function' on quickjs. To capture output portably, have the shell write to a file (execSync(`cmd > ${tmp}`)) and read it back with fs."
+      - "The exit status is result.status on all four runtimes."
+      - "Only the synchronous forms were compared across runtimes; treat exec/spawn (async) stream behaviour as unverified."

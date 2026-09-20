@@ -1,0 +1,8 @@
+{
+  "imports": {
+    "child_process": "node:child_process",
+    "fs": "node:fs",
+    "perf_hooks": "node:perf_hooks",
+    "process": "node:process"
+  }
+}

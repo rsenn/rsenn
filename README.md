@@ -16,6 +16,7 @@ Systems software developer and embedded hardware engineer specializing in low-le
 *   **[qjs-imgui](https://github.com/rsenn/qjs-imgui/)** — Dear ImGui bindings for QuickJS, mirroring the C++ `ImGui::` API for immediate-mode GUIs (typically driven by GLFW + OpenGL).
 *   **[qjs-sound](https://github.com/rsenn/qjs-sound/)** — Audio bindings for QuickJS built on PortAudio, LabSound and SoundTouch.
 *   **[qjs-debugger](https://github.com/rsenn/qjs-debugger/)** — A gdb-style source-level debugger for QuickJS, written in JavaScript, with a terminal REPL and a nanovg/glfw GUI frontend.
+*   **[ipe32](https://github.com/rsenn/ipe32/)** — The ind00r poly engine: a 32-bit polymorphic code engine in x86 assembly, with NASM, TASM and YASM builds.
 
 The `qjs-*` projects are built against my **[QuickJS fork](https://github.com/rsenn/quickjs/)** (branch `cxx-designated`): a CMake-ified `qjs` with a module search path and [Koushik Dutta](https://github.com/koush)'s [debugger implementation for QuickJS](https://github.com/koush/quickjs) (see also his [VS Code debug adapter](https://github.com/koush/vscode-quickjs-debug)). It is required to build them.
 
@@ -33,7 +34,6 @@ The `qjs-*` projects are built against my **[QuickJS fork](https://github.com/rs
 *   **[picstick_shield](https://github.com/rsenn/picstick_shield/)** — Development shield PCB for the picstick.
 *   **[lc-meter](https://github.com/rsenn/lc-meter/)** — Inductance/capacitance meter using a PIC16F876A and a Nokia 3310 LCD.
 *   **[insider](https://github.com/rsenn/insider/)** — INSIDER PIC tool: firmware, PCB and manual.
-*   **[ipe32](https://github.com/rsenn/ipe32/)** — Assembly source with NASM, TASM and YASM builds.
 *   **[an-tronics](https://github.com/rsenn/an-tronics/)** — Collection of analogue electronics circuits and PCBs (40106/4069 synth, 555 oscillator, all-band receiver and others).
 *   **[thomson-calculator](https://github.com/rsenn/thomson-calculator/)** — Calculator for Thomson's formula.
 
@@ -42,6 +42,7 @@ The `qjs-*` projects are built against my **[QuickJS fork](https://github.com/rs
 *   **[chaosircd](https://rsenn.github.io/chaosircd/)** — IRC daemon built around runtime-reloadable modules: every client command, channel mode, user mode and flood check is a module.
 *   **[c-utils](https://github.com/rsenn/c-utils/)** — C utility library and command-line tools built on libowfat, with containers such as ranges, string arrays and lists.
 *   **[sw-utils](https://github.com/rsenn/sw-utils/)** — Command-line utilities, built with autotools.
+*   **[ports](https://github.com/rsenn/ports/)** — Ports repository based on sw-utils (heavily patched), originally from the CRUX Linux distribution.
 *   **[libweb](https://github.com/rsenn/libweb/)** — Collection of browser-side JavaScript libraries and helpers.
 *   **[scripts](https://github.com/rsenn/scripts/)** — Miscellaneous scripts.
 *   **[beatflower](https://github.com/rsenn/beatflower/)** — Music visualisation plugin for xmms 1.2.x on Linux.

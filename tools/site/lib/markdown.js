@@ -4,8 +4,8 @@
  * ordered/unordered lists, thematic breaks, paragraphs, and inline
  * code/links/strong/em/autolinks. Deliberately does NOT implement
  * blockquotes, images, reference links, indented code blocks, raw HTML
- * or setext headings - none appear in the docs, and adding them would be
- * speculative. '_' is never an emphasis delimiter: the docs are full of
+ * or setext headings other than the '====' title form - none appear in the
+ * docs, and adding them would be speculative. '_' is never an emphasis delimiter: the docs are full of
  * bare LWS_CALLBACK_* identifiers written outside code spans.
  *
  * Member tables: doc/{js,native}/*.md document every method/property/constant
@@ -20,7 +20,8 @@
 
 const RE_FENCE = /^(\s*)(```+|~~~+)\s*([A-Za-z0-9+#-]*)\s*$/;
 const RE_HEADING = /^(#{1,6})\s+(.*?)\s*#*\s*$/;
-const RE_HR = /^(?:\s*)(?:-{3,}|\*{3,}|_{3,})\s*$/;
+const RE_SETEXT_H1 = /^=+\s*$/;
+const RE_HR =/^(?:\s*)(?:-{3,}|\*{3,}|_{3,})\s*$/;
 const RE_ITEM = /^(\s*)([-*+]|\d{1,9}[.)])(\s+)(.*)$/;
 const RE_TABLE_DELIM = /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/;
 
@@ -81,6 +82,10 @@ function inline(text, ctx, slots) {
       return put('<a href="' + escAttr(url) + '"' + t + ext + '>' + inline(label, ctx, slots) + '</a>');
     });
 
+  // 3b. <https://…> autolinks (esc() has already turned the brackets into entities)
+  text = text.replace(/&lt;(https?:\/\/[^\s&]+)&gt;/g,
+    (m, url) => put('<a href="' + escAttr(url) + '" target="_blank" rel="noopener">' + url + '</a>'));
+
   // 4. bare URLs
   text = text.replace(/(^|[\s(])(https?:\/\/[^\s<>()]+[^\s<>().,;:])/g,
     (m, pre, url) => pre + put('<a href="' + escAttr(url) + '" target="_blank" rel="noopener">' + url + '</a>'));
@@ -131,9 +136,16 @@ function blocks(lines, ctx) {
   let i = 0;
 
   while (i < lines.length) {
-    const line = lines[i];
+    let line = lines[i];
 
     if (isBlank(line)) { i++; continue; }
+
+    // "Title\n=====" is an ATX '# Title' whose underline is dropped
+    if (i + 1 < lines.length && RE_SETEXT_H1.test(lines[i + 1]) &&
+        !RE_FENCE.test(line) && !RE_HEADING.test(line) && !RE_ITEM.test(line)) {
+      line = '# ' + line.trim();
+      lines[i + 1] = '';
+    }
 
     const fence = line.match(RE_FENCE);
     if (fence) {

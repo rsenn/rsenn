@@ -41,7 +41,7 @@ The `qjs-*` projects are built against my **[QuickJS fork](https://github.com/rs
 
 *   **[chaosircd](https://rsenn.github.io/chaosircd/)** — IRC daemon built around runtime-reloadable modules: every client command, channel mode, user mode and flood check is a module.
 *   **[c-utils](https://github.com/rsenn/c-utils/)** — C utility library and command-line tools built on libowfat, with containers such as ranges, string arrays and lists.
-*   **[sw-utils](https://github.com/rsenn/sw-utils/)** — Command-line utilities, built with autotools.
+*   **[sw-utils](https://github.com/rsenn/sw-utils/)** — Package management tools (`pkgadd`, `pkgrm` and friends), originally the pkgutils from the CRUX Linux distribution, extended with `libswsh`, a shell script library for platform abstraction.
 *   **[ports](https://github.com/rsenn/ports/)** — Ports repository based on sw-utils (heavily patched), originally from the CRUX Linux distribution.
 *   **[libweb](https://github.com/rsenn/libweb/)** — Collection of browser-side JavaScript libraries and helpers.
 *   **[scripts](https://github.com/rsenn/scripts/)** — Miscellaneous scripts.

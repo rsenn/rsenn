@@ -1,0 +1,33 @@
+<main class="doc">
+<article>
+<h1>Canvas2D on qjsm</h1>
+<p><code>lib/canvas2d.js</code> is a thin <code>CanvasRenderingContext2D</code> emulation built on the <code>nanovg</code>, <code>glfw</code> and <code>dom</code> modules. Import it for its side effects and scripts written for the browser Canvas API (<code>getContext('2d')</code>, <code>requestAnimationFrame</code>, <code>drawImage</code>) run mostly unmodified in a real GLFW window.</p>
+
+<h2>Usage</h2>
+<p>qjsm has no DOM and no <code>requestAnimationFrame</code>. <code>canvas2d.js</code> provides them: importing it opens a GLFW window with a NanoVG context behind it and exports a <code>canvas</code> element and a <code>requestAnimationFrame</code> to draw with.</p>
+<x-code lang="js">
+  import { canvas, requestAnimationFrame } from 'canvas2d.js';   // installed next to nanovg.so
+
+  const ctx = canvas.getContext('2d');
+
+  function loop(t) {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    ctx.fillRect(10, 10, 100, 100);
+    requestAnimationFrame(loop);
+  }
+  requestAnimationFrame(loop);
+</x-code>
+<p>The canvas is 800&times;600 by default; set <code>canvas.width</code> and <code>canvas.height</code> to change it. The other exports are <code>window</code>, <code>document</code>, <code>Image</code>, <code>cancelAnimationFrame</code>, <code>registerFont</code> and the context classes. Importing also defines <code>window</code>, <code>document</code> and <code>requestAnimationFrame</code> as globals, so code written for a browser runs unchanged, but new code is clearer with the named imports. <code>cmake --install</code> copies <code>canvas2d.js</code> into the same directory as <code>nanovg.so</code>.</p>
+
+<h2>Known gaps</h2>
+<p>It is a thin emulation, not a pixel-perfect one:</p>
+<ul>
+  <li>Content is not kept between frames: redraw the whole canvas every frame.</li>
+  <li><code>clearRect()</code> paints with the clear colour; it does not make pixels transparent.</li>
+  <li><code>clip()</code> supports only a single <code>rect()</code> or <code>roundRect()</code> path.</li>
+  <li>Gradients use only the first and last colour stop.</li>
+  <li><code>strokeText()</code> draws filled text; <code>globalCompositeOperation</code>, <code>imageSmoothingEnabled</code> and line dashing are accepted but ignored.</li>
+  <li>Images and fonts load synchronously from local files only; <code>onload</code> fires immediately.</li>
+</ul>
+</article>
+</main>

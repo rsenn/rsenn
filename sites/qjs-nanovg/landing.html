@@ -1,0 +1,84 @@
+<section class="hero">
+  <div>
+    <span class="eyebrow">QuickJS · OpenGL · NanoVG</span>
+    <h1>{{NAME}}: draw antialiased vector graphics from a script</h1>
+    <p class="lede">NanoVG's Canvas-style API (paths, gradients, text, images) as a loadable QuickJS module. Point it at a GLFW window and draw.</p>
+    <div class="cta">
+      <a class="btn primary" href="docs/api.html">API reference</a>
+      <a class="btn" href="https://transistorisiert.ch/nanovg/" target="_blank" rel="noopener">Live demo</a>
+      <a class="btn" href="canvas2d.html">Canvas2D</a>
+      <a class="btn" href="examples.html">Examples</a>
+      <a class="btn" href="{{GITHUB}}" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+  <x-code lang="js">
+    import * as glfw from 'glfw';
+    import { CreateGL3, ANTIALIAS, RGBA } from 'nanovg';
+
+    const win = new glfw.Window(800, 600, 'NanoVG');
+    glfw.context.current = win;
+    const nvg = CreateGL3(ANTIALIAS);
+
+    while(!win.shouldClose) {
+      nvg.BeginFrame(800, 600, 1);
+      nvg.BeginPath();
+      nvg.RoundedRect(100, 100, 200, 150, 12);
+      nvg.FillColor(RGBA(255, 128, 0, 255));
+      nvg.Fill();
+      nvg.EndFrame();
+      win.swapBuffers();
+      glfw.poll();
+    }
+  </x-code>
+</section>
+
+<main>
+  <section class="section">
+    <h2>Why {{NAME}}</h2>
+    <p class="sub">Canvas-like drawing without a browser: the whole binding is one C file on top of NanoVG.</p>
+    <div class="grid">
+      <article class="card"><span class="ico">01</span><h3>Canvas-style API</h3><p>Paths, bezier and arc segments, fill and stroke, linear, box and radial gradients, scissor clipping and transform stacks, all as methods on one context.</p></article>
+      <article class="card"><span class="ico">02</span><h3>Text, images, framebuffers</h3><p>Load fonts and images by id, lay out and align text, render into offscreen framebuffers and read pixels back with <code>ReadPixels</code>.</p></article>
+      <article class="card"><span class="ico">03</span><h3>Small and loadable</h3><p>A single <code>nvgjs-module.c</code> (about 2,300 lines) plus NanoVG itself, built to <code>nanovg.so</code>. It needs QuickJS, GLEW and OpenGL; the window comes from the <code>glfw</code> module.</p></article>
+    </div>
+  </section>
+
+  <section class="section">
+    <h2>Or write it as browser Canvas</h2>
+    <p class="sub">qjsm has no DOM, but <code>canvas2d.js</code> gives you a <code>canvas</code> and a <code>requestAnimationFrame</code> that draw through NanoVG in a GLFW window, so Canvas 2D code runs under qjsm.</p>
+    <x-code lang="js">
+      import { canvas, requestAnimationFrame } from 'canvas2d.js';
+
+      const ctx = canvas.getContext('2d');
+
+      requestAnimationFrame(function loop() {
+        ctx.fillRect(10, 10, 100, 100);
+        requestAnimationFrame(loop);
+      });
+    </x-code>
+    <p><a href="canvas2d.html">Canvas2D usage and known gaps →</a></p>
+  </section>
+
+  <section class="section">
+    <h2>And in the browser</h2>
+    <p class="sub">The same API runs on a web page: NanoVG compiled to WebAssembly with Emscripten, drawing on WebGL2. <code>web/nanovg.js</code> mirrors the native module name for name, so the demo scripts run there unchanged.</p>
+    <div class="grid">
+      <article class="card"><span class="ico">01</span><h3>Same scripts</h3><p>The planets, curve editor and polyline editor examples load as they are. A small loader makes their blocking <code>glfw.poll()</code> loops yield to the browser.</p></article>
+      <article class="card"><span class="ico">02</span><h3>Checked against native</h3><p>A compatibility script diffs every export, function length, property flag and error message of the browser module against <code>nanovg.so</code>; the pure-math results agree.</p></article>
+      <article class="card"><span class="ico">03</span><h3>Built with the module</h3><p>A normal CMake build also produces the wasm when <code>emcc</code> is found (<code>BUILD_WEB</code>).</p></article>
+    </div>
+    <p><a href="https://transistorisiert.ch/nanovg/" target="_blank" rel="noopener">Live demo →</a> &nbsp; <a href="docs/web.html">Browser version documentation →</a></p>
+  </section>
+
+  <section class="section">
+    <h2>Install</h2>
+    <x-code lang="sh">
+      git clone --recursive {{GITHUB}}.git
+      cd {{NAME}}
+      cmake -B build -DCMAKE_BUILD_TYPE=Release
+      cmake --build build
+      sudo cmake --install build      # installs nanovg.so for qjsm
+      qjsm examples/planets.js
+    </x-code>
+  </section>
+</main>

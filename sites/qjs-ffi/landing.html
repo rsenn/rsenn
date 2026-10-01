@@ -9,18 +9,104 @@
       <a class="btn" href="{{GITHUB}}" target="_blank" rel="noopener">GitHub</a>
     </div>
   </div>
-  <x-code lang="js">
-    import { dlopen } from 'ffi';
+  <div class="hero-example">
+    <p class="example-switch">Example:
+      <button class="tab-btn active" type="button" data-tab="dlopen">dlopen</button>
+      <button class="tab-btn" type="button" data-tab="cfunction">CFunction</button>
+      <button class="tab-btn" type="button" data-tab="link">linkSymbols</button>
+      <button class="tab-btn" type="button" data-tab="callback">JSCallback</button>
+      <button class="tab-btn" type="button" data-tab="memory">memory</button>
+    </p>
 
-    const { symbols } = dlopen(null, {
-      strlen: { args: ['cstring'], returns: 'u64_fast' },
-      getenv: { args: ['cstring'], returns: 'cstring' },
-    });
+    <div class="tab-pane active" data-tab="dlopen">
+      <x-code lang="js">
+import { dlopen } from 'ffi';
 
-    console.log(symbols.strlen('hello, world')); // 12
-    console.log(symbols.getenv('HOME'));
-  </x-code>
+const { symbols } = dlopen(null, {
+  strlen: { args: ['cstring'], returns: 'u64_fast' },
+  getenv: { args: ['cstring'], returns: 'cstring' },
+});
+
+console.log(symbols.strlen('hello, world')); // 12
+console.log(symbols.getenv('HOME'));
+      </x-code>
+    </div>
+
+    <div class="tab-pane" data-tab="cfunction">
+      <x-code lang="js">
+import { CFunction, dlsym, RTLD_DEFAULT } from 'ffi';
+
+const strdup = CFunction({
+  ptr: dlsym(RTLD_DEFAULT, 'strdup'),
+  args: ['cstring'],
+  returns: 'cstring',
+});
+
+console.log(strdup('hello')); // hello
+      </x-code>
+    </div>
+
+    <div class="tab-pane" data-tab="link">
+      <x-code lang="js">
+import { linkSymbols, dlsym, RTLD_DEFAULT } from 'ffi';
+
+const { symbols } = linkSymbols({
+  abs: { args: ['i32'], returns: 'i32' }, // found with dlsym(RTLD_DEFAULT, 'abs')
+  labs: { ptr: dlsym(RTLD_DEFAULT, 'labs'), args: ['i64'], returns: 'i64' },
+});
+
+console.log(symbols.abs(-5)); // 5
+console.log(symbols.labs(-9007199254740993n)); // 9007199254740993n
+      </x-code>
+    </div>
+
+    <div class="tab-pane" data-tab="callback">
+      <x-code lang="js">
+import { JSCallback, CFunction, dlsym, read, RTLD_DEFAULT } from 'ffi';
+
+const compare = new JSCallback((a, b) => read.i32(a) - read.i32(b), {
+  args: ['pointer', 'pointer'],
+  returns: 'i32',
+});
+const qsort = CFunction({ ptr: dlsym(RTLD_DEFAULT, 'qsort'), args: ['pointer', 'u64', 'u64', 'pointer'], returns: 'void' });
+
+const numbers = new Int32Array([5, 3, 9, 1]);
+qsort(numbers, numbers.length, 4n, compare.ptr);
+console.log(numbers); // 1, 3, 5, 9
+      </x-code>
+    </div>
+
+    <div class="tab-pane" data-tab="memory">
+      <x-code lang="js">
+import { ptr, read, toArrayBuffer } from 'ffi';
+
+const bytes = new Uint8Array([1, 2, 3, 4, 5, 6, 7, 8]);
+const p = ptr(bytes);
+
+console.log(read.u8(p, 2)); // 3
+console.log(read.u32(p, 4)); // 134678021 (0x08070605)
+
+const view = new Uint8Array(toArrayBuffer(p, 2, 3)); // the same memory
+bytes[3] = 99;
+console.log(view); // 3, 99, 5
+      </x-code>
+    </div>
+  </div>
 </section>
+
+<script>
+document.querySelectorAll('.hero-example').forEach(function (box) {
+  var btns = box.querySelectorAll('.tab-btn');
+  var panes = box.querySelectorAll('.tab-pane');
+  btns.forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var tab = btn.dataset.tab;
+      btns.forEach(function (b) { b.classList.toggle('active', b === btn); });
+      panes.forEach(function (p) { p.classList.toggle('active', p.dataset.tab === tab); });
+    });
+  });
+});
+</script>
 
 <main>
   <ul class="badges">
@@ -39,24 +125,6 @@
       <article class="card"><span class="ico">03</span><h3>C on the fly</h3><p><code>cc()</code> compiles C source in memory with TinyCC and hands back its functions with the same typed signatures, like bun's <code>cc()</code>. Optional: build with <code>-DENABLE_TCC=ON</code>; without it the module stays at 81 KB.</p></article>
       <article class="card"><span class="ico">04</span><h3>Bindings included</h3><p><code>lib/</code> ships generated bindings for cairo, SDL2, freetype, libcurl, libusb, libarchive and zlib. <code>tools/gen-bindings.js</code> makes one for any other header, using clang's AST, including structs and C++ classes with virtual methods.</p></article>
     </div>
-  </section>
-
-  <section class="section">
-    <h2>Callbacks: sorting with libc</h2>
-    <p class="sub">Hand a JavaScript comparison function to <code>qsort()</code>. The two arguments are real pointers into the array; <code>read.i32</code> dereferences them.</p>
-    <x-code lang="js">
-      import { JSCallback, CFunction, dlsym, read, RTLD_DEFAULT } from 'ffi';
-
-      const compare = new JSCallback((a, b) => read.i32(a) - read.i32(b), {
-        args: ['pointer', 'pointer'],
-        returns: 'i32',
-      });
-      const qsort = CFunction({ ptr: dlsym(RTLD_DEFAULT, 'qsort'), args: ['pointer', 'u64', 'u64', 'pointer'], returns: 'void' });
-
-      const numbers = new Int32Array([5, 3, 9, 1]);
-      qsort(numbers, numbers.length, 4n, compare.ptr);
-      console.log(numbers); // 1, 3, 5, 9
-    </x-code>
   </section>
 
   <section class="section">

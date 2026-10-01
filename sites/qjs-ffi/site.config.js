@@ -25,8 +25,9 @@ export default {
 
   topnav: [
     ['Get started', 'getting-started.html'],
-    ['CFunction', 'docs/c-function.html'],
-    ['JSCallback', 'docs/js-callback.html'],
+    ['Overview', 'docs/ffi.html'],
+    ['Types', 'docs/types.html'],
+    ['C compiler', 'docs/c-compiler.html'],
   ],
 
   // TODO.md is left out on purpose: it is a working list, not documentation.
@@ -35,13 +36,30 @@ export default {
       group: 'Start here',
       pages: [
         ['README.md', 'getting-started.html', 'Getting started'],
+        ['doc/ffi.md', 'docs/ffi.html', 'Overview'],
       ],
     },
     {
       group: 'Reference',
       pages: [
+        ['doc/dlopen.md', 'docs/dlopen.html', 'Libraries and symbols'],
+        ['doc/types.md', 'docs/types.html', 'Types and ABI'],
         ['doc/c-function.md', 'docs/c-function.html', 'CFunction'],
         ['doc/js-callback.md', 'docs/js-callback.html', 'JSCallback'],
+        ['doc/pointers.md', 'docs/pointers.html', 'Pointers and memory'],
+        ['doc/c-compiler.md', 'docs/c-compiler.html', 'C compiler'],
+        ['doc/misc.md', 'docs/misc.html', 'Miscellaneous'],
+      ],
+    },
+    {
+      group: 'Tools',
+      pages: [['doc/gen-bindings.md', 'docs/gen-bindings.html', 'Generating bindings']],
+    },
+    {
+      group: 'More',
+      pages: [
+        ['doc/legacy.md', 'docs/legacy.html', 'Legacy API'],
+        ['doc/internals/cxx-virtual-dispatch.md', 'docs/internals/cxx-virtual-dispatch.html', 'Virtual dispatch'],
       ],
     },
   ],

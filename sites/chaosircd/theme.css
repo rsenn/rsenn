@@ -1,20 +1,20 @@
 /* chaosircd — an IRC daemon. Violet on ink, channel-style "#" headings,
    a soft glow behind the title. */
 :root {
-  --bg:          light-dark(#fbfafd, #14111b);
-  --bg-raised:   light-dark(#ffffff, #1c1826);
-  --bg-sunken:   light-dark(#f2eff8, #100d17);
-  --bg-code:     light-dark(#f4f1fa, #1c1826);
-  --fg:          light-dark(#1c1a22, #e9e6f2);
-  --fg-muted:    light-dark(#5f5a70, #a59fbb);
-  --fg-faint:    light-dark(#8d87a0, #776f92);
-  --line:        light-dark(#e4e0ee, #2b2540);
-  --line-strong: light-dark(#cec8e0, #40385c);
-  --accent:      light-dark(#5b3fa0, #a78bfa);
-  --accent-fg:   light-dark(#ffffff, #14111b);
-  --accent-soft: light-dark(#ebe5f8, #2a2145);
+  --bg:          light-dark(#fdfafa, #1b1112);
+  --bg-raised:   light-dark(#ffffff, #261819);
+  --bg-sunken:   light-dark(#f8eff0, #170d0e);
+  --bg-code:     light-dark(#faf1f2, #261819);
+  --fg:          light-dark(#221a1b, #f2e6e7);
+  --fg-muted:    light-dark(#705a5c, #bb9fa2);
+  --fg-faint:    light-dark(#a08789, #926f72);
+  --line:        light-dark(#eee0e1, #402527);
+  --line-strong: light-dark(#e0c8ca, #5c383b);
+  --accent:      light-dark(#c83240, #ffb3ba);
+  --accent-fg:   light-dark(#ffffff, #1b1112);
+  --accent-soft: light-dark(#f8e5e7, #452124);
 
-  --t-kw:  light-dark(#5b3fa0, #b9a3ff);
+  --t-kw:  light-dark(#a03f48, #ffa3ab);
   --t-fn:  light-dark(#1f6f8b, #7dd3fc);
   --t-str: light-dark(#0a7d43, #86d9a4);
 

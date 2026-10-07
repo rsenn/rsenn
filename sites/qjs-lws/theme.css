@@ -1,18 +1,18 @@
 /* qjs-lws — web serving. Teal on cool paper, rounded and airy, a field of
    connection dots behind the hero. */
 :root {
-  --bg:          light-dark(#fafcfb, #101617);
-  --bg-raised:   light-dark(#ffffff, #162021);
-  --bg-sunken:   light-dark(#eef4f2, #0c1213);
-  --bg-code:     light-dark(#f2f7f5, #162021);
-  --fg:          light-dark(#182120, #e3eeec);
-  --fg-muted:    light-dark(#556663, #96aeaa);
-  --fg-faint:    light-dark(#84958f, #62807b);
-  --line:        light-dark(#dde8e5, #1f2f30);
-  --line-strong: light-dark(#c5d6d2, #2f4547);
-  --accent:      light-dark(#0b7c72, #3fd0bd);
-  --accent-fg:   light-dark(#ffffff, #071110);
-  --accent-soft: light-dark(#dff2ef, #123130);
+  --bg:          light-dark(#fafbfc, #101217);
+  --bg-raised:   light-dark(#ffffff, #161a21);
+  --bg-sunken:   light-dark(#eef0f4, #0c0e13);
+  --bg-code:     light-dark(#f2f4f7, #161a21);
+  --fg:          light-dark(#181b21, #e3e7ee);
+  --fg-muted:    light-dark(#555b66, #969eae);
+  --fg-faint:    light-dark(#848a95, #626c80);
+  --line:        light-dark(#dde1e8, #1f2530);
+  --line-strong: light-dark(#c5cbd6, #2f3747);
+  --accent:      light-dark(#3768cd, #a9c5ff);
+  --accent-fg:   light-dark(#ffffff, #070a11);
+  --accent-soft: light-dark(#dfe5f2, #121c31);
 
   --radius: 12px;
   --mark-fg: var(--accent);

@@ -8,7 +8,7 @@ export default {
   name: 'qjs-ffi',
   mark: 'ffi',
   tagline: 'Call any C library from QuickJS',
-  description: 'libffi and dlopen as a loadable QuickJS module: define C prototypes, call functions, pass callbacks, plus ready-made bindings for cairo, SDL2, freetype, libcurl and more.',
+  description: 'libffi and dlopen as a loadable QuickJS module: define C prototypes, call functions, pass callbacks, use ArrayBuffer classes as struct types, plus ready-made bindings for cairo, SDL2, freetype, libcurl and more.',
   license: 'MIT',
   search: false,               // true once there are more than ~15 doc pages
 
@@ -47,6 +47,7 @@ export default {
         ['doc/c-function.md', 'docs/c-function.html', 'CFunction'],
         ['doc/js-callback.md', 'docs/js-callback.html', 'JSCallback'],
         ['doc/pointers.md', 'docs/pointers.html', 'Pointers and memory'],
+        ['doc/struct.md', 'docs/struct.html', 'Classes as types'],
         ['doc/c-compiler.md', 'docs/c-compiler.html', 'C compiler'],
         ['doc/misc.md', 'docs/misc.html', 'Miscellaneous'],
       ],
@@ -58,6 +59,7 @@ export default {
     {
       group: 'More',
       pages: [
+        ['doc/node-ffi.md', 'docs/node-ffi.html', 'node:ffi'],
         ['doc/legacy.md', 'docs/legacy.html', 'Legacy API'],
         ['doc/internals/cxx-virtual-dispatch.md', 'docs/internals/cxx-virtual-dispatch.html', 'Virtual dispatch'],
       ],

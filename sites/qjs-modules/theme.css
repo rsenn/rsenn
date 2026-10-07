@@ -1,20 +1,20 @@
 /* qjs-modules — the standard library. Rose on warm stone, built from
    blocks: heavy top-rules on cards, a tiled hero, a dense API reference. */
 :root {
-  --bg:          light-dark(#fcfaf9, #17131a);
-  --bg-raised:   light-dark(#ffffff, #201a24);
-  --bg-sunken:   light-dark(#f4efee, #120f15);
-  --bg-code:     light-dark(#f7f2f1, #201a24);
-  --fg:          light-dark(#221a1e, #efe6ea);
-  --fg-muted:    light-dark(#6b5a62, #b3a0aa);
-  --fg-faint:    light-dark(#988790, #80707a);
-  --line:        light-dark(#ebe1e3, #2e2431);
-  --line-strong: light-dark(#d8c8cd, #443548);
-  --accent:      light-dark(#b0286b, #f472b6);
-  --accent-fg:   light-dark(#ffffff, #1a0a12);
-  --accent-soft: light-dark(#f8e3ee, #40162f);
+  --bg:          light-dark(#f9fbfc, #13171a);
+  --bg-raised:   light-dark(#ffffff, #1a2024);
+  --bg-sunken:   light-dark(#eef1f4, #0f1215);
+  --bg-code:     light-dark(#f1f4f7, #1a2024);
+  --fg:          light-dark(#1a1f22, #e6ebef);
+  --fg-muted:    light-dark(#5a646b, #a0abb3);
+  --fg-faint:    light-dark(#879198, #707980);
+  --line:        light-dark(#e1e7eb, #242b31);
+  --line-strong: light-dark(#c8d1d8, #354048);
+  --accent:      light-dark(#2a71a7, #bae1ff);
+  --accent-fg:   light-dark(#ffffff, #0a131a);
+  --accent-soft: light-dark(#e3eff8, #162e40);
 
-  --t-kw:  light-dark(#b0286b, #f9a8d4);
+  --t-kw:  light-dark(#2875b0, #a8d6f9);
   --t-fn:  light-dark(#2563a8, #7cc0ff);
   --t-str: light-dark(#0a7d43, #8ee0a8);
 

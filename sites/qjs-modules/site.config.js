@@ -92,6 +92,15 @@ export default {
       ],
     },
     {
+      group: 'WebAssembly',
+      pages: [
+        ['doc/native/wasm.md', 'docs/native/wasm.html', 'wasm (engines & API)'],
+        ['doc/js/webassembly.md', 'docs/js/webassembly.html', 'WebAssembly global'],
+        ['doc/js/wasm-loader.md', 'docs/js/wasm-loader.html', 'wasm-loader (.wasm imports)'],
+        ['doc/js/wasi.md', 'docs/js/wasi.html', 'WASI'],
+      ],
+    },
+    {
       group: 'Native — Databases',
       pages: [
         ['doc/native/mysql.md', 'docs/native/mysql.html', 'mysql'],
@@ -124,6 +133,8 @@ export default {
         ['doc/js/events.md', 'docs/js/events.html', 'events'],
         ['doc/js/abort.md', 'docs/js/abort.html', 'abort'],
         ['doc/js/timers.md', 'docs/js/timers.html', 'timers'],
+        ['doc/js/timersPromises.md', 'docs/js/timersPromises.html', 'timers/promises'],
+        ['doc/js/globals.md', 'docs/js/globals.html', 'globals (opt-in)'],
         ['doc/js/perf_hooks.md', 'docs/js/perf_hooks.html', 'perf_hooks'],
         ['doc/js/module.md', 'docs/js/module.html', 'module'],
         ['doc/js/require.md', 'docs/js/require.html', 'require'],

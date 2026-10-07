@@ -1,21 +1,21 @@
 /* qjs-opencv — computer vision. Signal blue on graph paper: a pixel grid
    behind the hero, square corners, crosshair rule under section headings. */
 :root {
-  --bg:          light-dark(#fafbfd, #0e1218);
-  --bg-raised:   light-dark(#ffffff, #151b24);
-  --bg-sunken:   light-dark(#eef2f8, #0a0e13);
-  --bg-code:     light-dark(#f1f4fa, #151b24);
-  --fg:          light-dark(#161b24, #e4e9f2);
-  --fg-muted:    light-dark(#556075, #93a0b8);
-  --fg-faint:    light-dark(#8490a6, #62718c);
-  --line:        light-dark(#dfe5f0, #1f2836);
-  --line-strong: light-dark(#c6d0e2, #2f3b50);
-  --accent:      light-dark(#1d63c9, #5aa2ff);
-  --accent-fg:   light-dark(#ffffff, #07101c);
-  --accent-soft: light-dark(#e0ebfb, #14274a);
+  --bg:          light-dark(#fafdfb, #0e1810);
+  --bg-raised:   light-dark(#ffffff, #152418);
+  --bg-sunken:   light-dark(#eef8f0, #0a130c);
+  --bg-code:     light-dark(#f1faf3, #152418);
+  --fg:          light-dark(#162419, #e4f2e7);
+  --fg-muted:    light-dark(#55755c, #93b89b);
+  --fg-faint:    light-dark(#84a68b, #628c6b);
+  --line:        light-dark(#dff0e3, #1f3624);
+  --line-strong: light-dark(#c6e2cc, #2f5036);
+  --accent:      light-dark(#1f7a33, #baffc9);
+  --accent-fg:   light-dark(#ffffff, #071c0c);
+  --accent-soft: light-dark(#e0fbe6, #144a20);
 
   --t-kw:   light-dark(#7c3aed, #b69cff);
-  --t-type: light-dark(#1d63c9, #5aa2ff);
+  --t-type: light-dark(#1dc942, #5aff7e);
 
   --radius: 3px;
   --heading-tracking: -0.025em;

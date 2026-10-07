@@ -13,7 +13,7 @@ export default {
   name: 'shish',
   mark: '$_',
   tagline: 'a small POSIX-ish shell in C',
-  description: '139 KB stripped, 184 KB of WebAssembly, with cat/rm/mkdir built in: a shell for containers, agent sandboxes and the browser.',
+  description: '197 KB stripped, 184 KB of WebAssembly, with cat/rm/mkdir built in: a shell for containers, agent sandboxes and the browser.',
   license: 'GPL v2',
   search: false,
 
@@ -53,7 +53,10 @@ export default {
     },
     {
       group: 'Reference',
-      pages: [['doc/conformance.md', 'docs/conformance.html', 'Conformance']],
+      pages: [
+        ['doc/conformance.md', 'docs/conformance.html', 'Conformance'],
+        ['doc/debug-output.md', 'docs/debug-output.html', 'Debug output'],
+      ],
     },
   ],
 

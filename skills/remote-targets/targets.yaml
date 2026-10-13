@@ -1,0 +1,150 @@
+# targets.yaml - generic target definitions. NO site data here (no hosts, users, ports, paths of
+# a particular machine). Site -> target mapping is in sites.yaml (`targets:`).
+#
+# Per target:
+#   summary     one line
+#   triple      GNU/LLVM triple(s) it produces
+#   libc        libc / runtime
+#   link        usual linkage
+#   mode        native | cross | either   (where the compiler normally runs relative to the target)
+#   toolchain   how to get/call the compiler
+#   helper      rsenn cfg-cmake.sh helper, if any (writes build/<host>/)
+#   run         how a test binary is executed on/for this target
+#   transports  typical transports (see knowledge/transports/)
+#   knowledge   the per-target page (Build/Test/Debug/Trace/Instrument/Package/Transfer/Gotchas)
+
+version: 1
+
+targets:
+
+  termux:
+    summary: Termux userland on Android (bionic, own prefix), native or cross
+    triple: [aarch64-linux-android, arm-linux-androideabi, x86_64-linux-android]
+    libc: bionic (Termux prefix, not /usr)
+    link: dynamic against $PREFIX/lib
+    mode: either
+    toolchain: "native: pkg install clang cmake make ninja; cross: NDK clang or termux-packages docker build"
+    helper: cfg-termux
+    run: in a Termux shell (ssh to Termux sshd) - not via adb shell, which lacks Termux's env
+    transports: [ssh, sshfs, adb]
+    knowledge: knowledge/targets/termux.md
+
+  android-ndk:
+    summary: Plain Android executables/libs built with the NDK, run from /data/local/tmp via adb
+    triple: [aarch64-linux-android, armv7a-linux-androideabi, x86_64-linux-android, i686-linux-android]
+    libc: bionic
+    link: dynamic (or -static for standalone tools)
+    mode: cross
+    toolchain: "$ANDROID_NDK/toolchains/llvm/prebuilt/<host>/bin/<triple><api>-clang, or android.toolchain.cmake"
+    helper: cfg-android
+    run: adb push + adb shell
+    transports: [adb]
+    knowledge: knowledge/targets/android-ndk.md
+
+  linux-glibc:
+    summary: Debian/Raspberry Pi OS style glibc Linux on ARM/x86 boards, native or cross
+    triple: [aarch64-linux-gnu, arm-linux-gnueabihf, arm-linux-gnueabi, x86_64-linux-gnu]
+    libc: glibc
+    link: dynamic
+    mode: either
+    toolchain: "native gcc/clang on the board, or gcc-<triple> / clang --target with a sysroot rsync'ed from the board"
+    helper: cfg-aarch64
+    run: ssh, or qemu-user with -L <sysroot> for smoke tests on the build host
+    transports: [ssh, sshfs, serial, vnc]
+    knowledge: knowledge/targets/linux-glibc.md
+
+  musl:
+    summary: Static Linux binaries against musl
+    triple: [x86_64-linux-musl, aarch64-linux-musl, arm-linux-musleabihf, i686-linux-musl]
+    libc: musl
+    link: static
+    mode: cross
+    toolchain: "musl-gcc wrapper, musl-cross-make toolchains, or zig cc -target <arch>-linux-musl"
+    helper: cfg-musl
+    run: directly on a compatible-arch Linux host (static), else qemu-user
+    transports: [ssh]
+    knowledge: knowledge/targets/musl.md
+
+  dietlibc:
+    summary: Tiny static Linux binaries against dietlibc
+    triple: [x86_64-linux, i386-linux, arm-linux, aarch64-linux]
+    libc: dietlibc
+    link: static only
+    mode: cross
+    toolchain: "diet gcc ...; libs built per ARCH with `make ARCH=<arch>`"
+    helper: cfg-diet
+    run: directly on a compatible-arch Linux host, else qemu-user
+    transports: [ssh]
+    knowledge: knowledge/targets/dietlibc.md
+
+  mingw:
+    summary: Native Windows binaries cross-built on Linux (mingw-w64)
+    triple: [x86_64-w64-mingw32, i686-w64-mingw32, aarch64-w64-mingw32]
+    libc: msvcrt or ucrt, no POSIX layer
+    link: static recommended
+    mode: cross
+    toolchain: "x86_64-w64-mingw32-gcc / clang with mingw sysroot"
+    helper: cfg-mingw64   # cfg-mingw32 for i686
+    run: wine on the build host, or on a Windows machine
+    transports: [ssh, rdp, sshfs]
+    knowledge: knowledge/targets/mingw.md
+
+  msys:
+    summary: MSYS2 on Windows (msys / mingw64 / ucrt64 / clang64 environments, pacman)
+    triple: [x86_64-pc-msys, x86_64-w64-mingw32]
+    libc: msys-2.0.dll (msys env) or ucrt/msvcrt (mingw envs)
+    link: dynamic, ship DLLs or link static
+    mode: native
+    toolchain: "pacman -S mingw-w64-ucrt-x86_64-toolchain; run inside the chosen MSYSTEM"
+    helper: ~
+    run: Windows shell via ssh -> bash -lc, or msys2_shell.cmd -c
+    transports: [ssh, rdp]
+    knowledge: knowledge/targets/msys.md
+
+  cygwin:
+    summary: Cygwin POSIX layer on Windows
+    triple: [x86_64-pc-cygwin]
+    libc: newlib + cygwin1.dll
+    link: dynamic against cygwin1.dll
+    mode: native
+    toolchain: "setup-x86_64.exe -q -P gcc-core,make,cmake,...; gcc inside Cygwin"
+    helper: ~
+    run: Cygwin bash (ssh to Cygwin sshd, or a Windows ssh -> bash -lc)
+    transports: [ssh, rdp]
+    knowledge: knowledge/targets/cygwin.md
+
+  msvc:
+    summary: Microsoft toolchain (cl/link, clang-cl) on Windows
+    triple: [x86_64-pc-windows-msvc, i686-pc-windows-msvc, aarch64-pc-windows-msvc]
+    libc: UCRT + vcruntime
+    link: static CRT (/MT) or dynamic (/MD)
+    mode: native
+    toolchain: "vcvarsall.bat x64 (or Developer Prompt) then cl/link/nmake/ninja; clang-cl; xwin for Linux cross"
+    helper: ~
+    run: Windows shell via ssh (cmd/powershell)
+    transports: [ssh, rdp]
+    knowledge: knowledge/targets/msvc.md
+
+  emscripten:
+    summary: C/C++ to WebAssembly + JS glue for node and browsers
+    triple: [wasm32-unknown-emscripten]
+    libc: emscripten musl-derived libc + JS runtime
+    link: static
+    mode: cross
+    toolchain: "emsdk: emcc / em++ / emcmake / emmake"
+    helper: cfg-emscripten
+    run: node, or a browser via static server / emrun
+    transports: [ssh]   # when node/browser is on another machine
+    knowledge: knowledge/targets/emscripten.md
+
+  wasi:
+    summary: WebAssembly System Interface executables run in a standalone runtime
+    triple: [wasm32-wasi, wasm32-wasip1, wasm32-wasip2]
+    libc: wasi-libc
+    link: static
+    mode: cross
+    toolchain: "wasi-sdk clang (--target=wasm32-wasi, --sysroot=$WASI_SDK_PATH/share/wasi-sysroot)"
+    helper: cfg-wasi
+    run: wasmtime / wasmer / wasmedge / node --experimental-wasi
+    transports: [ssh]
+    knowledge: knowledge/targets/wasi.md

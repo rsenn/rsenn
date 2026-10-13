@@ -1,0 +1,196 @@
+# sites.yaml - the ONLY place for site-specific data of the remote-targets skill.
+# Everything here is about a concrete machine; generic how-to lives in knowledge/.
+#
+# Rules
+#  - No secrets. Reference them: key file paths, "pass:<entry>", "env:<VAR>", or "ask".
+#  - Addresses below are documentation placeholders (RFC 5737 / example.*). Replace on real use.
+#  - Keep an id short and stable; targets.yaml ids go in `targets`.
+#
+# Schema (all keys optional except id-level `targets` and `access`)
+#
+#   <site-id>:
+#     description: free text
+#     aliases: [names the user may say]
+#     targets: [ids from targets.yaml this site can build/run for]
+#     arch: aarch64 | armv7l | x86_64 | wasm32 ...      # of the hardware / runtime
+#     os: free text                                      # distro / Android version / Windows build
+#     access:                                            # one block per transport that exists
+#       ssh:     {alias, host, port, user, key, jump, opts, forward, notes}  -> knowledge/transports/ssh.md
+#                (alias = Host entry in ~/.ssh/config; if set, `ssh <alias>` is enough)
+#       sshfs:   {remote, mountpoint, opts, notes}               -> knowledge/transports/sshfs.md
+#       adb:     {serial | tcp, notes}                           -> knowledge/transports/adb.md
+#       serial:  {device, baud, settings, login, notes}          -> knowledge/transports/serial.md
+#       rdp:     {host, port, user, password_ref, opts}          -> knowledge/transports/rdp.md
+#       vnc:     {host, port, display, password_ref, tunnel}     -> knowledge/transports/vnc.md
+#       debug:   {kind: gdbserver|lldb-server|cdb|msvsmon|inspect, host, port, notes}
+#                                                                -> knowledge/transports/remote-debug.md
+#     use:                    # which transport serves which activity (the "at a glance" map)
+#       run: ssh              # run commands / tests
+#       transfer: sshfs       # move files (sshfs | ssh | adb | rdp-drive)
+#       debug: debug          # key under access
+#       console: serial       # boot/rescue console
+#       gui: vnc              # see/drive the desktop
+#     dirs:
+#       work:   remote scratch/build dir (safe to wipe)
+#       deploy: where artifacts are installed/run from
+#       mount:  local mountpoint of the sshfs, if any
+#     services: [{name, port, proto, notes}]             # port layout on the device
+#     facts:    {tool/version/space info found by scripts/probe.sh, dated}
+#     notes:    [dated quirks specific to this machine]
+#     example: true           # delete on real entries; lint ignores addresses in this file anyway
+
+version: 1
+
+sites:
+
+  pi-lab:                                   # EXAMPLE: Raspberry Pi on the bench network
+    example: true
+    description: Raspberry Pi 4, Raspberry Pi OS (64-bit kernel, check userland arch), headless
+    aliases: [pi, raspberry]
+    targets: [linux-glibc]
+    arch: aarch64
+    os: Raspberry Pi OS bookworm
+    access:
+      ssh:
+        host: 192.0.2.10
+        port: 22
+        user: pi
+        key: ~/.ssh/id_ed25519_lab
+        opts: [-o, ConnectTimeout=10, -o, BatchMode=yes, -o, ControlMaster=auto, -o, "ControlPath=~/.ssh/cm-%C", -o, ControlPersist=10m]
+      sshfs:
+        remote: "pi@192.0.2.10:/home/pi/work"
+        mountpoint: ~/mnt/pi-lab
+        opts: [reconnect, ServerAliveInterval=15, follow_symlinks]
+      serial:
+        device: /dev/serial/by-id/usb-EXAMPLE_UART-if00-port0
+        baud: 115200
+        settings: 8N1, no flow control
+        login: ask
+      debug:
+        kind: gdbserver
+        host: 192.0.2.10
+        port: 2345
+        notes: start on the pi, connect from here; or tunnel with ssh -L 2345:localhost:2345
+      vnc:
+        host: 192.0.2.10
+        port: 5900
+        display: ":0"
+        password_ref: "pass:rt/pi-lab-vnc"
+    use: {run: ssh, transfer: sshfs, debug: debug, console: serial, gui: vnc}
+    dirs: {work: /home/pi/work, deploy: /home/pi/deploy, mount: ~/mnt/pi-lab}
+    services:
+      - {name: sshd, port: 22, proto: tcp}
+      - {name: gdbserver, port: 2345, proto: tcp, notes: started on demand}
+      - {name: vnc, port: 5900, proto: tcp}
+    facts: {}          # fill from scripts/probe.sh
+    notes: []
+
+  phone-termux:                             # EXAMPLE: Android phone with Termux and adb
+    example: true
+    description: Android phone, Termux from F-Droid, sshd in Termux, USB adb available
+    aliases: [phone, android, termux]
+    targets: [termux, android-ndk]
+    arch: aarch64
+    os: Android 14
+    access:
+      ssh:
+        host: 192.0.2.20
+        port: 8022
+        user: u0_a123
+        key: ~/.ssh/id_ed25519_lab
+        opts: [-o, ConnectTimeout=10, -o, BatchMode=yes]
+        notes: sshd must be started in Termux (`sshd`); not persistent across Termux restarts
+      adb:
+        serial: EXAMPLE0123456
+        tcp: "192.0.2.20:5555"
+      sshfs:
+        remote: "u0_a123@192.0.2.20:/data/data/com.termux/files/home/work"
+        mountpoint: ~/mnt/phone
+        opts: ["-p", "8022", reconnect, ServerAliveInterval=15]
+      debug:
+        kind: gdbserver
+        host: 192.0.2.20
+        port: 5039
+        notes: via `adb forward tcp:5039 tcp:5039` for NDK binaries
+    use: {run: ssh, transfer: sshfs, debug: debug}
+    dirs:
+      work: /data/data/com.termux/files/home/work     # Termux target
+      deploy: /data/local/tmp/deploy                   # android-ndk target (adb)
+      mount: ~/mnt/phone
+    services:
+      - {name: termux-sshd, port: 8022, proto: tcp}
+      - {name: adbd-tcp, port: 5555, proto: tcp}
+    facts: {}
+    notes: []
+
+  win-build:                                # EXAMPLE: Windows machine with MSVC + MSYS2 + Cygwin
+    example: true
+    description: Windows 11 VM; OpenSSH server (default shell cmd), MSVC 2022, MSYS2 in C:\msys64, Cygwin in C:\cygwin64
+    aliases: [windows, win]
+    targets: [msvc, msys, cygwin, mingw]
+    arch: x86_64
+    os: Windows 11
+    access:
+      ssh:
+        host: win-build.example.net
+        port: 22
+        user: builder
+        key: ~/.ssh/id_ed25519_lab
+        notes: default shell cmd.exe; use `bash -lc` / `msys2_shell.cmd -c` to enter MSYS2
+      rdp:
+        host: win-build.example.net
+        port: 3389
+        user: builder
+        password_ref: "pass:rt/win-build"
+        opts: ["/cert:ignore", "+clipboard", "/drive:share,/tmp/share"]
+      debug:
+        kind: msvsmon
+        host: win-build.example.net
+        port: 4026
+    use: {run: ssh, transfer: ssh, debug: debug, gui: rdp}
+    dirs: {work: 'C:\work', deploy: 'C:\deploy'}
+    services:
+      - {name: openssh, port: 22, proto: tcp}
+      - {name: rdp, port: 3389, proto: tcp}
+      - {name: msvsmon, port: 4026, proto: tcp}
+    facts: {}
+    notes: []
+
+  termux:                                   # REAL: user's phone, Termux over ssh + sshfs
+    description: Android phone running Termux; sshd in Termux; home and $PREFIX mounted via sshfs
+    aliases: [termux, phone, android]
+    targets: [termux]
+    arch: aarch64
+    os: Android (Termux)
+    access:
+      ssh:
+        alias: termux                       # Host termux android in ~/.ssh/config
+        host: 192.168.178.61
+        port: 22222
+        opts: [-o, ConnectTimeout=10]       # ssh config has ConnectTimeout 0: bound it ourselves
+        forward: {agent: true, x11: true, x11_trusted: true}
+        notes: PasswordAuthentication no (key/agent only); user maps to the Termux app uid
+      sshfs:
+        remote: "termux:.."                 # one level above Termux $HOME == dirname of $PREFIX
+        mountpoint: ~/mnt/termux
+        opts: [reconnect, transform_symlinks]
+        notes: |
+          mount: sshfs termux:.. ~/mnt/termux -o reconnect,transform_symlinks
+          gives two dirs: ~/mnt/termux/home/ (Termux $HOME) and ~/mnt/termux/usr/ (Termux $PREFIX).
+          transform_symlinks makes absolute symlinks inside $PREFIX resolve under the mount.
+    use: {run: ssh, transfer: sshfs}
+    dirs:
+      work: ~/mnt/termux/home                # local view; projects are git repos directly under it
+      deploy: ~/mnt/termux/usr               # local view of $PREFIX
+      mount: ~/mnt/termux
+    services:
+      - {name: termux-sshd, port: 22222, proto: tcp}
+    facts:
+      probed: 2026-10-14
+      android: "15 (API 35), kernel 5.4.242, aarch64, 8 cpus, 7.3 GB RAM"
+      compilers: "clang 21.1.8 (gcc/cc -> clang-21), tcc 0.9.27"
+      tools: "gdb 16.3, gdbserver, lldb 21.1.8, strace, ltrace, rsync, python3, node, wasmtime, cmake, ninja, git"
+      env: "LD_PRELOAD=libtermux-exec.so (required to exec anything); see knowledge/targets/termux.md#debug"
+    notes:
+      - "list project dirs: (cd ~/mnt/termux/home/; set -- */.git; echo \"${@%/*}\")"
+      - "real gcc may be available from extra Termux repositories (not yet tried)"

@@ -2,3 +2,7 @@
   added a Tools section pointing at tool-registry (extract-c and genbindings ir for api design, genstructs asserts, describe for parity, debugger)
 - 2026-10-14
   added static module init symbol rule and checks, make_module source argument, both-target loop, qjsm external-module status and the list ';' gotcha (cmake.md, section 21)
+- 2026-10-14
+  qjsm external natives now implemented (cmake.md): module.cmake include, link, builtin registration; stdc++ added for C++ modules; open symbol collisions listed
+- 2026-10-14
+  documented hide_static_symbols (ld -r, nm, objcopy --localize-symbols), HIDE_STATIC_SYMBOLS and <name>_EXPORT_SYMBOLS (cmake.md, section 21); replaces the open symbol-collision note

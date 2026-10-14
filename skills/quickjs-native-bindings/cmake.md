@@ -74,11 +74,13 @@ Macros (set variables the top level reads, so keep them macros), called in this 
 `qjsm_init_builtins`, `qjsm_resolve_builtins`, `qjsm_declare_imports`, `qjsm_compile_builtins`,
 `qjsm_process_builtins`, `qjsm_add_executable`.
 
-**Status of out-of-tree natives (not implemented yet):** `qjsm_init_builtins` collects them in
-`EXTERNAL_MODULES` (and sets `<name>_MODULE` for a directory entry), but nothing includes the
-`quickjs-<name>.module.cmake`, adds `<name>_MODULE` to `QJSM_STATIC_LIBS` or emits
-`BUILTIN_NATIVE(<name>)` into `quickjs-builtins.h`; the directory lookup uses `find_library(<name>)`
-and so misses `quickjs-<name>.a`. Until that is done an external module is not in the binary.
+**Out-of-tree natives.** A `BUILTIN_MODULES` entry that is a build dir named `.../qjs-<name>/...` or a
+`quickjs-<name>.a` is routed to `EXTERNAL_MODULES`: `quickjs-<name>.module.cmake` is included
+(`<name>_MODULE` = archive + libraries, `_MODULE_LINK_FLAGS`), the archive and libraries join the
+link line and `BUILTIN_NATIVE(<name>)` registers `js_init_module_<name>`. Verified: glfw, nanovg, stk
+import from a qjsm built with them. A dir holding several modules (qjs-sound) is given as one
+`quickjs-<name>.a` per module. Symbol clashes between archives and `libmodules.a` are
+prevented by `hide_static_symbols()` (next section); full description: `qjs-modules/doc/qjsm-layout.md` 4.2.
 
 Baking in: `BUILTIN_MODULES` entries are a bare name (`lib/<name>.js` -> bytecode, `quickjs-<name>.c`
 -> native, native wins), a `.js` file, or a directory/library of an out-of-tree `qjs-<name>` built
@@ -123,6 +125,34 @@ and the older variants carry bytecode helpers that only qjs-modules uses (now in
    (child must not rebuild).
 4. Run qjsm/tests under limits (`timeout 60 systemd-run --user --scope -q -p MemoryMax=4G -p MemorySwapMax=0`).
 5. Install to a scratch prefix; check `readelf -d qjsm` RUNPATH is absolute and the module loads.
+
+## Hidden symbols of static modules (`hide_static_symbols`)
+
+Every static module carries its own copies of helpers (`js_error_print`, `js_function_prototype`,
+...) that `libmodules.a` and other modules define too, so linking two of them fails with
+`multiple definition`. `make_module` therefore rewrites the finished `quickjs-<name>.a`; a project
+without `make_module` (qjs-lws) calls `hide_static_symbols(<static-target> js_init_module_<name>)`
+itself, after `quickjs_module_options()`:
+
+```
+cc -r -nostdlib -o merged.o -Wl,--whole-archive foo.a    # calls between files resolved
+nm -g --defined-only merged.o                            # strong T D B R C S G symbols
+objcopy --localize-symbols=local.txt merged.o            # all but js_init_module_foo
+ar qc foo.a merged.o && ranlib foo.a
+```
+
+- Only strong definitions are localised. Undefined references and weak symbols (C++ inline
+  functions, `DW.ref.__gxx_personality_v0`) must stay global: `objcopy --keep-global-symbol=<init>`
+  also localises the weak ones and breaks the final link (`undefined hidden symbol DW.ref...`).
+- `<name>_EXPORT_SYMBOLS` (before `make_module(<name>)`) keeps extra symbols global, for a module
+  whose archive is used by another module's archive. `-DHIDE_STATIC_SYMBOLS=OFF` skips the step;
+  macOS, MSVC, Emscripten and WASI skip it by themselves (needs `objcopy` and `nm`).
+- The generated `<build>/CMakeFiles/<target>-hide/hide.cmake` is run with `cmake -P` and needs
+  `cmake_minimum_required(VERSION 3.20)` for `IN_LIST`.
+- Check: `nm -g --defined-only quickjs-*.a | awk '$2 ~ /[TDBRCSG]/ && $3 !~ /^js_init_module_/'`
+  prints nothing.
+- Because the archive no longer exports its helpers, a symbol another project calls in a static
+  build must be listed in `<name>_EXPORT_SYMBOLS`.
 
 ## Static modules: init symbol and checks
 

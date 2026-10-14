@@ -1953,6 +1953,10 @@ decide" treatment as any other existing API surface.)
 **Static entry point**: the archive must export only `js_init_module_<name>` (no plain `js_init_module`, see
 the `JS_INIT_MODULE` macro in section 1); check with `nm -A quickjs-*.a | grep " T js_init_module"`. See
 [`cmake.md`](cmake.md) "Static modules".
+A static archive also has all its other global definitions made local at build time
+(`hide_static_symbols`, `HIDE_STATIC_SYMBOLS`), so several modules and `libmodules.a` link into one
+executable although each has its own copy of the same helpers; a module must not rely on another static
+module for a non-init symbol (`<name>_EXPORT_SYMBOLS` lists the exceptions).
 
 **Naming convention**: `BUILD_SHARED_MODULES`/`BUILD_STATIC_MODULES` -
 plural, even in a project with only one module - is the settled monorepo

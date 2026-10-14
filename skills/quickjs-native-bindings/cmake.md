@@ -80,6 +80,15 @@ with `-DBUILD_STATIC=ON` (goes to `EXTERNAL_MODULES`, `<name>_MODULE` from its `
 Natives are linked as `quickjs-<name>.a` and their init function runs at first import.
 Overrides: `BUILTINS_NATIVE`, `BUILTINS_COMPILED`.
 
+**Closed builtins.** A compiled JS builtin never loads a `.js` from disk: `qjsm_resolve_builtins`
+scans each builtin's literal `import`/`export from` specifiers (`qjsm_scan_imports`; computed
+specifiers are invisible) and bakes what they name in too (`BUILTINS_NEEDED[_JS|_NATIVE]`, not
+cached: drop the dependants and the dependencies go). Compiled in = `BUILTIN_MODULES` +
+`BUILTINS_NEEDED`; needed natives join the link closure. Builtins must not import `node:x`
+(use `node/x`). Names with `-` are emitted with `BUILTIN_COMPILED_AS(symbol, "name")`.
+The qjsm.c side (static imports of a builtin see only the builtin table) is in
+`qjs-modules/doc/qjsm-layout.md` 4.1.
+
 ## Syncing
 
 ```sh

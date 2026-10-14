@@ -17,6 +17,7 @@ Cross-target hub. Transport details: [remote-debug](../transports/remote-debug.m
 | mingw | winedbg --gdb / gdb on Windows | [debug](../targets/mingw.md#debug) |
 | msys / cygwin | gdb on Windows | [msys](../targets/msys.md#debug) [cygwin](../targets/cygwin.md#debug) |
 | msvc | cdb/windbg/msvsmon | [debug](../targets/msvc.md#debug) |
+| cosmo | gdb on `prog.dbg` / `prog.aarch64.elf`; `--strace` `--ftrace` | [debug](../targets/cosmo.md#debug) |
 | emscripten / wasi | node inspector / wasmtime | [emscripten](../targets/emscripten.md#debug) [wasi](../targets/wasi.md#debug) |
 
 - `[seeded]` Build with `-g -O0` (or `-Og`) for debugging; ship stripped, keep the unstripped file and match by build-id (`readelf -n`).

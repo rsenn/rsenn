@@ -28,6 +28,7 @@ Each cell is a section of the target page (`targets/<id>.md#<section>`); the hub
 | msys | [targets/msys.md](targets/msys.md) | [ssh](transports/ssh.md) [rdp](transports/rdp.md) |
 | cygwin | [targets/cygwin.md](targets/cygwin.md) | [ssh](transports/ssh.md) [rdp](transports/rdp.md) |
 | msvc | [targets/msvc.md](targets/msvc.md) | [ssh](transports/ssh.md) [rdp](transports/rdp.md) [remote-debug](transports/remote-debug.md) |
+| cosmo (cosmocc, APE) | [targets/cosmo.md](targets/cosmo.md) | [ssh](transports/ssh.md) (copy the same file everywhere) |
 | emscripten | [targets/emscripten.md](targets/emscripten.md) | local node/browser |
 | wasi | [targets/wasi.md](targets/wasi.md) | local runtime |
 
@@ -43,4 +44,4 @@ Template for a new target: [targets/_template.md](targets/_template.md).
 
 [build](activities/build.md) · [test](activities/test.md) · [debug](activities/debug.md) ·
 [trace](activities/trace.md) · [instrument](activities/instrument.md) ·
-[package](activities/package.md) · [transfer](activities/transfer.md)
+[package](activities/package.md) · [transfer](activities/transfer.md) · [sync](activities/sync.md)

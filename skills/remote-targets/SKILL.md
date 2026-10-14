@@ -1,6 +1,6 @@
 ---
 name: remote-targets
-description: Build, test, debug, trace, package, deploy and transfer to remote or foreign targets - Raspberry Pi, Android (Termux, adb/NDK), Windows (MinGW, MSYS2, Cygwin, MSVC), musl, dietlibc, Emscripten, WASI - over ssh, sshfs, adb, serial, rdp, vnc or a remote debugger. Use when a task has to run, cross-compile for, deploy to or debug on a machine other than this one, when asked to "try it on the pi/phone/windows box", or when adding a new remote site or target. Site data lives only in sites.yaml, generic knowledge in knowledge/; the skill extends itself after every use.
+description: Build, test, debug, trace, package, deploy and transfer to remote or foreign targets - Raspberry Pi, Android (Termux, adb/NDK), Windows (MinGW, MSYS2, Cygwin, MSVC), musl, dietlibc, Cosmopolitan/cosmocc (APE), Emscripten, WASI - over ssh, sshfs, adb, serial, rdp, vnc or a remote debugger. Use when a task has to run, cross-compile for, deploy to or debug on a machine other than this one, when asked to "try it on the pi/phone/windows box", or when adding a new remote site or target. Site data lives only in sites.yaml, generic knowledge in knowledge/; the skill extends itself after every use.
 ---
 
 # remote-targets
@@ -35,6 +35,7 @@ A site lists the targets it can host (`targets: [...]`); a target never names a 
 |---|---|---|---|---|
 | reach the machine, run a command | `use.run`, `access.*` | - | - | [ssh](knowledge/transports/ssh.md) [adb](knowledge/transports/adb.md) [serial](knowledge/transports/serial.md) |
 | build (native or cross) | `dirs.work` | `#build` | [build](knowledge/activities/build.md) | - |
+| test uncommitted code on the remote / bring remote edits back | `dirs.repos` | - | [sync](knowledge/activities/sync.md) (`scripts/rt-sync.sh`) | [ssh](knowledge/transports/ssh.md) |
 | copy files / mount the remote | `use.transfer`, `dirs.*` | `#transfer` | [transfer](knowledge/activities/transfer.md) | [ssh](knowledge/transports/ssh.md) [sshfs](knowledge/transports/sshfs.md) [adb](knowledge/transports/adb.md) |
 | run tests on it | `use.run` | `#test` | [test](knowledge/activities/test.md) | - |
 | debug (gdb/lldb/cdb/inspector) | `use.debug`, `access.debug` | `#debug` | [debug](knowledge/activities/debug.md) | [remote-debug](knowledge/transports/remote-debug.md) |
@@ -49,7 +50,7 @@ Targets: [termux](knowledge/targets/termux.md) · [android-ndk](knowledge/target
 [dietlibc](knowledge/targets/dietlibc.md) · [mingw](knowledge/targets/mingw.md) ·
 [msys](knowledge/targets/msys.md) · [cygwin](knowledge/targets/cygwin.md) ·
 [msvc](knowledge/targets/msvc.md) · [emscripten](knowledge/targets/emscripten.md) ·
-[wasi](knowledge/targets/wasi.md). Full matrix: [knowledge/INDEX.md](knowledge/INDEX.md).
+[wasi](knowledge/targets/wasi.md) · [cosmo](knowledge/targets/cosmo.md) (cosmocc / APE). Full matrix: [knowledge/INDEX.md](knowledge/INDEX.md).
 
 ## Rules that never change
 
@@ -126,6 +127,7 @@ remote-targets/
   LESSONS.md          append-only learning log
   scripts/
     probe.sh          gather facts from a remote shell (stdin script)
+    rt-sync.sh        push/run/pull/merge uncommitted work via private wip refs
     lint.sh           cross-reference + leak checks
   knowledge/
     INDEX.md          matrix: target x activity, transports, conventions

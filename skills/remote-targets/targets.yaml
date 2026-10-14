@@ -148,3 +148,15 @@ targets:
     run: wasmtime / wasmer / wasmedge / node --experimental-wasi
     transports: [ssh]
     knowledge: knowledge/targets/wasi.md
+
+  cosmo:
+    summary: Cosmopolitan Libc / cosmocc - one APE binary for Linux, macOS, Windows, *BSD on x86_64 + aarch64
+    triple: [x86_64-unknown-cosmo, aarch64-unknown-cosmo]   # cosmocc = fat build of both
+    libc: Cosmopolitan Libc (own ABI, not the distro's)
+    link: static
+    mode: cross
+    toolchain: "cosmocc release zip (GCC 14 + Clang 19), runs anywhere; bin/cosmocc, x86_64-unknown-cosmo-cc, aarch64-unknown-cosmo-cc, apelink, assimilate"
+    helper: ~   # cfg-cosmo not written yet
+    run: "sh -c ./prog on the host; qemu-aarch64 ./prog.aarch64.elf; copy the same file to a Linux/Windows/macOS/BSD site (Android/Termux unsupported)"
+    transports: [ssh]
+    knowledge: knowledge/targets/cosmo.md

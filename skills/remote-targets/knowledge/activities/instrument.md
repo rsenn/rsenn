@@ -12,6 +12,7 @@ Sanitizers, coverage, size accounting. Back to [INDEX](../INDEX.md). Bullets: `[
 | mingw / cygwin | UBSan; clang-mingw partial ASan | [mingw](../targets/mingw.md#instrument) [cygwin](../targets/cygwin.md#instrument) |
 | msys | clang env ASan/UBSan | [instrument](../targets/msys.md#instrument) |
 | msvc | `/fsanitize=address`, AppVerifier | [instrument](../targets/msvc.md#instrument) |
+| cosmo | size via `-mtiny`; `-mdbg` UBSan runtime | [instrument](../targets/cosmo.md#instrument) |
 | emscripten / wasi | ASan (emcc), `wasm-opt`/`twiggy` size | [emscripten](../targets/emscripten.md#instrument) [wasi](../targets/wasi.md#instrument) |
 
 - `[seeded]` Size: `size prog`, `nm --size-sort -S prog | tail -20`, linker map. Coverage: build with `--coverage`, run on target, pull `*.gcda`, run `gcov`/`lcov` here with the same source tree path.

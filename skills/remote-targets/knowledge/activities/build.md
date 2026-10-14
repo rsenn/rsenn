@@ -19,6 +19,7 @@ Cross-target hub. Site keys: `dirs.work`, `targets`. Back to [INDEX](../INDEX.md
 | msys | gcc/clang in an MSYSTEM | [build](../targets/msys.md#build) |
 | cygwin | gcc in Cygwin | [build](../targets/cygwin.md#build) |
 | msvc | cl / clang-cl after vcvars | [build](../targets/msvc.md#build) |
+| cosmo | `cosmocc` (fat APE) / `<arch>-unknown-cosmo-cc` | [build](../targets/cosmo.md#build) |
 | emscripten | emcc | [build](../targets/emscripten.md#build) |
 | wasi | wasi-sdk clang | [build](../targets/wasi.md#build) |
 

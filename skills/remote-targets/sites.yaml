@@ -31,6 +31,7 @@
 #       console: serial       # boot/rescue console
 #       gui: vnc              # see/drive the desktop
 #     dirs:
+#       repos:  home-relative dir with git clones for scripts/rt-sync.sh (default Sources)
 #       work:   remote scratch/build dir (safe to wipe)
 #       deploy: where artifacts are installed/run from
 #       mount:  local mountpoint of the sshfs, if any
@@ -180,7 +181,8 @@ sites:
           transform_symlinks makes absolute symlinks inside $PREFIX resolve under the mount.
     use: {run: ssh, transfer: sshfs}
     dirs:
-      work: ~/mnt/termux/home                # local view; projects are git repos directly under it
+      repos: Sources                         # home-relative; clones live in ~/Sources/<proj> (rt-sync default)
+      work: ~/mnt/termux/home                # local view of the Termux home
       deploy: ~/mnt/termux/usr               # local view of $PREFIX
       mount: ~/mnt/termux
     services:
@@ -194,3 +196,19 @@ sites:
     notes:
       - "list project dirs: (cd ~/mnt/termux/home/; set -- */.git; echo \"${@%/*}\")"
       - "real gcc may be available from extra Termux repositories (not yet tried)"
+
+  workstation:                              # REAL: this development machine (local, no transport)
+    description: Linux x86_64 dev workstation (Ubuntu); builds locally, qemu-user binfmt registered for aarch64
+    aliases: [local, host, workstation]
+    targets: [cosmo, musl, dietlibc, mingw, emscripten, wasi]
+    arch: x86_64
+    access: {}
+    use: {run: local}
+    dirs:
+      work: ~/Sources
+      tools: ~/Sources/cosmopolitan            # Cosmopolitan source clone (master 4.x); tool/cosmocc/README.md is the toolchain reference
+    facts:
+      probed: 2026-10-14
+      disk: "root fs 100% full, ~1.5 GB free (check `df -h /` before installing toolchains; cosmocc 4.0.2 needs 1.4 GB extracted)"
+      binfmt: "qemu-aarch64 and others registered; no APE entry; APE runs via shell self-extraction"
+    notes: []

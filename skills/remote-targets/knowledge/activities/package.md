@@ -14,5 +14,6 @@ Cross-target hub; the publishing side is the `release-management` skill. Site ke
 | msys | zip / pacman pkg | ucrt DLLs unless static | [package](../targets/msys.md#package) |
 | cygwin | zip | `cygwin1.dll` + `cyg*.dll` | [package](../targets/cygwin.md#package) |
 | msvc | zip / MSI | VC redist unless `/MT`; PDBs separately | [package](../targets/msvc.md#package) |
+| cosmo | one APE for all OS/arch (+ `/zip` assets) | `.dbg`/`.aarch64.elf` separately | [package](../targets/cosmo.md#package) |
 | emscripten | js + wasm (+data) | HTML shell, COOP/COEP headers | [package](../targets/emscripten.md#package) |
 | wasi | wasm | run line with `--dir` grants | [package](../targets/wasi.md#package) |

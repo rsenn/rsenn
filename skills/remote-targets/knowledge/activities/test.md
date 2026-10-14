@@ -15,6 +15,7 @@ Cross-target hub. Back to [INDEX](../INDEX.md). Bullets: `[seeded]`.
 | musl / dietlibc | host if same arch, else qemu or a board | [musl](../targets/musl.md#test) [dietlibc](../targets/dietlibc.md#test) |
 | mingw | wine, or Windows over ssh | [test](../targets/mingw.md#test) |
 | msys / cygwin / msvc | Windows over ssh (`bash -lc` / cmd) | [msys](../targets/msys.md#test) [cygwin](../targets/cygwin.md#test) [msvc](../targets/msvc.md#test) |
+| cosmo | host `sh -c ./prog`, qemu-aarch64 on the `.elf`, same file on other OS sites | [test](../targets/cosmo.md#test) |
 | emscripten | node | [test](../targets/emscripten.md#test) |
 | wasi | wasmtime | [test](../targets/wasi.md#test) |
 

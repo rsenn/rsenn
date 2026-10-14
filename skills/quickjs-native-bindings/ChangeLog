@@ -1,0 +1,4 @@
+- 2026-10-14
+  added a Tools section pointing at tool-registry (extract-c and genbindings ir for api design, genstructs asserts, describe for parity, debugger)
+- 2026-10-14
+  added static module init symbol rule and checks, make_module source argument, both-target loop, qjsm external-module status and the list ';' gotcha (cmake.md, section 21)

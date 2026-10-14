@@ -74,6 +74,12 @@ Macros (set variables the top level reads, so keep them macros), called in this 
 `qjsm_init_builtins`, `qjsm_resolve_builtins`, `qjsm_declare_imports`, `qjsm_compile_builtins`,
 `qjsm_process_builtins`, `qjsm_add_executable`.
 
+**Status of out-of-tree natives (not implemented yet):** `qjsm_init_builtins` collects them in
+`EXTERNAL_MODULES` (and sets `<name>_MODULE` for a directory entry), but nothing includes the
+`quickjs-<name>.module.cmake`, adds `<name>_MODULE` to `QJSM_STATIC_LIBS` or emits
+`BUILTIN_NATIVE(<name>)` into `quickjs-builtins.h`; the directory lookup uses `find_library(<name>)`
+and so misses `quickjs-<name>.a`. Until that is done an external module is not in the binary.
+
 Baking in: `BUILTIN_MODULES` entries are a bare name (`lib/<name>.js` -> bytecode, `quickjs-<name>.c`
 -> native, native wins), a `.js` file, or a directory/library of an out-of-tree `qjs-<name>` built
 with `-DBUILD_STATIC=ON` (goes to `EXTERNAL_MODULES`, `<name>_MODULE` from its `.module.cmake`).
@@ -118,9 +124,36 @@ and the older variants carry bytecode helpers that only qjs-modules uses (now in
 4. Run qjsm/tests under limits (`timeout 60 systemd-run --user --scope -q -p MemoryMax=4G -p MemorySwapMax=0`).
 5. Install to a scratch prefix; check `readelf -d qjsm` RUNPATH is absolute and the module loads.
 
+## Static modules: init symbol and checks
+
+A `quickjs-<name>.a` is linked next to others into one binary, so it must export exactly
+`JSModuleDef* js_init_module_<name>(JSContext*, const char*)` and no plain `js_init_module`:
+
+```c
+#ifdef JS_SHARED_LIBRARY
+#define JS_INIT_MODULE js_init_module
+#else
+#define JS_INIT_MODULE js_init_module_foo
+#endif
+```
+
+- `JS_SHARED_LIBRARY` is defined for the shared target only (`make_module` does this; a hand-written
+  target must too). A helper that declares exports must not be named `js_init_module_<name>`
+  (qjs-sound used `js_<name>_add_exports`).
+- Check: `nm -A quickjs-*.a | grep " T js_init_module"` lists one symbol per archive.
+- Test per project: scratch dir, `cmake -DBUILD_STATIC=ON -DBUILD_SHARED=OFF`, build, `nm` check, read
+  `quickjs-<name>.module.cmake`.
+- `make_module(<name> [sources])` takes sources, not a language: `make_module(stk quickjs-stk.cpp)`.
+- With `BUILD_SHARED=OFF` the target `qjs-<name>` does not exist, only `qjs-<name>-static`; code that
+  configures targets after `make_module` must loop over both (`if(TARGET ...)`). Replace a target's
+  `INCLUDE_DIRECTORIES` instead of appending, or a directory-wide include dir shadows same-named
+  headers (stk's `ADSR.h` over sndobj's).
+
 ## Gotchas
 
 - `option()` under old policy CMP0077 discards a pre-set variable: use `if(NOT DEFINED)`.
 - Macros see `CMAKE_CURRENT_LIST_DIR` of the caller: capture dirs at include time (`_QUICKJS_CMAKE_DIR`).
 - `Functions.cmake` / `Compat.cmake` are included on demand by FindQuickJS from its own dir or one up.
 - Do not install into `QUICKJS_BUILD_ROOT`; the build tree is only for compile/link.
+- A CMake list item cannot hold `;`: a regex match containing it splits in two. Keep `;` out of the
+  pattern, and cut a match with `string(FIND)` + `SUBSTRING`, not `REGEX REPLACE "^[^x]+"` (errors on an empty match).

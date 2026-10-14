@@ -41,6 +41,18 @@ How to edit:
 - the skill dir is a symlink into the `rsenn` repo; leave committing that
   repo to the user, and mention in your reply what you changed here
 
+## Tools
+
+Tools: see `tool-registry/skill-uses.yaml` key `quickjs-native-bindings`; run them via
+`tool-registry/scripts/qtool`. Facts per tool live in `tool-registry/tools.yaml`. Useful here:
+
+- designing the JS API: `qtool extract-c -l -p '^<lib>_' <include>` for the surface and
+  `qtool qjs-ffi-genbindings --emit-ir=ir.json -I <inc> <hdr>` for compiler-true types, enums and struct sizes;
+  `qjs-ffi-genbindings ... -o proto.js` gives a throwaway FFI prototype to try the API from JS before writing C
+- struct wrappers: `qjs-ffi-genstructs --format=c ir.json` emits layout asserts to compile into the binding tests
+- parity with a reference API: `qjs-ffi-describe.sh -d qjsm,node --flat <mod>`, and `--dts <mod>` for declarations
+- a callback or finalizer misbehaving at the JS boundary: `qjsm-debugger --args test.js`
+
 ## 0. Before designing anything: survey existing bindings of the same library
 
 **Don't invent a JS API for a C/C++ library from scratch. Someone has
@@ -1362,16 +1374,11 @@ Default locations, applied going forward:
 - Tests: `tests/test-<module-name>.js` (e.g. `tests/test-portmidi.js`).
 
 **Check the project's own established convention before assuming these
-defaults apply, and follow section 0's rule: local convention wins over
-an externally-imposed one.** Concretely, `qjs-sound` (this project, as
-of this writing) does *not* use `doc/native/` - its docs live flat under
-`doc/*.md` (`doc/aubio.md`, `doc/stk-io.md`, `doc/portmidi.md`) - and its
-tests are flat `<name>-test.js` files at the repo root, no `tests/`
-directory, no `tinytest.js`. Don't silently introduce a new `doc/native/`
-subdirectory or a new `tests/` layout into a project that already has an
-established, different one; flag the mismatch and ask which to use for
-new work, same as any other convention conflict this skill tells you to
-surface rather than resolve unilaterally.
+defaults apply** (local convention wins, section 0). `qjs-sound` now follows
+them: native-module docs in `doc/native/<module>.md`, docs for JS modules and
+cross-module docs (e.g. `doc/api-interoperability.md`) directly in `doc/`,
+tests under `tests/` as `<name>-test.js`. Other projects may differ; flag a
+mismatch and ask before introducing a layout.
 
 **Prefer `tinytest.js` for new test files if the project tree already
 uses it anywhere** (`grep -rl tinytest` or look for a `tests/tinytest.js`
@@ -1942,6 +1949,10 @@ file rather than `QUICKJS_${UNAME}_LIBRARIES` - not wrong, just a
 different vintage of the variable-naming half; don't silently rename it
 to match without the same section 0 "offer the rename, let the user
 decide" treatment as any other existing API surface.)
+
+**Static entry point**: the archive must export only `js_init_module_<name>` (no plain `js_init_module`, see
+the `JS_INIT_MODULE` macro in section 1); check with `nm -A quickjs-*.a | grep " T js_init_module"`. See
+[`cmake.md`](cmake.md) "Static modules".
 
 **Naming convention**: `BUILD_SHARED_MODULES`/`BUILD_STATIC_MODULES` -
 plural, even in a project with only one module - is the settled monorepo

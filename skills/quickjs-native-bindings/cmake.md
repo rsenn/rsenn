@@ -27,6 +27,10 @@ Include order in a top-level `CMakeLists.txt`: `UseMultiArch`, `Functions`, `Che
 `QUICKJS_BUILD_ROOT` / `QUICKJS_SOURCES_ROOT` (when a tree is used), `QJSC`, `QJS`, `QJSM` (exact names: grep `FindQuickJS.cmake`)
 (lookup off with `set(QUICKJS_FIND_QJSM OFF)` before the include: qjs-modules builds its own).
 
+`QUICKJS_MODULE_PATH` (written to `config.h`) = the path in the found `quickjs-config.h` first, then the
+configured dirs, de-duplicated. A C file including both headers must include `<quickjs-config.h>`,
+`#undef QUICKJS_MODULE_PATH`, then `"config.h"` (see `qjs-modules/src/qjsm.c`), else the macro is redefined.
+
 Rule: compile and link refer to the **build** tree (headers, libs), run time (rpath, module dirs)
 refers to the **project's install dirs**. Never use `QUICKJS_LIBRARY_DIR` for `INSTALL_RPATH`.
 

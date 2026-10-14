@@ -24,6 +24,18 @@ this replaced.
 Machine-specific checkout paths are in `rsenn/rsenn/sites.local` (`name=path`,
 untracked). If a project is missing there, add it before anything else.
 
+## Tools
+
+Tools: see `tool-registry/skill-uses.yaml` key `github-pages`; run them via `tool-registry/scripts/qtool`.
+Facts per tool live in `tool-registry/tools.yaml`. Useful here:
+
+- landing-page facts (function counts, API names) come from the code, not memory:
+  `qtool extract-c -l -p '^<lib>_' <include> | wc -l`; re-verify them in Procedure C
+- API reference text from header comments: `qtool extract-comments -d --style doxygen -j <include>/*.h`
+- importing an existing HTML page as markdown source: `qtool html2md page.html > doc/page.md`
+  (tables and code-fence languages are lost; review the result)
+- code highlighting is done by the generator's own `tools/site/lib/highlight.js`; do not use the `highlight` CLI for pages
+
 ## Commands (run from the rsenn/rsenn checkout)
 
 ```sh

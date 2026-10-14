@@ -29,6 +29,20 @@ A site lists the targets it can host (`targets: [...]`); a target never names a 
 6. Check `LESSONS.md` (grep the target and transport names) for recent surprises.
 7. Act. Then [learn](#learning-loop).
 
+## Tools
+
+Tools: see `tool-registry/skill-uses.yaml` key `remote-targets`; run them via `tool-registry/scripts/qtool`.
+They run on this workstation, on artifacts the cross build produced here; none of them is installed on a target.
+Facts per tool live in `tool-registry/tools.yaml`. Useful here:
+
+- the module path differs per install prefix: check `qtool --env` before running any tool on another prefix or machine
+- `qtool nm-symbols <lib>.a` reads ELF (musl) and COFF (mingw) archives with the host `nm`; it fails on
+  emscripten/wasm objects, and its reachability mode is still tied to `js_init_module` (no `--entry` yet), so for
+  per-target size questions use plain `size` and `nm` until that lands
+- a script that differs on the device: dump with `qjs-ffi-describe.sh` on the target's runtime (`-o`/`--json`) and
+  diff on the host (not yet tried against a real device)
+- debugging a JS script on a device with `qjsm-debugger -e` attach waits for the scriptable debugger work
+
 ## Task -> where to look
 
 | I need to... | Site key | Target section | Cross-target hub | Transport page |

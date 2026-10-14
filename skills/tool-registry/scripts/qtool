@@ -1,0 +1,31 @@
+#!/bin/sh
+# qtool - run an installed qjs-* utility with a working module path.
+#   qtool <tool> [args...]     e.g. qtool extract-c -l -p '^sh_' src
+#   qtool --check              run --help of every registry tool, report load failures
+#   qtool --env                print the QUICKJS_MODULE_PATH it would use
+# Why: qjsm's default path is /usr/local/lib/quickjs only, but the native .so modules (lexer,
+# arraybuffer_sink, tree_walker, ...) install to /usr/local/lib/<triplet>/quickjs, and the
+# separator is ';' (not ':'). Only the host arch dir is added: a stale /usr/local/lib/i386-linux-gnu/quickjs
+# with 32-bit .so files shadows the right one ("could not load module filename ... as shared library"). Without this every tool dies with "could not load module 'lexer'".
+set -u
+p=
+for d in /usr/local/lib/quickjs "/usr/local/lib/$(uname -m)-linux-gnu/quickjs"; do
+  [ -d "$d" ] && p="${p:+$p;}$d"
+done
+[ -n "${QUICKJS_MODULE_PATH:-}" ] && p="$QUICKJS_MODULE_PATH;$p"
+export QUICKJS_MODULE_PATH="$p"
+case "${1:-}" in
+  --env) echo "$QUICKJS_MODULE_PATH"; exit 0 ;;
+  --check)
+    for t in $(sed -n '/^tools:/,$ s/^  \([a-z0-9.-]*\):$/\1/p' "$(dirname "$0")/../tools.yaml"); do
+      f=/usr/local/bin/$t; [ -x "$f" ] || f=$f.js
+      case "$t" in search) echo "skipped $t (queries SerpApi, needs a key; --help is a search)"; continue;; esac
+      [ -x "$f" ] || { echo "MISSING $t"; continue; }
+      o=$(timeout 8 "$f" --help </dev/null 2>&1)
+      case "$o" in *"could not load"*) echo "BROKEN  $t: $(echo "$o" | grep 'could not load' | tail -1)";; *) echo "ok      $t";; esac
+    done; exit 0 ;;
+  "") echo "usage: qtool <tool> [args...] | --check | --env" >&2; exit 2 ;;
+esac
+t=$1; shift
+f=/usr/local/bin/$t; [ -x "$f" ] || f=/usr/local/bin/${t%.js}.js
+exec "$f" "$@"

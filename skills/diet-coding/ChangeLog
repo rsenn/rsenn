@@ -1,0 +1,2 @@
+- 2026-10-14
+  added a Tools section pointing at tool-registry (extract-c lookup, dead code evidence ladder, struct layout asserts)

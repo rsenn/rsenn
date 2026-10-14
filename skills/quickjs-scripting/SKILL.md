@@ -10,6 +10,28 @@ The target: **one script file, ES module syntax, runs unchanged under `qjsm`,
 The interpreter is `qjsm` (QuickJS plus the qjs-modules standard library),
 the debugger is `qjsm-debugger`.
 
+## This skill is self-modifying: learn as you work
+
+This file is a living document, not a frozen reference. **Whenever work done
+under this skill teaches something it does not already say, edit the skill
+before finishing the task**:
+
+- a mistake you made and the rule that would have prevented it
+- a user correction or stated preference ("always do X", "never Y")
+- an API quirk, portability difference or gotcha found by running code
+- a pattern that worked and is likely to recur
+- a statement here that turned out wrong or outdated: fix or delete it
+
+How to edit:
+
+- put the fact in the section it belongs to; add a section only if none fits
+- state the current rule and its reason in a few lines; no session history
+- verify before writing (run it, `diff` it, `grep` it); never record a guess
+- prefer one precise line over a paragraph; merge duplicates instead of appending
+- follow the comment and style rules already in this file
+- the skill dir is a symlink into the `rsenn` repo; leave committing that
+  repo to the user, and mention in your reply what you changed here
+
 ## Files in this skill
 
 | File | Purpose |
@@ -20,6 +42,18 @@ the debugger is `qjsm-debugger`.
 
 Start every task by reading `modules.yaml`. It is short; do not guess an API
 from memory when the entry points at a doc file.
+
+## Tools
+
+Tools: see `tool-registry/skill-uses.yaml` key `quickjs-scripting`; run them via `tool-registry/scripts/qtool`.
+Facts per tool live in `tool-registry/tools.yaml`. Useful here:
+
+- is a module or function portable: `qtool qjs-ffi-describe.sh -d qjsm,node --flat <mod>` (also `-l -d qjsm,bun` for
+  builtin module lists, `--dts <mod>` for declarations); `runtime-diff` (run from `qjs-modules/`) gives
+  "present in [runtimes]" per member. Record the result in `modules.yaml` notes instead of guessing
+- what a lib module offers: `qtool list-exports <path>.js | grep -v ': took'`
+- audit a script's imports: `qtool resolve-imports --list-imports -q script.js`, `-u` for unused ones
+- a script that does not behave: `qjsm-debugger script.js` (see section 5; strip ANSI when capturing output)
 
 ## 1. Choosing modules
 

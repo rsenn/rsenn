@@ -1,0 +1,405 @@
+# Central registry of command-line tools the skills may employ.
+# One entry per tool = facts about the TOOL only. Which skill uses it for what lives in
+# skill-uses.yaml. Improvement ideas live in PROPOSALS.md. Keep entries to verified facts;
+# `status` says how much of an entry was actually run (see SKILL.md "Learning loop").
+#
+# status:  verified   = run by hand on real input, usage lines below are known to work
+#          partial    = some modes run, others read from --help/source only
+#          unverified = read, not run (interactive/destructive/needs a build)
+# rating:  1-5 usefulness for our work (see ASSESSMENT.md for the reasoning)
+#
+# invoke every tool through scripts/qtool (fixes QUICKJS_MODULE_PATH, see `env`).
+
+env:
+  runner: scripts/qtool            # qtool <tool> args...; qtool --check; qtool --env
+  interpreter: /usr/local/bin/qjsm
+  module_path: >-
+    QUICKJS_MODULE_PATH uses ';' as separator on this build (':' silently finds nothing).
+    Needed: /usr/local/lib/quickjs (js) AND /usr/local/lib/x86_64-linux-gnu/quickjs (native .so).
+    A stale /usr/local/lib/i386-linux-gnu/quickjs (32-bit .so) must NOT be on the path: it shadows
+    the right one ("could not load module filename ... as shared library"); qtool adds the host arch only.
+    Bare `extract-c.js` fails with "could not load module 'lexer'" otherwise.
+  error_noise: >-
+    A module-load failure prints "TypeError: not a function" from process.js emitUncaught first;
+    the real cause is the last line ("ReferenceError: could not load module ...").
+  install_dir: /usr/local/bin
+  source_projects:                                 # entries without `project:` belong to qjs-modules
+    qjs-modules: ~/Sources/quickjs/qjs-modules     # utilities/*.js (html2md: examples/)
+    qjs-debugger: ~/Sources/quickjs/qjs-debugger
+    qjs-ffi: ~/Sources/quickjs/qjs-ffi             # installs tools to /usr/local/share/qjs-ffi/tools/
+    qjs-lws: ~/Sources/quickjs/qjs-lws
+  todo_file: "<project>/TODO.md"                   # where approved proposals go (the entry's project)
+  other_runtimes: [node, bun, deno]                # present on this machine (runtime-diff)
+
+tools:
+  extract-c:
+    path: /usr/local/bin/extract-c.js
+    group: c-analysis
+    rating: 5
+    status: verified
+    what: >-
+      Lexer-based C/C++ extractor (no compiler needed): functions (with source text), types
+      with LP64 field offsets/sizes, #define/macro, and a cross-file identifier index with
+      declaration, prototypes and reference counts. Can build a dependency graph from entry
+      points and list unreachable identifiers. Has -r REPL over the parsed project.
+    modes:
+      list_functions: extract-c.js -l [-p REGEX] DIR...          # file:line:col: name
+      function_source: extract-c.js -F function -p '^name$' DIR  # JSON with .text
+      types: extract-c.js -t [-F struct|typedef|enum] FILE       # JSON IR, offsets+sizes
+      split_one_per_file: extract-c.js -s OUTDIR FILE.c          # <name>.c per function (diet!)
+      unused_identifiers: extract-c.js -i -c -C 0 -l DIR...      # 0 references
+      unreachable: extract-c.js -d -m main -l DIR...             # not reachable from entry points
+      macros: extract-c.js -F define,macro -l FILE
+      preprocessed: -E / -e 'gcc -E -Iinclude' / -I DIR
+    speed: ~4 s listing shish src/, ~10 s for -i over src/+lib/ (1 core). Cache JSON in scratch.
+    gotchas:
+      - "-i reports data tables (`*_ops`, `*_tag`) with 0 references although they are used via macros or registration: treat 0-ref DATA as candidates, 0-ref FUNCTIONs as stronger evidence."
+      - "Without -E macro-generated functions/uses are invisible; use -E for heavily macro-driven code."
+      - "-t on `struct buffer` (lib/buffer.h) gives size:null although all fields have sizes (trailing/unresolved member?). Do not trust total size for structs with null; sum fields."
+      - "Positional args are files or DIRs; a shell glob that matches nothing (src/*.c with nested dirs) just yields 'cannot read' / an exception."
+    verified: "2026-10-14 on shish src/ lib/"
+
+  extract-comments:
+    path: /usr/local/bin/extract-comments.js
+    group: source-text
+    rating: 4
+    status: verified
+    what: >-
+      Prints/exports comments of C/C++, JS, shell, cmake, make, ini, lex, bnf, csv, xml files
+      (lexer chosen by extension, --lang for stdin). Filters: doc vs plain, jsdoc/doxygen style,
+      min/max lines, regex. Output text, JSON or NDJSON with positions.
+    modes:
+      doc_comments: extract-comments.js -d DIR              # /** */, ///
+      long_comments: extract-comments.js -m FILE...         # 2+ lines
+      todo_scan: extract-comments.js -i -p 'todo|fixme|xxx|hack' DIR
+      machine: extract-comments.js -n -s -L start FILE...   # NDJSON, stripped text
+    gotchas:
+      - "Adjacent // lines are joined into one comment (-G to disable)."
+    verified: "2026-10-14 on shish src/sh, lib/"
+
+  extract-structs:
+    path: /usr/local/bin/extract-structs.js
+    group: c-analysis
+    rating: 1
+    status: partial
+    what: >-
+      Older struct extractor. --help is not handled: it prints `cFuncListObjects {}` and `[]`.
+      Superseded by `extract-c.js -t`.
+    gotchas:
+      - "No usable --help; treat as legacy. Use extract-c.js -t."
+    verified: "2026-10-14 (help only)"
+
+  source-scanner:
+    path: /usr/local/bin/source-scanner.js
+    group: c-analysis
+    rating: 4
+    status: verified
+    what: >-
+      Non-preprocessing C scanner. Follows local #include "..." and streams NDJSON, one record
+      per identifier: {name, type: proto|decl|ref, file, range, conditions, static?, context?}.
+      Very fast. Feed for unused-functions.js and for ad-hoc jq/qjs queries.
+    modes:
+      scan: source-scanner.js -I lib -I src FILE_OR_DIR... > scan.ndjson
+      array: source-scanner.js -j ...                       # streamed JSON array
+    speed: 36 ms for one file with includes.
+    gotchas:
+      - "-I defaults to include/ only; shish needs -I lib -I src."
+      - "Conditions (#if) are recorded, not evaluated."
+    verified: "2026-10-14 sh_exit.c"
+
+  unused-functions:
+    path: /usr/local/bin/unused-functions.js
+    group: c-analysis
+    rating: 3
+    status: unverified
+    what: >-
+      Interactive (tty) table of source-scanner output: functions with live reference count,
+      redraws while still reading. For a human at a terminal; not scriptable.
+    modes:
+      pipe: source-scanner.js -j ... | tee scan.json | unused-functions.js
+    gotchas:
+      - "Needs a tty: from Claude run source-scanner + jq/qjs instead and hand the user the command."
+    verified: "2026-10-14 (help only)"
+
+  nm-symbols:
+    path: /usr/local/bin/nm-symbols.js
+    group: binary-analysis
+    rating: 4
+    status: partial
+    what: >-
+      Cross-checks nm/objdump data. Default: which object files/symbols of .a/.o inputs are
+      pulled in by an entry point (default js_init_module) and which are unused, per-object
+      symbol coverage, -g full call graph. -d: dead-code report (JSON) = functions in --source
+      dirs that no .so/executable defines (needs -ffunction-sections/--gc-sections and
+      -fno-inline), with platformGuarded and referencedButUnlinked cross-checks.
+    modes:
+      reachability: nm-symbols.js [-g] build/libfoo.a
+      dead_code: nm-symbols.js -d -s src -s lib -o dead.json build/*.so
+    gotchas:
+      - "-d on a static archive (libowfat.a of shish) reported 1109 of 1362 functions dead: the mode is designed for .so/executables built with gc-sections. Use it on a linked binary, never on a bare .a."
+      - "Entry point is hard-wired to js_init_module for the default mode; for a C program there is no --entry (see PROPOSALS)."
+      - "Name-only matching: same-named statics in different files mask each other."
+      - "Uses the HOST nm: reads ELF (musl) and COFF (mingw) archives of shish, but fails on emscripten/wasm objects ('file format not recognized'). For a foreign arch pass a cross nm or use llvm-nm."
+      - "Default mode on a non-QuickJS library (shish libowfat.a, musl and mingw builds) reports 0 included objects: nothing reaches js_init_module. Needs --entry (PROPOSALS)."
+    verified: "2026-10-14 (-d on .a: misleading; default mode not run)"
+
+  remove-dead-functions:
+    path: /usr/local/bin/remove-dead-functions.js
+    group: c-analysis
+    rating: 4
+    status: unverified
+    destructive: true
+    what: >-
+      Deletes functions (and their header prototype) listed in an nm-symbols -d report or an
+      `extract-c.js -i -L start,end -c` identifier list. Default is a dry run: plan on stderr,
+      a POSIX sh script of `sed -i 'N,Md'` on stdout. -a applies directly.
+    gotchas:
+      - "Always review the generated script; never -a without a clean git tree and a build+test afterwards."
+      - "Re-locates by name+start line and skips changed files, so run it right after the report."
+    verified: "2026-10-14 (help only)"
+
+  deadwood:
+    path: /usr/local/bin/deadwood.js
+    group: c-analysis
+    rating: 3
+    status: unverified
+    destructive: true
+    what: >-
+      Interactive front-end: nm-symbols dead-code detection + terminal checklist + confirm by
+      retyping a phrase + remove-dead-functions. For the user at a tty.
+    gotchas:
+      - "Interactive only. Claude should produce the report (nm-symbols -d) and tell the user to run deadwood.js."
+    verified: "2026-10-14 (help only)"
+
+  list-exports:
+    path: /usr/local/bin/list-exports.js
+    group: js-analysis
+    rating: 4
+    status: partial
+    what: >-
+      Lists what a JS module exports, as an ES import statement
+      (`import { A, B } from '/path/mod.js'`); options for include/exclude filters, sorting,
+      imports; follows module graphs. Good for API surface inventory of qjs-* lib/*.js.
+    modes:
+      exports: list-exports.js lib/events.js
+    gotchas:
+      - "--help is not handled: it dumps the option table (a getOpt debug print). Read the source header or options in extract-c style: use -s sort, -I/-X include/exclude."
+      - "Prints '<file>: took Nms' lines to the output; strip with grep -v ': took'."
+    verified: "2026-10-14 on qjs-modules/lib/events.js"
+
+  resolve-imports:
+    path: /usr/local/bin/resolve-imports.js
+    group: js-analysis
+    rating: 4
+    status: partial
+    what: >-
+      Resolves/flattens/merges ES module graphs; --list-imports, --check-imports,
+      --remove-unused, --show-dependencies, bundling (-f/-m), module maps (-M name=path),
+      userscript output. The nearest thing to a bundler/lint for qjsm scripts.
+    modes:
+      imports: resolve-imports.js --list-imports -q FILE      # "file:module names"
+      deps: resolve-imports.js -d FILE
+      unused: resolve-imports.js -u FILE
+    gotchas:
+      - "--help lists flags with no descriptions."
+      - "Only --list-imports run so far."
+    verified: "2026-10-14 --list-imports on a 3-line script"
+
+  runtime-diff:
+    path: /usr/local/bin/runtime-diff.js
+    group: js-analysis
+    rating: 5
+    status: verified
+    what: >-
+      Describes modules/globals in qjsm, node, deno and bun via lib/describe.js and diffs member
+      sets: "present in [qjsm]" / "[node, deno, bun]". The portability oracle for API design
+      and for the quickjs-scripting module index.
+    modes:
+      compare: "cd ~/Sources/quickjs/qjs-modules && runtime-diff.js -a path fs"
+      globals: runtime-diff.js -g URL -g fetch -a
+      builtins: runtime-diff.js -b -a
+      raw: runtime-diff.js -o out.json -a mod
+    speed: 0.2 s for `path` on 4 runtimes.
+    gotchas:
+      - "MUST run with cwd = qjs-modules/ : it does loadFile('lib/describe.js') relative to cwd; elsewhere: TypeError cannot read property 'slice' of null."
+      - "node, bun, deno are installed here (nvm/.bun/.deno)."
+    verified: "2026-10-14 `path` -a from qjs-modules"
+
+  parse-ast:
+    path: /usr/local/bin/parse-ast.js
+    group: js-analysis
+    rating: 3
+    status: verified
+    what: >-
+      Parses source text with a grammar file (.bnf .ebnf .g4 .y .jison, tokens from .l / %lex)
+      into a JSON/JS syntax tree via an Earley parser. Handy to prototype grammars (the
+      grammars-v4 checkout is at ~/Sources/grammars-v4) and to parse small formats.
+    modes:
+      parse: printf '1+20' | parse-ast.js -c -L -T grammar.ebnf
+    gotchas:
+      - "Earley: fine for small inputs, not for parsing whole large source files."
+    verified: "2026-10-14 EBNF arithmetic"
+
+  highlight:
+    path: /usr/local/bin/highlight.js
+    group: docs
+    rating: 4
+    status: verified
+    what: >-
+      Syntax highlighter on the lexers/ set (C, JS, cmake, make, shell, ini, ...). Formats:
+      ansi, ansi256, truecolor, html (page or --fragment with inline styles), json (token list),
+      rtf.
+    modes:
+      terminal: highlight.js FILE
+      html_fragment: highlight.js -f html -F FILE > snippet.html
+      tokens: highlight.js -f json FILE
+    gotchas:
+      - "qjs-opencv/tools/site/highlight.js is a separate site-local copy: reconcile with this one (PROPOSALS)."
+    verified: "2026-10-14 byte.h html fragment"
+
+  html2md:
+    path: /usr/local/bin/html2md.js
+    group: docs
+    rating: 3
+    status: verified
+    what: >-
+      HTML/XML (file or http(s) URL) to Markdown. Supports h1-h6, p, b/strong, i/em, ul/ol/li,
+      pre, a, img. No tables, no code-fence language, no nested-list indentation.
+    modes:
+      convert: html2md.js page.html | html2md.js https://example.org/doc
+    verified: "2026-10-14 small snippet"
+
+  jsonpp:
+    path: /usr/local/bin/jsonpp.js
+    group: data
+    rating: 3
+    status: verified
+    what: >-
+      Streaming JSON pretty-printer/minifier with JSON5 output options (bare keys, single quotes,
+      hex numbers). -w rewrites files in place atomically.
+    modes:
+      pretty: jsonpp.js -i 2 f.json
+      compact: jsonpp.js -c f.json
+      json5: jsonpp.js -b -s -m f.json
+    gotchas:
+      - "-w is destructive (in-place); a file that fails to parse is left alone."
+      - "Streaming parser: big files fine; jq is still better for querying."
+    verified: "2026-10-14"
+
+  xml-shell:
+    path: /usr/local/bin/xml-shell.js
+    group: data
+    rating: 2
+    status: partial
+    what: >-
+      REPL over a DOM (qjs-modules dom.js) of an XML/HTML file: query and edit the tree, write back.
+      Interactive; --help is taken as a file name.
+    gotchas:
+      - "Needs a tty/readline; piping stdin just replays the line-editor escape codes. For scripted DOM work import 'xml' / 'dom' in a small qjsm script instead."
+    verified: "2026-10-14 (piped: only escape codes)"
+
+  qjs-ffi-genbindings:
+    path: /usr/local/bin/qjs-ffi-genbindings
+    project: qjs-ffi
+    group: c-analysis
+    rating: 5
+    status: partial
+    what: >-
+      Compiler-accurate C/C++ -> QuickJS FFI binding generator: runs clang -ast-dump=json on the
+      sources, emits a JS module (functions, enums, optional struct/union classes, JSDoc,
+      describe signatures) for qjs, bun:ffi, Deno.dlopen or node:ffi. Intermediate JSON IR
+      (--emit-ir) and dlopen symbol specs (--emit-specs) are usable on their own: the IR is
+      the clang-true counterpart of extract-c (types, sizes, enums, prototypes).
+    modes:
+      bind: qjs-ffi-genbindings --structs --jsdoc --library=libfoo.so.1 -I include foo.h -o foo-ffi.js
+      ir_only: qjs-ffi-genbindings --emit-ir=ir.json [-I dir] [-D X] foo.h
+      specs: qjs-ffi-genbindings --emit-specs foo.h
+      other_runtime: --target=bun|deno|node (needs --library)
+      cxx: --c++ --std=c++17 --namespace=ns foo.hpp
+    speed: 0.1 s for a 5-line header (clang parse dominates on real headers; condensed AST cached in .tmp/gen-bindings).
+    gotchas:
+      - "Needs clang (/usr/bin/clang present). Missing system include dirs show as warnings; add -I."
+      - "Without --library symbols are looked up in RTLD_DEFAULT."
+      - "Output is for the qjs-ffi (script) route; the quickjs-native-bindings route is hand-written C. Use the IR to design the latter."
+    verified: "2026-10-14 5-line header with struct/enum/2 functions"
+
+  qjs-ffi-genstructs:
+    path: /usr/local/bin/qjs-ffi-genstructs
+    project: qjs-ffi
+    group: c-analysis
+    rating: 4
+    status: partial
+    what: >-
+      From a genbindings IR: struct/union classes as JS ArrayBuffer wrappers, or (--format=c) a C
+      header with the same layout plus _Static_assert(sizeof/offsetof) lines. The assert header is a
+      ready-made ABI check: compile it against the real header and layout drift fails the build.
+    modes:
+      js: qjs-ffi-genstructs [--struct=NAME] --describe --jsdoc ir.json -o structs.js
+      c_asserts: qjs-ffi-genstructs --format=c ir.json -o layout.h
+    verified: "2026-10-14 struct pt {int,int,double} -> size 16, offsets 0/4/8"
+
+  qjs-ffi-describe.sh:
+    path: /usr/local/bin/qjs-ffi-describe.sh
+    project: qjs-ffi
+    group: js-analysis
+    rating: 5
+    status: partial
+    what: >-
+      Superset of runtime-diff for API comparison: dumps a module/object/class/global in qjsm, qjs,
+      node, bun, deno or a headless browser, as flat sorted lines (for diff), JSON, a JS skeleton,
+      or TypeScript declarations (.d.ts). --diff a,b shows the line diff of two runtimes; --list
+      (with --diff) compares the builtin module lists. Run with only a module name: prints the
+      command per runtime that can load it.
+    modes:
+      diff: qjs-ffi-describe.sh -d qjsm,node --flat path
+      dts: qjs-ffi-describe.sh --dts path          # TypeScript declarations
+      skeleton: qjs-ffi-describe.sh --js mod       # JS skeleton, empty bodies
+      builtins: qjs-ffi-describe.sh -l -d qjsm,node
+      other: -r node|bun|deno|browser ; --global Name
+    speed: 0.08 s for `path` in two runtimes.
+    gotchas:
+      - "-d prints EVERY differing line (-/+), also for members present in both under different spelling (default.* vs plain exports); compare shapes, not counts. runtime-diff's 'present in [..]' form is easier to read for member presence."
+      - "qjs-ffi-describe.js is the qjsm-only entry (same options without -r/-d)."
+    verified: "2026-10-14 `path` diff qjsm,node; --dts; -l -d"
+
+  qjs-ffi-describe.js:
+    path: /usr/local/bin/qjs-ffi-describe.js
+    project: qjs-ffi
+    group: js-analysis
+    rating: 3
+    status: partial
+    what: qjsm-only entry of the same describe.js (no -r/-d); use qjs-ffi-describe.sh.
+    verified: "2026-10-14 help"
+
+  qjs-debugger:
+    path: /usr/local/bin/qjs-debugger         # qjsm-debugger is a symlink: debuggee runs on qjsm
+    project: qjs-debugger
+    group: debug
+    rating: 3
+    status: partial
+    what: >-
+      gdb-style debugger for QuickJS scripts over the engine's debug protocol: break/step/next/finish,
+      bt, print, display, catch throw, info locals; also server (HTTP/WebSocket), gui and dap modes.
+      qjsm-debugger spawns qjsm (use it for scripts that import qjs-modules).
+    modes:
+      repl: qjsm-debugger script.js ; qjsm-debugger --args script.js a b
+      attach: QUICKJS_DEBUG_ADDRESS=127.0.0.1:9901 qjsm script.js &  qjsm-debugger -e
+    gotchas:
+      - 'Line-editor tool: piped stdin works but output is full of ANSI redraw escapes (strip with sed "s/\x1b\[[0-9;]*[A-Za-z]//g").'
+      - "2026-10-14: `break d.js:3` then `run` from piped stdin ran to completion without stopping (breakpoint not hit). Cause not found: path form, timing of breakpoint vs spawn, or piping. Retry interactively / with `start` before relying on it (PROPOSALS)."
+      - "Scripts: see quickjs-scripting for when to debug instead of print."
+    verified: "2026-10-14 help, piped session (breakpoint not hit)"
+
+  search:
+    path: /usr/local/bin/search
+    project: qjs-lws
+    group: web
+    rating: 2
+    status: unverified
+    what: >-
+      Web search through SerpApi (google, bing, duckduckgo, yahoo, baidu, naver, ...) via qjs-lws fetch,
+      paginated, JSON results. Needs a SerpApi api_key and network.
+    gotchas:
+      - "NOT run: no --help (the argument is taken as the query and would hit the paid API). Read the source header for flags and the key variable before use; never test with throwaway queries."
+      - "Claude already has WebSearch/WebFetch; employ only for scripted/batch research or when engines must be chosen."
+    verified: "2026-10-14 source read"

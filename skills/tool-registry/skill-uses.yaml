@@ -1,0 +1,277 @@
+# Unified spec: which registry tool a development skill employs, for what, and how.
+# Tool facts (flags, gotchas, speed) are in tools.yaml; do not repeat them here.
+#
+# One use = { tool, when, how, state, evidence }
+#   state:    proposed  = idea, not yet tried or not yet approved into the skill
+#             tried     = run by hand on real input, worked (evidence says where)
+#             adopted   = user approved; the skill's SKILL.md carries a pointer to this entry
+#             rejected  = tried/considered and not useful (kept so it is not re-proposed)
+#   when:     the trigger inside that skill's workflow
+#   how:      the command line, via scripts/qtool (shortened to the tool name here)
+#   evidence: date + project where it ran; empty while proposed
+#
+# Rules: a skill's SKILL.md is only changed with the user's approval (SKILL.md of this skill,
+# "Employing a tool"). Moving a use to `adopted` and adding the pointer line are one step.
+
+diet-coding:
+  - tool: extract-c
+    when: "before adding a function/module to lib/, check what already exists and who uses it"
+    how: "extract-c -l -p '^<prefix>_' lib src      # does <prefix>_foo exist? which file?"
+    state: adopted
+    evidence: "2026-10-14 shish: -l -p '^sh_' found 8 functions in 4 s"
+  - tool: extract-c
+    when: "enforcing 'one function per file' on a legacy .c that has several"
+    how: "extract-c -s lib/<mod>/ lib/<mod>.c      # <name>.c per function, with the preamble"
+    state: proposed
+  - tool: extract-c
+    when: "finding dead code in lib/ and src/ (candidates for removal)"
+    how: "extract-c -i -c -C 0 -l lib src ; extract-c -d -m main -l src lib"
+    state: adopted
+    evidence: "2026-10-14 shish: 0-ref FUNCTIONs credible, 0-ref DATA tables are false positives"
+  - tool: extract-c
+    when: "judging struct layout cost (padding/offset) of a struct headed for a hot path"
+    how: "extract-c -t -F struct <header>      # field offsets and sizes, LP64"
+    state: tried
+    evidence: "2026-10-14 shish lib/buffer.h (total size null for it, sum the fields)"
+  - tool: source-scanner
+    when: "need project-wide reference counts quickly or scripted (jq) instead of interactive"
+    how: "source-scanner -I lib -I src src lib > $SCRATCH/scan.ndjson"
+    state: tried
+    evidence: "2026-10-14 shish sh_exit.c"
+  - tool: nm-symbols
+    when: "`size` shows a binary larger than expected: which objects were pulled in and why"
+    how: "nm-symbols [-g] build/<lib>.a      # reachability from the entry point"
+    state: proposed
+  - tool: nm-symbols
+    when: "after a diet pass, confirm removed/unused functions against a linked binary"
+    how: "nm-symbols -d -s src -s lib -o dead.json build/<bin>    # needs -ffunction-sections --gc-sections -fno-inline; NOT on a .a"
+    state: proposed
+  - tool: remove-dead-functions
+    when: "user approves a dead-function list from extract-c / nm-symbols"
+    how: "remove-dead-functions dead.json > rm.sh ; review ; sh rm.sh ; rebuild + tests"
+    state: proposed
+  - tool: deadwood
+    when: "user wants to pick dead functions interactively"
+    how: "tell the user: deadwood.js -s src -s lib build/   (needs a tty; Claude cannot drive it)"
+    state: proposed
+  - tool: extract-comments
+    when: "auditing comment quality/TODOs of lib/ before a diet pass; extracting each function's contract comment"
+    how: "extract-comments -d lib ; extract-comments -i -p 'todo|fixme|xxx' src"
+    state: tried
+    evidence: "2026-10-14 shish lib/ doc comments"
+  - tool: qjs-ffi-genstructs
+    when: "a struct layout is part of an ABI/file format and must not drift (padding, offsets)"
+    how: "qjs-ffi-genbindings --emit-ir=ir.json hdr.h ; qjs-ffi-genstructs --format=c --struct=NAME ir.json -o layout.h   # _Static_assert(sizeof/offsetof)"
+    state: adopted
+    evidence: "2026-10-14 scratch struct pt: size 16, offsets 0/4/8"
+  - tool: qjs-ffi-genbindings
+    when: "need compiler-true types/sizes/enum values where extract-c's lexer view is not enough (macro-heavy headers, typedef chains)"
+    how: "qjs-ffi-genbindings --emit-ir=ir.json -I lib hdr.h"
+    state: proposed
+
+quickjs-native-bindings:
+  - tool: extract-c
+    when: "designing the JS API of a binding from a C library header"
+    how: "extract-c -l -p '^<lib>_' include ; extract-c -t -F struct,enum,typedef <hdr>      # surface + enum/flag sets + struct fields"
+    state: proposed
+  - tool: extract-c
+    when: "choosing class vs function layout; finding the functions that take/return a given struct (method candidates)"
+    how: "extract-c -i -L start <hdr> -o ids.json ; jq on prototypes"
+    state: proposed
+  - tool: extract-c
+    when: "checking binding completeness - which library functions the quickjs-*.c does not wrap"
+    how: "extract-c -l -p '^<lib>_' <lib>/include > all.txt ; extract-c -i -l quickjs-<lib>.c  # compare references"
+    state: proposed
+  - tool: extract-comments
+    when: "lifting docs (doxygen) of the C API into the binding's README / JS doc comments"
+    how: "extract-comments -d --style doxygen -n -s <hdr>"
+    state: proposed
+  - tool: nm-symbols
+    when: "a binding build links more than expected; verify unused-object pruning"
+    how: "nm-symbols -d -s src -o dead.json build/*.so"
+    state: proposed
+  - tool: runtime-diff
+    when: "a binding mimics a Node/Web API (fs, path, URL, stream): compare member sets with the real runtimes"
+    how: "cd qjs-modules && runtime-diff -a <module> ; runtime-diff -g <Global> -a"
+    state: tried
+    evidence: "2026-10-14 `path` -a: lists qjsm-only and node/deno/bun-only members"
+  - tool: list-exports
+    when: "checking which names a lib/*.js module exports (binding's JS companion), and what changed after an edit"
+    how: "list-exports lib/<mod>.js | grep -v ': took'"
+    state: tried
+    evidence: "2026-10-14 qjs-modules lib/events.js"
+  - tool: remove-dead-functions
+    when: "pruning a binding of wrappers that were never registered in the function table"
+    how: "see diet-coding entry"
+    state: proposed
+  - tool: qjs-ffi-genbindings
+    when: "first step of designing a binding - get the clang-true IR of the library header (functions, enums, structs, sizes) and a throwaway FFI prototype to try the API from JS before writing C"
+    how: "qjs-ffi-genbindings --structs --jsdoc --library=libx.so -I inc x.h -o proto.js ; qjs-ffi-genbindings --emit-ir=ir.json x.h"
+    state: adopted
+    evidence: "2026-10-14 run on a scratch header"
+  - tool: qjs-ffi-genstructs
+    when: "struct wrappers in the C binding must match the library ABI; generate layout asserts to compile into the binding's tests"
+    how: "qjs-ffi-genstructs --format=c ir.json -o layout-check.h"
+    state: adopted
+    evidence: "2026-10-14 scratch struct"
+  - tool: qjs-ffi-describe.sh
+    when: "the finished binding must match a reference API (Node/Bun/Deno or an earlier binding): dump both, diff; also emit .d.ts for the binding"
+    how: "qjs-ffi-describe.sh -d qjsm,node --flat <mod> ; qjs-ffi-describe.sh --dts <mod> > <mod>.d.ts ; (binding's own .so: pass the file path)"
+    state: adopted
+    evidence: "2026-10-14 path diff and --dts"
+  - tool: qjs-debugger
+    when: "a binding callback or finalizer misbehaves at the JS boundary; step the JS side (C side stays gdb)"
+    how: "qjsm-debugger --args test.js"
+    state: proposed
+
+quickjs-scripting:
+  - tool: runtime-diff
+    when: "adding a module to modules.yaml or verifying a 'compatibility' line; deciding if a function is portable"
+    how: "cd qjs-modules && runtime-diff -a <module>      # replaces guessing; paste 'present in [...]' into notes"
+    state: adopted
+    evidence: "2026-10-14 `path`: qjsm has getcwd/isFile/..., node/deno/bun have matchesGlob/win32"
+  - tool: runtime-diff
+    when: "refreshing modules.yaml after a runtime upgrade"
+    how: "runtime-diff -b -a      # builtin module name lists per runtime"
+    state: proposed
+  - tool: resolve-imports
+    when: "auditing a script's imports for portability and unused ones before delivering it"
+    how: "resolve-imports --list-imports -q script.js ; resolve-imports -u script.js"
+    state: adopted
+    evidence: "2026-10-14 --list-imports only"
+  - tool: resolve-imports
+    when: "delivering a single-file version of a multi-file script (flatten/bundle)"
+    how: "resolve-imports -f -o dist/script.js src/main.js"
+    state: proposed
+  - tool: list-exports
+    when: "learning what a lib/*.js module offers before importing it"
+    how: "list-exports <path>.js"
+    state: adopted
+    evidence: "2026-10-14"
+  - tool: jsonpp
+    when: "normalizing/inspecting JSON outputs and package/config files a script produces"
+    how: "jsonpp -i 2 f.json ; jsonpp -c f.json"
+    state: tried
+    evidence: "2026-10-14"
+  - tool: parse-ast
+    when: "a script needs to parse a small format; prototype the grammar first"
+    how: "printf '<input>' | parse-ast -c -L -T g.ebnf"
+    state: tried
+    evidence: "2026-10-14 EBNF arithmetic"
+  - tool: highlight
+    when: "a script prints source to a terminal or html"
+    how: "highlight -f ansi256 FILE ; highlight -f html -F FILE"
+    state: tried
+    evidence: "2026-10-14"
+  - tool: html2md
+    when: "pulling a web page's docs into the repo as Markdown"
+    how: "html2md https://... > doc.md   # review: tables/code-fence language are lost"
+    state: tried
+    evidence: "2026-10-14 snippet"
+  - tool: xml-shell
+    when: "interactive DOM exploration of an XML/HTML file (user at a tty)"
+    how: "tell the user: xml-shell.js file.xml"
+    state: proposed
+  - tool: qjs-ffi-describe.sh
+    when: "checking a candidate module for modules.yaml across runtimes, producing .d.ts, or listing builtins"
+    how: "qjs-ffi-describe.sh -d qjsm,node,... ; -l -d qjsm,bun ; --dts <mod>   (see tools.yaml for how it differs from runtime-diff)"
+    state: adopted
+    evidence: "2026-10-14 path"
+  - tool: qjs-debugger
+    when: "a script misbehaves and print debugging is not converging"
+    how: "qjsm-debugger script.js   # break FILE:LINE, run, bt, print EXPR, catch throw; strip ANSI when capturing"
+    state: proposed
+    note: "piped-session breakpoint was not hit on 2026-10-14; confirm interactively first"
+  - tool: search
+    when: "a script needs web search results (batch research)"
+    how: "read the source header first; needs SerpApi key"
+    state: proposed
+
+github-pages:
+  - tool: highlight
+    when: "rendering code samples on a site page"
+    how: "highlight -f html -F -o snippet.html FILE      # inline-styled <pre>, no CSS needed"
+    state: rejected
+    evidence: "2026-10-14 the site generator has its own tools/site/lib/highlight.js; the CLI adds nothing"
+  - tool: html2md
+    when: "importing an existing HTML doc page as the Markdown source of a site page"
+    how: "html2md old.html > docs/page.md"
+    state: adopted
+    evidence: "2026-10-14 same command shapes run on shish (extract-c, extract-comments) and a snippet (html2md)"
+  - tool: extract-comments
+    when: "generating API docs for a doc page from header doc comments"
+    how: "extract-comments -d --style doxygen -j include/*.h > $SCRATCH/api.json"
+    state: adopted
+    evidence: "2026-10-14 same command shapes run on shish (extract-c, extract-comments) and a snippet (html2md)"
+  - tool: extract-c
+    when: "filling stale-prone numbers (function count, API list) on a landing page from the code"
+    how: "extract-c -l -p '^<lib>_' include | wc -l"
+    state: adopted
+    evidence: "2026-10-14 same command shapes run on shish (extract-c, extract-comments) and a snippet (html2md)"
+  - tool: runtime-diff
+    when: "a playground/compat table page (what works on qjsm vs node/bun/deno)"
+    how: "runtime-diff -a -o compat.json <mods>      # JSON -> table"
+    state: proposed
+  - tool: jsonpp
+    when: "formatting site data files (nav, versions) kept as JSON"
+    how: "jsonpp -w sites/<name>/*.json"
+    state: proposed
+  - note: "qjs-opencv/tools/site/highlight.js duplicates highlight.js; see PROPOSALS.md."
+  - tool: qjs-ffi-describe.sh
+    when: "API reference page generated from the real module surface"
+    how: "qjs-ffi-describe.sh --dts <mod> / --json <mod>"
+    state: proposed
+
+release-management:
+  - tool: extract-c
+    when: "changelog of public API - diff exported functions/types between the last tag and HEAD"
+    how: "extract-c -l include > new.txt ; same on a 'git worktree add' of <tag> > old.txt ; diff old.txt new.txt"
+    state: adopted
+    evidence: "2026-10-14 shish: tag v0.10.0 vs HEAD api diff via worktree (332 vs 300 functions)"
+  - tool: list-exports
+    when: "JS side of the same: exports of lib/*.js between tags"
+    how: "list-exports lib/<mod>.js | grep -v ': took' > exports.<ver>.txt ; diff"
+    state: proposed
+  - tool: runtime-diff
+    when: "release notes claim compatibility with node/bun/deno"
+    how: "runtime-diff -a <modules>"
+    state: proposed
+  - tool: nm-symbols
+    when: "release-size check of a stripped package; unexpected growth versus the last release"
+    how: "nm-symbols -d ... / size + nm on the package binaries"
+    state: proposed
+  - tool: extract-comments
+    when: "harvesting TODO/FIXME for 'ready to release?' checks"
+    how: "extract-comments -i -p 'todo|fixme|xxx' src lib"
+    state: adopted
+    evidence: "2026-10-14 run on shish and scratch input"
+  - tool: jsonpp
+    when: "validating JSON manifests (package.json, site data) before tagging"
+    how: "jsonpp -c f.json > /dev/null      # non-zero exit if it does not parse"
+    state: adopted
+    evidence: "2026-10-14 run on shish and scratch input"
+  - tool: qjs-ffi-describe.sh
+    when: "API surface diff of a JS-facing module between two builds/tags (breaking-change check for the changelog)"
+    how: "qjs-ffi-describe.sh --flat <mod> > api.<ver>.txt   # on each tag's build; diff"
+    state: adopted
+    evidence: "2026-10-14 flat dump and diff run on path (qjsm vs node)"
+  - tool: qjs-ffi-genstructs
+    when: "pre-release ABI check that public struct layouts did not change"
+    how: "layout.h _Static_assert compile step in CI"
+    state: proposed
+
+remote-targets:
+  - tool: nm-symbols
+    when: "a cross build (musl, dietlibc, cosmo, mingw) is larger than the native one; see what each target pulls in"
+    how: "nm-symbols build-<target>/lib<x>.a"
+    state: proposed
+    evidence: "2026-10-14 shish musl/mingw libowfat.a read ok, wasm fails in host nm, reachability empty without --entry"
+  - tool: runtime-diff
+    when: "a script/binding behaves differently on the device; compare qjsm builds on the target against node/bun"
+    how: "run on the target with the target's qjsm; -o JSON; diff on host"
+    state: proposed
+  - tool: jsonpp
+    when: "sites.yaml/targets data exported as JSON from device probes"
+    how: "jsonpp -c"
+    state: proposed
+  - note: "remote-targets depends on this registry for tool facts: check tools.yaml `env` before running any tool on a target (the module path differs per install prefix)."

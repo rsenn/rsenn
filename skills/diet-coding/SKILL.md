@@ -29,6 +29,19 @@ Check the repo for its own `CLAUDE.md` first; where it differs, it wins.
 7. **Measure.** Size is a test result, not a feeling (see "Measure").
 8. **Surgical.** Add the function the task needs, in its own file; do not rework neighbours.
 
+## Tools
+
+Tools: see `tool-registry/skill-uses.yaml` key `diet-coding`; run them via `tool-registry/scripts/qtool`.
+Facts per tool live in `tool-registry/tools.yaml`; do not copy them here. The ones that pay off here:
+
+- before adding a function: `qtool extract-c -l -p '^<prefix>_' lib src` (does it exist already, where)
+- dead code, as an evidence ladder: `extract-c -i -c -C 0 -l lib src` (candidates; zero-reference data
+  tables are false positives), then `extract-c -d -m main -l src lib`, then `nm-symbols -d` on a linked
+  binary (never a bare `.a`), then human review, then `remove-dead-functions` dry run
+- an ABI-relevant struct: `qjs-ffi-genstructs --format=c` emits `_Static_assert(sizeof/offsetof)` checks
+
+Destructive tools (`remove-dead-functions -a`, `deadwood`) only on a clean git tree, after showing the plan.
+
 ## 1. One function, one source file
 
 The linker pulls whole object files out of a static archive. If `str_chr` and `str_rchr` share

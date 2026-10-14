@@ -24,6 +24,7 @@ Reference this file from `~/.claude/CLAUDE.md` with `@/home/roman/Sources/rsenn/
 | [`github-pages`](github-pages/SKILL.md) | project landing/doc sites via `tools/site`, `sites/<name>` | creating or restyling a site under `sites/`; adding a doc page to a site's nav; syncing/publishing a site to a `gh-pages` branch; editing `base.css` or site themes | a project is released/changed in a way that makes its landing page numbers stale; the user asks for "docs", "a demo page" or "a playground" for a project |
 | [`release-management`](release-management/SKILL.md) | version bump, changelog, build+package for many targets, tag, GitHub release | the user says release, bump version, changelog, release notes, tag, publish, "ready to release?"; building packages for several targets (cpack, cross toolchains) | the work is clearly the end of a feature cycle (`TODO`/`BUGS` empty, tests green) and no release was mentioned; before pushing a tag |
 | [`remote-targets`](remote-targets/SKILL.md) | build/test/debug/deploy on other machines: Pi, Android/Termux, Windows (MinGW/MSYS2/Cygwin/MSVC), musl, dietlibc, Cosmopolitan/cosmocc (APE), emscripten, WASI; over ssh/sshfs/adb/serial/rdp/vnc/remote debugger | any task that must run, cross-compile for, deploy to or debug on a machine other than this one; "try it on the pi/phone/windows box"; adb, termux, gdbserver, sshfs, serial console, qemu-user, wine, cosmocc/APE/`.com` portable binaries; adding a site to `sites.yaml` | a build is requested for a non-host target (`cfg-musl`, `cfg-cosmo`, `cfg-mingw*`, `cfg-aarch64`, `cfg-termux`, `cfg-diet`, `cfg-emscripten`, `cfg-wasi`) even if only compiling; a test passes only under emulation and device confirmation would be valuable |
+| [`tool-registry`](tool-registry/SKILL.md) | registry + learning loop for the qjs-* CLI tools (qjs-modules, qjs-ffi, qjs-debugger, qjs-lws tools: extract-c, source-scanner, nm-symbols, runtime-diff, qjs-ffi-describe/genbindings/genstructs, qjsm-debugger, ...); run via `tool-registry/scripts/qtool` | analysing C/JS sources (function/type/identifier index, dead code, struct layout, comments), comparing APIs across qjsm/node/bun/deno, auditing JS imports/exports, highlighting or converting docs; any of these skills active: `diet-coding`, `quickjs-native-bindings`, `quickjs-scripting`, `github-pages`, `release-management`, `remote-targets`; the user suggests a way to use a tool | a tool misbehaved or lacked an option (log it in PROPOSALS.md) |
 | [`mcu-firmware-engineer`](mcu-firmware-engineer/SKILL.md) | 8-bit PIC (PIC10/12/16/18) firmware, SDCC and XC8 portable | any work in `pictest`, `lc-meter`, or a PIC project: lib/ routines, `genmakefile`, `piccfg` config words, `.hex`/`.cof` for Proteus | the user mentions a PIC part number, a Microchip MCU, SDCC/XC8, or a breadboard/firmware idea on a small MCU |
 | [`eagle-circuit`](eagle-circuit/SKILL.md) | design a circuit and emit an EAGLE `.scr` script | asked to design a circuit, schematic, breakout, harness or wiring for EAGLE; turning a circuit idea into something EAGLE loads | a firmware task needs a board/wiring description that does not exist yet |
 
@@ -33,6 +34,7 @@ Reference this file from `~/.claude/CLAUDE.md` with `@/home/roman/Sources/rsenn/
 - Size-sensitive tool for a foreign libc: `diet-coding` + `remote-targets` (`dietlibc`, `musl`).
 - Phone/Pi deployment of a QuickJS thing: `quickjs-native-bindings` or `quickjs-scripting` + `remote-targets`.
 - Landing page after a release: `release-management` then `github-pages`.
+- Any development skill + tools: `tool-registry` rides along with `diet-coding`, `quickjs-native-bindings`, `quickjs-scripting`, `github-pages`, `release-management`, `remote-targets` (read `skill-uses.yaml` under that skill's key; modify the skill only with the user's approval).
 - PIC project with a new board: `mcu-firmware-engineer` + `eagle-circuit`.
 
 ## Skill employment
@@ -61,3 +63,18 @@ Skills and the projects in which they must be active at least:
   ones to SUGGEST.
 - Do not put project or site specifics here; they belong inside the skill (`remote-targets/sites.yaml`
   for machines, `release-management/LESSONS.md` for release lessons).
+
+## TODO and ChangeLog
+
+- `skills/TODO.md` lists open work on the skills themselves. Add an item when you find work you are not doing now;
+  delete it when done.
+- Every skill dir has a `ChangeLog` (create it the first time you change that skill). One entry per change you made:
+  a hyphen bullet with the date, then the text on the next line indented by 2 spaces. Lowercase text, punctuation
+  and parentheses only where really needed. Newest entry last. Example:
+
+  ```
+  - 2026-10-14
+    added a Tools section pointing at tool-registry
+  ```
+- Log changes to a skill's own files (SKILL.md, yaml, scripts, knowledge) in the same task you make them. Leave
+  committing to the user.

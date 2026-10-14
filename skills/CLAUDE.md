@@ -23,7 +23,7 @@ Reference this file from `~/.claude/CLAUDE.md` with `@/home/roman/Sources/rsenn/
 | [`quickjs-scripting`](quickjs-scripting/SKILL.md) | JS scripts for qjsm, portable to node/bun/deno/browser | creating/editing a standalone `.js`/`.mjs` script meant for qjsm; choosing which qjs-* module to import; checking cross-runtime portability; debugging with qjsm-debugger | any small automation/tooling script in a QuickJS-using repo; the user asks to "script" something in JS without naming a runtime |
 | [`github-pages`](github-pages/SKILL.md) | project landing/doc sites via `tools/site`, `sites/<name>` | creating or restyling a site under `sites/`; adding a doc page to a site's nav; syncing/publishing a site to a `gh-pages` branch; editing `base.css` or site themes | a project is released/changed in a way that makes its landing page numbers stale; the user asks for "docs", "a demo page" or "a playground" for a project |
 | [`release-management`](release-management/SKILL.md) | version bump, changelog, build+package for many targets, tag, GitHub release | the user says release, bump version, changelog, release notes, tag, publish, "ready to release?"; building packages for several targets (cpack, cross toolchains) | the work is clearly the end of a feature cycle (`TODO`/`BUGS` empty, tests green) and no release was mentioned; before pushing a tag |
-| [`remote-targets`](remote-targets/SKILL.md) | build/test/debug/deploy on other machines: Pi, Android/Termux, Windows (MinGW/MSYS2/Cygwin/MSVC), musl, dietlibc, emscripten, WASI; over ssh/sshfs/adb/serial/rdp/vnc/remote debugger | any task that must run, cross-compile for, deploy to or debug on a machine other than this one; "try it on the pi/phone/windows box"; adb, termux, gdbserver, sshfs, serial console, qemu-user, wine; adding a site to `sites.yaml` | a build is requested for a non-host target (`cfg-musl`, `cfg-mingw*`, `cfg-aarch64`, `cfg-termux`, `cfg-diet`, `cfg-emscripten`, `cfg-wasi`) even if only compiling; a test passes only under emulation and device confirmation would be valuable |
+| [`remote-targets`](remote-targets/SKILL.md) | build/test/debug/deploy on other machines: Pi, Android/Termux, Windows (MinGW/MSYS2/Cygwin/MSVC), musl, dietlibc, Cosmopolitan/cosmocc (APE), emscripten, WASI; over ssh/sshfs/adb/serial/rdp/vnc/remote debugger | any task that must run, cross-compile for, deploy to or debug on a machine other than this one; "try it on the pi/phone/windows box"; adb, termux, gdbserver, sshfs, serial console, qemu-user, wine, cosmocc/APE/`.com` portable binaries; adding a site to `sites.yaml` | a build is requested for a non-host target (`cfg-musl`, `cfg-cosmo`, `cfg-mingw*`, `cfg-aarch64`, `cfg-termux`, `cfg-diet`, `cfg-emscripten`, `cfg-wasi`) even if only compiling; a test passes only under emulation and device confirmation would be valuable |
 | [`mcu-firmware-engineer`](mcu-firmware-engineer/SKILL.md) | 8-bit PIC (PIC10/12/16/18) firmware, SDCC and XC8 portable | any work in `pictest`, `lc-meter`, or a PIC project: lib/ routines, `genmakefile`, `piccfg` config words, `.hex`/`.cof` for Proteus | the user mentions a PIC part number, a Microchip MCU, SDCC/XC8, or a breadboard/firmware idea on a small MCU |
 | [`eagle-circuit`](eagle-circuit/SKILL.md) | design a circuit and emit an EAGLE `.scr` script | asked to design a circuit, schematic, breakout, harness or wiring for EAGLE; turning a circuit idea into something EAGLE loads | a firmware task needs a board/wiring description that does not exist yet |
 
@@ -34,6 +34,24 @@ Reference this file from `~/.claude/CLAUDE.md` with `@/home/roman/Sources/rsenn/
 - Phone/Pi deployment of a QuickJS thing: `quickjs-native-bindings` or `quickjs-scripting` + `remote-targets`.
 - Landing page after a release: `release-management` then `github-pages`.
 - PIC project with a new board: `mcu-firmware-engineer` + `eagle-circuit`.
+
+## Skill employment
+
+Per-project minimum activation (beyond the AUTO/SUGGEST rules above):
+
+- **qjs-\* projects with C native modules**: `quickjs-native-bindings` is always active.
+- **qjs-\* projects that are JS modules or programs** (e.g. qjs-debugger): `quickjs-scripting` is active.
+- `quickjs-scripting` is also active in qjs-\* C-native-module projects, but only when working on
+  demo, example or library code there (not when merely writing unit tests for the C native module API).
+
+Skills and the projects in which they must be active at least:
+
+| Skill | Projects |
+|---|---|
+| `diet-coding` | shish, c-utils, chaosircd |
+| `mcu-firmware-engineer` | libpicp, pictest, lc-meter, USB-uC, USB-Stack |
+| `eagle-circuit` | an-tronics, lc-meter, pictest |
+| `release-management` | every project with a site in `~/Sources/rsenn/sites/*`, or with a `./tools/site/` |
 
 ## Maintaining this index
 

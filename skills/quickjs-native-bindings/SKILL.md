@@ -1,6 +1,6 @@
 ---
 name: quickjs-native-bindings
-description: Writing native C/C++ bindings for QuickJS (wrapping a C or C++ library as a loadable QuickJS module). Use whenever creating or modifying a `quickjs-*.c`/`.cpp` binding file, planning/designing a new binding's JS API surface, adding a class/constructor/method/getter to an existing binding, wrapping a C++ class hierarchy, exposing an enum/flag surface, bridging a C callback into JS, or writing an async/Promise-returning native function for QuickJS.
+description: Writing native C/C++ bindings for QuickJS (wrapping a C or C++ library as a loadable QuickJS module). Use whenever creating or modifying a `quickjs-*.c`/`.cpp` binding file, planning/designing a new binding's JS API surface, adding a class/constructor/method/getter to an existing binding, wrapping a C++ class hierarchy, exposing an enum/flag surface, bridging a C callback into JS, or writing an async/Promise-returning native function for QuickJS. Also covers maintaining the synchronized cmake files across qjs-* projects (FindQuickJS, BuildQuickJS/BUILD_QUICKJS, QuickJSModule, qjsm.cmake).
 ---
 
 # QuickJS native C/C++ bindings
@@ -18,6 +18,28 @@ a C++ class hierarchy), `qjs-imgui`, `qjs-glfw`, `qjs-rgfw`, `qjs-lws`,
 `qjs-ffi`, and `qjs-net`. File:line citations below point at those trees
 as a starting point for deeper examples; they may drift as those repos
 change, but the patterns are stable.
+
+## This skill is self-modifying: learn as you work
+
+This file is a living document, not a frozen reference. **Whenever work done
+under this skill teaches something it does not already say, edit the skill
+before finishing the task**:
+
+- a mistake you made and the rule that would have prevented it
+- a user correction or stated preference ("always do X", "never Y")
+- an API quirk, portability difference or gotcha found by running code
+- a pattern that worked and is likely to recur
+- a statement here that turned out wrong or outdated: fix or delete it
+
+How to edit:
+
+- put the fact in the section it belongs to; add a section only if none fits
+- state the current rule and its reason in a few lines; no session history
+- verify before writing (run it, `diff` it, `grep` it); never record a guess
+- prefer one precise line over a paragraph; merge duplicates instead of appending
+- follow the comment and style rules already in this file
+- the skill dir is a symlink into the `rsenn` repo; leave committing that
+  repo to the user, and mention in your reply what you changed here
 
 ## 0. Before designing anything: survey existing bindings of the same library
 
@@ -1717,6 +1739,12 @@ platform it was written on.
 
 ## 21. CMake: building a module both shared and static, from the same sources
 
+> **Current state (verified 2026-10):** the canonical `cmake/QuickJSModule.cmake` (qjs-modules)
+> names the options `BUILD_SHARED` / `BUILD_STATIC` and writes the sidecar as
+> `quickjs-<name>.module.cmake` (`<name>_MODULE_LIBRARY`, `_LIBRARIES`, `_LINK_FLAGS`, `_MODULE`).
+> The `*_MODULES` names and `quickjs-<name>.cmake` below are the older vintage still found in
+> unreconciled projects; see [`cmake.md`](cmake.md) before writing new code.
+
 A module normally only needs the `SHARED` target from section 20 (a
 `dlopen()`-loadable `.so`/`.dylib`/`.dll`). Some consumers instead want to
 **statically link** the module straight into a custom QuickJS-embedding
@@ -2282,6 +2310,10 @@ you write, including the lightweight struct-by-value/proto-splice
 variants from section 6, not just opaque-pointer classes.
 
 ## 24. CMake project structure across the qjs-* monorepo
+
+> **Shared cmake layer** (FindQuickJS, BuildQuickJS/`-DBUILD_QUICKJS`, QuickJSModule, qjsm.cmake):
+> canonical files in `cmake/`, reference in [`cmake.md`](cmake.md), drift tool
+> `scripts/cmake-sync.sh status`. Read it before editing any of those files in any qjs-* project.
 
 Every `qjs-*` project (`qjs-modules`, `qjs-glfw`, `qjs-imgui`, `qjs-lws`,
 `qjs-net`, `qjs-ffi`, `qjs-nanovg`, `qjs-sound`, `qjs-rgfw`, `qjs-debugger`,

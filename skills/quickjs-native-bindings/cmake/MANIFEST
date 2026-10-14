@@ -1,0 +1,18 @@
+# files of the shared cmake layer: <file> <projects>
+#
+# <projects> is * (every qjs-* project that has a cmake/ directory) or a space separated
+# list. A file with a copy in this directory is canonical: scripts/cmake-sync.sh makes the
+# projects match it. A listed file without a copy here is unreconciled: the script only
+# reports how its copies differ (see "Reconciling a file" in doc/cmake.md).
+#
+# layout per project: cmake/<file>, or cmake/deps/<file> when the project has cmake/deps/
+# (its Find*/Build* dependency scripts live there).
+
+FindQuickJS.cmake       *
+BuildQuickJS.cmake      *
+qjsm.cmake              qjs-modules
+QuickJSModule.cmake     *
+Functions.cmake         *
+Checks.cmake            *
+Compat.cmake            *
+UseMultiArch.cmake      *

@@ -52,7 +52,7 @@ Newest first inside each section. One precise line beats a paragraph.
   variable. Owner: qjs-lws.
 - [open] **qjs-ffi-describe vs runtime-diff**: two tools for one job. Pick one (describe.sh has diff,
   dts, browser, list) and make the other a thin alias, or document the split. Owner: qjs-ffi + qjs-modules.
-- [approved 2026-10-15, in qjs-ffi/TODO.md section 6; name clash, missing symbols and by-value unions done 2026-10-15] **qjs-ffi-genbindings** (found by doc/generated-vs-handwritten.md in qjs-ffi, 2026-10-15): struct and function with the same name break --structs output (lws_xos); symbols missing from the library abort the import; NVGcolor by value and unresolved C++ value types drop functions; unsigned char * returns are numbers; no finalizers for C handles. details in that page.
+- [approved 2026-10-15, in qjs-ffi/TODO.md section 6; name clash, missing symbols, by-value unions, --cstring, --handle, --out and --owned-return done 2026-10-15] **qjs-ffi-genbindings** (found by doc/generated-vs-handwritten.md in qjs-ffi, 2026-10-15): struct and function with the same name break --structs output (lws_xos); symbols missing from the library abort the import; NVGcolor by value and unresolved C++ value types drop functions; unsigned char * returns are numbers; no finalizers for C handles. details in that page.
 - [open] **qjs-ffi-genbindings --emit-ir**: IR could serve as the shared input for extract-c-style queries
   (list functions/enums by prefix); consider an `ir-query` mode or document the IR schema.
 

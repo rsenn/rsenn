@@ -1202,6 +1202,15 @@ worth noting as a third valid strategy: **sidestep the realtime callback
 entirely** if the library offers a synchronous/blocking alternative,
 rather than bridging it).
 
+**A binding that only needs to hand a call from a foreign thread to JS**
+(no deadline, return value not needed) can use qjs-ffi's `JSCallback` with
+`threadsafe: true` instead of writing the queue: it copies the arguments
+(ints, floats, pointer, cstring) under a mutex and wakes the loop through a
+pipe registered with `os.setReadHandler`. The recipe for a C binding is the
+same (`js-callback-thread.c` in qjs-ffi): libc-only `post()` on the foreign
+side, a drain function on the JS side, `os.setReadHandler` as wake-up and
+keep-alive, `close()` clearing the open flag under the same mutex.
+
 ## 14. Async native calls: bridging into a Promise
 
 The complete template for "wrap a fire-once native async operation as a

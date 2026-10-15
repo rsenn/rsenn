@@ -26,3 +26,7 @@
   qjs-ffi-genbindings gotchas updated after the first three generator fixes (class _t suffix, throwing stubs, by-value unions); installed copy needs a reinstall to see them
 - 2026-10-15
   qjs-ffi-genbindings modes and gotchas updated for --cstring, --handle, --out and --owned-return (sqlite verified end to end)
+- 2026-10-15
+  qjs-ffi-genbindings gotchas updated for missing-symbol stubs on all targets, default arguments, by-value classes and template instances
+- 2026-10-15
+  qjs-ffi-genbindings gotchas updated for --out-auto, wrappers on C++ functions and methods, non-type template arguments, defaults in describe and jsdoc

@@ -323,8 +323,8 @@ tools:
       - "Without --library symbols are looked up in RTLD_DEFAULT."
       - "Output is for the qjs-ffi (script) route; the quickjs-native-bindings route is hand-written C. Use the IR to design the latter."
       - "The installed command runs /usr/local/share/qjs-ffi (a copy); to try a checkout run qjsm <qjs-ffi>/tools/gen-bindings.js with the qtool --env module path."
-      - "A struct and a function of one name: the class is NAME_t. A symbol missing from the library is a stub that throws on call (qjs target only; bun/deno/node still fail the import). --handle/--out/--owned-return are per function name, qjs target and free C functions only; a handle nobody closed is closed by GC in no fixed order (sqlite3_close can fail with SQLITE_BUSY while statements are open)."
-    verified: "2026-10-15 nanovg (87 bound), sqlite (loads without --exclude; open/prepare/step/column text via --out/--handle/--cstring), tests/cxx/wrappers.h"
+      - "A struct and a function of one name: the class is NAME_t. A symbol missing from the library is a stub that throws on call (all targets; node untested, no node:ffi here). C++: a literal default argument may be left out of a call; a trivially copyable class (ImVec2) and a template instance (cv::Size_<int>, Vec<float, 3>) are bound by value; std::string, nested instances and non-literal defaults are not. --describe/--jsdoc show defaults. --handle/--out/--owned-return are per function name (--out-auto guesses out*/pp* and handle ** parameters), qjs target only; --out and --owned-return reach C++ functions and methods as ns::Class::method:arg, --handle does not; a handle nobody closed is closed by GC in no fixed order (sqlite3_close can fail with SQLITE_BUSY while statements are open)."
+    verified: "2026-10-15 nanovg (87 bound), C++ defaults and by-value classes/templates (tests/cxx/defaults.hpp, cxxvalue.hpp), sqlite (loads without --exclude; open/prepare/step/column text via --out/--handle/--cstring), tests/cxx/wrappers.h"
 
   qjs-ffi-genstructs:
     path: /usr/local/bin/qjs-ffi-genstructs

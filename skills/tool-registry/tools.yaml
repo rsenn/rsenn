@@ -321,7 +321,9 @@ tools:
       - "Needs clang (/usr/bin/clang present). Missing system include dirs show as warnings; add -I."
       - "Without --library symbols are looked up in RTLD_DEFAULT."
       - "Output is for the qjs-ffi (script) route; the quickjs-native-bindings route is hand-written C. Use the IR to design the latter."
-    verified: "2026-10-14 5-line header with struct/enum/2 functions"
+      - "The installed command runs /usr/local/share/qjs-ffi (a copy); to try a checkout run qjsm <qjs-ffi>/tools/gen-bindings.js with the qtool --env module path."
+      - "A struct and a function of one name: the class is NAME_t. A symbol missing from the library is a stub that throws on call (qjs target only; bun/deno/node still fail the import)."
+    verified: "2026-10-15 nanovg (87 bound), sqlite (loads without --exclude), tests/cxx/anonunion.h"
 
   qjs-ffi-genstructs:
     path: /usr/local/bin/qjs-ffi-genstructs

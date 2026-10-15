@@ -34,6 +34,8 @@ Facts per tool live in `tool-registry/tools.yaml`. Useful here:
 - notes (step 6), public C API changes since the last tag: run `qtool extract-c -l include` (or `lib`) in a
   `git worktree` at the old tag and in the tree to release, strip `:line:col` (`sed 's/:[0-9]*:[0-9]*:/:/'`), sort, `diff`;
   `<` lines were removed, `>` added (1.7 s on shish v0.10.0 against HEAD)
+- a release script (qjsm) that fails only in the release environment: `qjsm-debugger --json --timeout 120 -x cmds.txt script.js`
+  and read the records instead of adding prints
 - JS-facing modules: `qtool qjs-ffi-describe.sh --flat <mod>` on each build, then `diff`, before claiming compatibility
 
 ## Procedure

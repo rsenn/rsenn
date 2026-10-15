@@ -41,7 +41,9 @@ Facts per tool live in `tool-registry/tools.yaml`. Useful here:
   per-target size questions use plain `size` and `nm` until that lands
 - a script that differs on the device: dump with `qjs-ffi-describe.sh` on the target's runtime (`-o`/`--json`) and
   diff on the host (not yet tried against a real device)
-- debugging a JS script on a device with `qjsm-debugger -e` attach waits for the scriptable debugger work
+- debugging a JS script on a device without a tty: on the target `QUICKJS_DEBUG_LISTEN_ADDRESS=0.0.0.0:9901 qjsm script.js`,
+  here `ssh -L 9901:localhost:9901 target`, then `qjsm-debugger -e -c --plain -x cmds.txt` (attach verified locally
+  in both directions; not yet over ssh to a real device)
 
 ## Task -> where to look
 

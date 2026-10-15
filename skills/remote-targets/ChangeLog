@@ -1,2 +1,4 @@
 - 2026-10-14
   added a Tools section pointing at tool-registry (module path check, nm-symbols limits on foreign objects, describe diff idea)
+- 2026-10-15
+  tools stanza: debug a script on a device without a tty via qjsm-debugger -e -c over an ssh tunnel

@@ -1,2 +1,4 @@
 - 2026-10-14
   added a Tools section pointing at tool-registry (todo scan, manifest check, api diff against the last tag)
+- 2026-10-15
+  tools stanza: qjsm-debugger --json for release scripts that fail only in the release environment

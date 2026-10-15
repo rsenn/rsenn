@@ -181,7 +181,7 @@ quickjs-scripting:
   - tool: qjs-debugger
     when: "a script misbehaves and print debugging is not converging"
     how: "qjsm-debugger --plain --timeout 60 -x cmds.txt script.js   # or --json for records; cmds: break FILE:LINE [if EXPR], run, bt, print EXPR, watch, until, catch throw, info locals"
-    state: tried
+    state: adopted
     evidence: "2026-10-15 d.js break d.js:3 / run / print a,b (plain and json), exit status, attach -e"
   - tool: search
     when: "a script needs web search results (batch research)"
@@ -267,7 +267,8 @@ release-management:
   - tool: qjs-debugger
     when: "a release script (changelog/notes generator in qjsm) fails only in the release environment"
     how: "qjsm-debugger --json --timeout 120 -x cmds.txt script.js"
-    state: proposed
+    state: adopted
+    evidence: "2026-10-15 stanza added; batch/json verified locally on the qjs-debugger test suite"
 
 remote-targets:
   - tool: nm-symbols
@@ -288,4 +289,5 @@ remote-targets:
   - tool: qjs-debugger
     when: "a QuickJS script misbehaves only on the Pi/Termux/Windows target; debug it there without a tty"
     how: "on the target: QUICKJS_DEBUG_LISTEN_ADDRESS=0.0.0.0:9901 qjsm script.js ; here: ssh -L 9901:localhost:9901 target, then qjsm-debugger -e -c --plain -x cmds.txt"
-    state: proposed
+    state: adopted
+    evidence: "2026-10-15 stanza added; -e/-c attach verified locally both directions, not over ssh"

@@ -1,2 +1,4 @@
 - 2026-10-14
   added a Tools section pointing at tool-registry (describe and runtime-diff for portability, list-exports, resolve-imports, debugger)
+- 2026-10-15
+  section 5 debugging rewritten around the scriptable qjsm-debugger (--plain, --json, -x, --timeout, library, -e attach)

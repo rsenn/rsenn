@@ -20,3 +20,7 @@
   qjs-debugger verified: batch, json, library and attach modes in tools.yaml, proposal marked done, skill-uses tried (scripting, bindings) and proposed (github-pages, release-management, remote-targets)
 - 2026-10-15
   generator gap proposal moved into qjs-ffi TODO.md section 6 (commit be70dfc in qjs-ffi)
+- 2026-10-15
+  qjs-debugger entries for quickjs-scripting, release-management and remote-targets set to adopted
+- 2026-10-15
+  qjs-ffi-genbindings gotchas updated after the first three generator fixes (class _t suffix, throwing stubs, by-value unions); installed copy needs a reinstall to see them

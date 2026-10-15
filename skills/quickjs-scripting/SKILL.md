@@ -53,7 +53,7 @@ Facts per tool live in `tool-registry/tools.yaml`. Useful here:
   "present in [runtimes]" per member. Record the result in `modules.yaml` notes instead of guessing
 - what a lib module offers: `qtool list-exports <path>.js | grep -v ': took'`
 - audit a script's imports: `qtool resolve-imports --list-imports -q script.js`, `-u` for unused ones
-- a script that does not behave: `qjsm-debugger script.js` (see section 5; strip ANSI when capturing output)
+- a script that does not behave: `qjsm-debugger --plain -x cmds.txt script.js` (section 5; no tty needed)
 
 ## 1. Choosing modules
 
@@ -134,19 +134,26 @@ quirk. Do not claim a script is portable without running this.
 
 ## 5. Debugging
 
+Drive it from a script, not a tty; the output is parseable and the exit status tells the result:
+
 ```sh
-qjsm-debugger script.mjs                 # gdb-style REPL, debuggee runs under qjsm
-qjsm-debugger --args script.mjs a b c    # pass arguments
-qjsm-debugger -m gui script.mjs          # native GUI (needs qjs-glfw, qjs-nanovg)
-qjsm-debugger -m dap script.mjs          # Debug Adapter Protocol, for editors
+printf 'break d.js:3\nrun\nbt\nprint a\ncontinue\nquit\n' | qjsm-debugger --plain --timeout 60 d.js
+qjsm-debugger --json --timeout 60 -x cmds.txt script.mjs   # one JSON record per line, schema in doc/json-protocol.md
+qjsm-debugger -e -c --plain -x cmds.txt                    # attach to QUICKJS_DEBUG_LISTEN_ADDRESS=host:port
 ```
 
-REPL commands follow gdb: `break file.js:12` / `break fn` / `break Class.prototype.method`,
-`run`, `start`, `continue`, `next`, `step`, `finish`, `backtrace`, `print expr`,
-`display expr`, `info locals`, `list`. Breakpoints by function name work
-through imports. Full manual: `~/Projects/plot-cv/quickjs/qjs-debugger/README.md`
-(entry `qjs-debugger` in `modules.yaml`). Use it when a script misbehaves on
-qjsm only: reproduce with the check script, then step through on qjsm.
+- `--plain`/`--no-color` removes line editing and ANSI; `-x FILE|-` runs commands from a file or stdin
+- exit status: `quit N`, else 124 on `--timeout`, else 1 if any command failed, else the debuggee's code
+- commands follow gdb: `break FILE:LINE [if EXPR]` / `break fn` / `tbreak`, `run`, `continue`, `next`, `step`,
+  `finish`, `until`, `watch EXPR`, `backtrace`, `print EXPR`, `eval EXPR`, `set var X = V`, `info locals|source`
+- a test or tool drives it as a library: `import { Debugger } from 'qjs-debugger'`
+  (`launch`, `break`, `continue`, `step`, `eval`, `backtrace`, `on('stopped')`)
+- interactive: `qjsm-debugger script.mjs`, `-m gui` (qjs-glfw, qjs-nanovg), `-m dap` for editors
+- `watch` single-steps, so it is slow; `return` is unsupported; the installed `qjs` may be a stale 32-bit build,
+  use `qjsm-debugger`
+
+Manual: `~/Sources/quickjs/qjs-debugger/README.md` and `doc/json-protocol.md`. Use it when a script misbehaves on
+qjsm only: reproduce with the check script, then break and print on qjsm.
 
 ## Comments
 

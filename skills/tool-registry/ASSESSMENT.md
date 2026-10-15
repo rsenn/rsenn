@@ -27,7 +27,7 @@ Rating: 5 = reach for it routinely, 3 = good when the situation fits, 1 = skip.
 | **qjs-ffi-genbindings** | clang-AST based C/C++ -> FFI binding + JSON IR (types, enums, sizes) for qjs/bun/deno/node | 5 | header with struct/enum/fns | bindings (API design, throwaway prototype), diet-coding (compiler-true types) |
 | **qjs-ffi-describe.sh** | dump a module's API in qjsm/node/bun/deno/browser: flat, json, js skeleton, .d.ts; diff two runtimes | 5 | diff, dts, list | scripting (compat), bindings (parity, .d.ts), release (API diff), github-pages (reference) |
 | **qjs-ffi-genstructs** | struct classes in JS, or C header with sizeof/offsetof asserts | 4 | C asserts | diet-coding & bindings (ABI/layout guard), release |
-| **qjs-debugger / qjsm-debugger** | gdb-style JS debugger (repl/server/dap) | 3 | piped session: breakpoint not hit | scripting & bindings (JS-side debugging) |
+| **qjs-debugger / qjsm-debugger** | gdb-style JS debugger (repl/server/dap) | 4 | batch/json/library verified; qjs binary stale (32-bit) | scripting & bindings (JS-side debugging) |
 | **qjs-ffi-describe.js** | qjsm-only entry of describe | 3 | help | prefer the .sh |
 | **search** | SerpApi web search | 2 | not run (paid API) | scripted batch research only |
 | **extract-structs** | legacy struct extractor | 1 | help only | none; use `extract-c -t` |

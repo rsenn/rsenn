@@ -121,8 +121,9 @@ quickjs-native-bindings:
     evidence: "2026-10-14 path diff and --dts"
   - tool: qjs-debugger
     when: "a binding callback or finalizer misbehaves at the JS boundary; step the JS side (C side stays gdb)"
-    how: "qjsm-debugger --args test.js"
-    state: proposed
+    how: "printf 'break test.js:12\\nrun\\nbt\\nprint x\\ncontinue\\n' | qjsm-debugger --json --timeout 60 test.js   # records parse with JSON.parse per line"
+    state: tried
+    evidence: "2026-10-15 qjs-debugger test/run.sh, library test (dbg.launch/break/continue/eval)"
 
 quickjs-scripting:
   - tool: runtime-diff
@@ -179,9 +180,9 @@ quickjs-scripting:
     evidence: "2026-10-14 path"
   - tool: qjs-debugger
     when: "a script misbehaves and print debugging is not converging"
-    how: "qjsm-debugger script.js   # break FILE:LINE, run, bt, print EXPR, catch throw; strip ANSI when capturing"
-    state: proposed
-    note: "piped-session breakpoint was not hit on 2026-10-14; confirm interactively first"
+    how: "qjsm-debugger --plain --timeout 60 -x cmds.txt script.js   # or --json for records; cmds: break FILE:LINE [if EXPR], run, bt, print EXPR, watch, until, catch throw, info locals"
+    state: tried
+    evidence: "2026-10-15 d.js break d.js:3 / run / print a,b (plain and json), exit status, attach -e"
   - tool: search
     when: "a script needs web search results (batch research)"
     how: "read the source header first; needs SerpApi key"
@@ -221,6 +222,10 @@ github-pages:
     when: "API reference page generated from the real module surface"
     how: "qjs-ffi-describe.sh --dts <mod> / --json <mod>"
     state: proposed
+  - tool: qjs-debugger
+    when: "the site generator (tools/site, a qjsm script) misbehaves and print debugging is not converging"
+    how: "qjsm-debugger --plain --timeout 60 -x cmds.txt --args tools/site/build.js sites/<name>"
+    state: proposed
 
 release-management:
   - tool: extract-c
@@ -259,6 +264,10 @@ release-management:
     when: "pre-release ABI check that public struct layouts did not change"
     how: "layout.h _Static_assert compile step in CI"
     state: proposed
+  - tool: qjs-debugger
+    when: "a release script (changelog/notes generator in qjsm) fails only in the release environment"
+    how: "qjsm-debugger --json --timeout 120 -x cmds.txt script.js"
+    state: proposed
 
 remote-targets:
   - tool: nm-symbols
@@ -275,3 +284,8 @@ remote-targets:
     how: "jsonpp -c"
     state: proposed
   - note: "remote-targets depends on this registry for tool facts: check tools.yaml `env` before running any tool on a target (the module path differs per install prefix)."
+
+  - tool: qjs-debugger
+    when: "a QuickJS script misbehaves only on the Pi/Termux/Windows target; debug it there without a tty"
+    how: "on the target: QUICKJS_DEBUG_LISTEN_ADDRESS=0.0.0.0:9901 qjsm script.js ; here: ssh -L 9901:localhost:9901 target, then qjsm-debugger -e -c --plain -x cmds.txt"
+    state: proposed

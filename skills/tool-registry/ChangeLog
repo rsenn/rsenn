@@ -14,3 +14,9 @@
   added the Tools stanza to release-management; extract-c, extract-comments, jsonpp and describe entries marked adopted
 - 2026-10-14
   added the Tools stanza to remote-targets; nm-symbols limits recorded (host nm fails on wasm, no --entry); entries stay proposed until tried on a device
+- 2026-10-15
+  added a proposal pointing at qjs-ffi doc/generated-vs-handwritten.md (generator gaps found while comparing generated and hand-written bindings)
+- 2026-10-15
+  qjs-debugger verified: batch, json, library and attach modes in tools.yaml, proposal marked done, skill-uses tried (scripting, bindings) and proposed (github-pages, release-management, remote-targets)
+- 2026-10-15
+  generator gap proposal moved into qjs-ffi TODO.md section 6 (commit be70dfc in qjs-ffi)

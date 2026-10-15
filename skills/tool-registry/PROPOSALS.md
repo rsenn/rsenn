@@ -44,13 +44,15 @@ Newest first inside each section. One precise line beats a paragraph.
   implementation, the site generator imports it.
 - [open] **html2md**: tables, code-fence language (`class="language-x"`), nested lists, `<code>`.
 
-- [open] **qjs-debugger**: piped-stdin session (`break d.js:3`, `run`) ran to completion without stopping;
+- [done 2026-10-15] **qjs-debugger**: piped-stdin session (`break d.js:3`, `run`) ran to completion without stopping;
   find out whether it is the path form, spawn timing or piping, and offer a non-interactive batch mode
   (`--batch cmds.txt`, no ANSI) so it can be scripted/driven by Claude. Owner: qjs-debugger.
+  Cause: engine breakpoint scanner (quickjs.c pc2line decoding), fixed in quickjs patches/008; batch/--json/library added in qjs-debugger.
 - [open] **search**: handle `--help` (today it is sent as a query to the paid API) and document the key
   variable. Owner: qjs-lws.
 - [open] **qjs-ffi-describe vs runtime-diff**: two tools for one job. Pick one (describe.sh has diff,
   dts, browser, list) and make the other a thin alias, or document the split. Owner: qjs-ffi + qjs-modules.
+- [approved 2026-10-15, in qjs-ffi/TODO.md section 6] **qjs-ffi-genbindings** (found by doc/generated-vs-handwritten.md in qjs-ffi, 2026-10-15): struct and function with the same name break --structs output (lws_xos); symbols missing from the library abort the import; NVGcolor by value and unresolved C++ value types drop functions; unsigned char * returns are numbers; no finalizers for C handles. details in that page.
 - [open] **qjs-ffi-genbindings --emit-ir**: IR could serve as the shared input for extract-c-style queries
   (list functions/enums by prefix); consider an `ir-query` mode or document the IR schema.
 

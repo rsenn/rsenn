@@ -375,20 +375,28 @@ tools:
     path: /usr/local/bin/qjs-debugger         # qjsm-debugger is a symlink: debuggee runs on qjsm
     project: qjs-debugger
     group: debug
-    rating: 3
-    status: partial
+    rating: 4
+    status: verified
     what: >-
-      gdb-style debugger for QuickJS scripts over the engine's debug protocol: break/step/next/finish,
-      bt, print, display, catch throw, info locals; also server (HTTP/WebSocket), gui and dap modes.
+      gdb-style debugger for QuickJS scripts over the engine's debug protocol: break (also `if EXPR`), tbreak,
+      watch, until, step/next/finish, bt, print/eval/call/set var, display, catch throw, info locals|source|program;
+      scriptable without a tty (batch + JSON records), importable as a library, plus server, gui and dap modes.
       qjsm-debugger spawns qjsm (use it for scripts that import qjs-modules).
     modes:
-      repl: qjsm-debugger script.js ; qjsm-debugger --args script.js a b
-      attach: QUICKJS_DEBUG_ADDRESS=127.0.0.1:9901 qjsm script.js &  qjsm-debugger -e
+      batch: "printf 'break d.js:3\\nrun\\nbt\\nprint a\\ncontinue\\n' | qjsm-debugger --plain d.js ; qjsm-debugger --plain -x cmds.txt --args d.js a b"
+      json: "qjsm-debugger --json -x cmds.txt d.js    # one record per line: stopped | exited | output | result (doc/json-protocol.md in the project)"
+      library: "import { Debugger } from 'qjs-debugger'; const dbg = new Debugger({ interpreter: 'qjsm', quiet: true }); await dbg.launch('d.js'); dbg.break('d.js:3'); await dbg.continue(); (await dbg.eval('a')).value"
+      attach: "QUICKJS_DEBUG_ADDRESS=127.0.0.1:9901 qjsm script.js &  qjsm-debugger -e --plain -x cmds.txt   (program listens instead: QUICKJS_DEBUG_LISTEN_ADDRESS=..., qjsm-debugger -e -c)"
+      repl: "qjsm-debugger script.js ; qjsm-debugger --args script.js a b"
+      dap: "qjsm-debugger -m dap     # test client: qjs-debugger/test/dap-client.js"
     gotchas:
-      - 'Line-editor tool: piped stdin works but output is full of ANSI redraw escapes (strip with sed "s/\x1b\[[0-9;]*[A-Za-z]//g").'
-      - "2026-10-14: `break d.js:3` then `run` from piped stdin ran to completion without stopping (breakpoint not hit). Cause not found: path form, timing of breakpoint vs spawn, or piping. Retry interactively / with `start` before relying on it (PROPOSALS)."
+      - "Batch exit status: `quit N`, else 124 on --timeout, else 1 if any command failed, else the debuggee's exit code (128+N on signal). Use --timeout in agents: a debuggee that never stops blocks `run`."
+      - "`break f` stops on the first body line; `watch` steps by statement (slow, misses changes inside callees until they return); no `return` command (engine has no forced return)."
+      - "Needs the engine fixes of quickjs patches/008-debugger-fixes.patch (line breakpoints in loops/functions, print no longer crashes). /usr/local/bin/qjs is a stale 32-bit build: qjs-debugger (debuggee qjs) runs without them; use qjsm-debugger."
+      - "The debuggee's own output is `output` records (json) or printed inline (plain); with -e it goes to the program's terminal."
       - "Scripts: see quickjs-scripting for when to debug instead of print."
-    verified: "2026-10-14 help, piped session (breakpoint not hit)"
+    speed: "~0.5 s per session (spawn + connect); ~1 round trip per stop with locals"
+    verified: "2026-10-15 batch, json, library, attach (both directions), dap client, server client; qjs-debugger/test/run.sh 12/12"
 
   search:
     path: /usr/local/bin/search

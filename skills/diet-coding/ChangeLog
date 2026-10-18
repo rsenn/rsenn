@@ -1,2 +1,12 @@
 - 2026-10-14
   added a Tools section pointing at tool-registry (extract-c lookup, dead code evidence ladder, struct layout asserts)
+- 2026-10-18
+  code style: no braces around a one-statement body of if/else/for/while
+- 2026-10-18
+  code style: initialize at declaration, or fold the assignment into the test
+- 2026-10-18
+  code style: group same-type declarations on one line, uninitialized names first
+- 2026-10-18
+  comment style: no semicolon in comment text, bare names instead of backquotes
+- 2026-10-18
+  comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long

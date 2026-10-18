@@ -38,6 +38,11 @@ How to edit:
 - verify before writing (run it, `diff` it, `grep` it); never record a guess
 - prefer one precise line over a paragraph; merge duplicates instead of appending
 - follow the comment and style rules already in this file
+- code style: **No braces around a one-statement body** of `if`/`else`/`for`/`while`: `if(remainder)` newline `remainder++;` and `while(cond && (0x03 & j))` newline `out[j++] = c;`. Braces only for two or more statements (or to disambiguate a dangling `else`).
+- code style: Initialize a variable in its declaration when the value is known there; do not declare it and assign it on a later line. When declaration and first assignment cannot be adjacent and the variable is only tested, fold the assignment into the test, as long as readability holds and the line stays reasonably short (a short right-hand side and a simple comparison). A blank line separates the declarations from the statements that follow.
+- code style: Group declarations of the same base type at one scope into one declaration; pointers to that type join it with their own asterisks. Order within the line: names without an initializer first, then initialized ones from the simplest initializer to the most complex; a variable another initializer depends on comes before its dependant. Keep an initialized variable on its own line when the initializer is a call or expression that does not fit comfortably, when it has side effects whose order matters, when the line would pass about 80 columns, or when the group would hold more than about four names. Never merge types that differ in indirection depth or qualifiers (const, volatile) just to save a line.
+- comment style: Comment text has no semicolon, so a grep for names ending in a semicolon finds only code; split into two fragments or use a comma or a dash. A semicolon appears only inside real C or JS code. Names in a comment are bare, no backquotes or quotes around them: write that opaque is b. In a doxygen comment use \param, \return and the like instead.
+- comment style: A comment on a function prototype starts with a brief of one or two lines, then the rest in separate paragraphs, never one crammed block. When a comment grows past about 4 lines or its text refers to argument names, make it a doxygen comment. A doxygen comment lists the parameters in aligned columns (type, name and description each start at the same column, padded to fit) and then the return type and its meaning. A non-doxygen comment describes a parameter or the return value only where the caller needs it. In both forms the detailed description follows the brief, or follows the parameters when it refers to them.
 - the skill dir is a symlink into the `rsenn` repo; leave committing that
   repo to the user, and mention in your reply what you changed here
 
@@ -211,6 +216,11 @@ walked/incremented, which is how it's used everywhere in this skill.
 Match whichever form a given codebase already uses when editing existing
 code (see section 0's "match the codebase you're adding to" rule), but
 default to `argv[]` for anything new.
+
+**Strings that may hold lone surrogates**: `JS_ToCStringLen(ctx, &len, v)` turns a lone surrogate into U+FFFD, so
+the original is lost. `JS_ToCStringLen2(ctx, &len, v, 1)` (cesu8 = TRUE) keeps every UTF-16 unit as a 3-byte
+sequence (`ED A0..BF xx`; a pair is two of them), which a JSON writer can pair up or escape as `\udXXX`.
+`JS_ToObject` is not public: box a primitive with `JS_Call(Object, undefined, 1, &prim)` and `JS_GetClassID(obj)`.
 
 **Argument-conversion idiom, used everywhere**: every `JS_To*` conversion
 function returns nonzero (and has already thrown internally) on failure,
@@ -756,6 +766,14 @@ module with no established convention, `<module>-utils.c`/`.h` (matching
 `qjs-nanovg`'s `nvgjs-utils.{c,h}`) or plain `js-utils.c`/`.h` (matching
 `qjs-lws`) are both fine defaults - ask if genuinely unsure which reads
 better for the target project.
+
+**A shared static core lib gives every `.so` its own copy of its globals.** `libmodules.a` (qjs-modules) is
+linked into each module `.so`, so a `JSClassID` or any global in it is per module, not per process. To let
+module A's C code use module B's class natively, B puts a native method on its prototype under
+`Symbol.for('qjs.<thing>')` that checks its own class (`JS_GetOpaque2`) and returns the pointer; A calls it once
+when it builds the object (e.g. `Writer`), then stays in C. Do not resolve a class id by name with
+`js_class_find`/`misc.classId`: it returns -1 for every class against the installed libquickjs. A rebuilt
+core lib needs every module rebuilt (`cmake --build`, all targets) and `QUICKJS_MODULE_PATH=<build>`.
 
 ## 9. Wrapping a C++ class hierarchy / virtual base classes
 
@@ -1335,6 +1353,16 @@ meaningfully more machinery.
   always call its destructor explicitly before `js_free_rt`** (see
   section 9). `js_free_rt` alone never runs a C++ destructor.
 
+- **State freed in a finalizer must not hold a `JSContext`.** A finalizer gets only the `JSRuntime`, and the
+  context may already be freed. Init such state with the runtime-bound allocators: `vector_init_rt(&v, rt)`,
+  `jwrite_init(&wr, (DynBufReallocFunc*)&js_realloc_rt, rt)`, `dbuf_init_ctx` (runtime-bound already), and free
+  with `JS_FreeValueRT`/`JS_FreeAtomRT`/`js_free_rt` (`walk_close_rt`). `vector_init(&v, ctx)` and libc
+  `realloc(p, 0)` as `NULL, NULL` allocator are the wrong choice here; valgrind also flags the latter
+  ("realloc() with size 0").
+- **A pull/step machine that calls user JS (`toJSON`, replacers, getters) must never re-run a step.** The old
+  "step again after the sink blocked, skipping what was delivered" design runs the JS twice. Write each step into
+  an unbounded `DynBuf` and let `read(n)` serve from it (JsonSerializer).
+
 ## 17. Naming conventions (consistent across every binding surveyed)
 
 - File names: `quickjs-<lib>.c`/`.cpp`, or a `<lib>js-module.c` +
@@ -1369,6 +1397,11 @@ meaningfully more machinery.
   just a naming preference from one rename.
 - `JSClassID` globals: `js_<lib>_<class>_class_id`, one static per class
   (or per hierarchy level, see section 9).
+- Headers that only a C native module includes and that are not the
+  project's public API get no `#ifdef __cplusplus` / `extern "C"` guards.
+  The guards belong on headers a C++ consumer may include (the project's
+  public API); on internal ones they are noise and promise a C++ use that
+  does not exist. If a header later becomes public, add the guards then.
 
 ## 18. Documentation and test file conventions
 
@@ -1459,9 +1492,21 @@ diagram is, not something they have to read start to end to parse.
   a comment are fragments or follow after `;`, not new capitalised ones.
 - Comment text is 75 columns at most, measured after the leading ` * `
   (or `/* `); with the prefix that is 78, so a closing ` */` still fits.
-- Multi-line code in a comment is fenced: ```` ```js ```` for JS and
-  ```` ```c ```` for C, each fence on its own comment line. A one-line
-  snippet stays in single backticks.
+- Plain text, no markdown idioms in comments: no ``` fences, and no
+  backticks, neither around code nor for quoting. Code in a comment is
+  plain lines indented by 2 spaces more than the comment text; an
+  identifier is written bare (ptr, JS_FreeCString).
+- Go light on punctuation and quotation marks: plain words, short
+  sentences, no decorative quotes or parentheses. Quote only a literal
+  the reader must see exactly, such as an error message.
+- In C code never use // comments, not even trailing ones; always
+  /* ... */.
+- A comment contains */ only where it ends. Check the text for a glob or
+  path such as lib/*/x.c, a division next to a pointer, or a nested
+  comment opener; reword it (lib/<module>/x.c) instead of escaping it.
+- A table in a comment may use unicode line-drawing characters
+  (┌ ─ ┬ ┐ │ ├ ┼ ┤ └ ┴ ┘); aligned columns stay fine too. Keep every row
+  the same width, and count columns, not bytes.
 - A function's comment says what the function does, in plain words, in its
   first line. After two lines a reader who has not seen the code can say
   what goes in and what comes out; if they cannot, rewrite it.
@@ -1486,7 +1531,7 @@ reads like the JS docs, in JS terms, and is the one place the 4-line prose
 cap does not count the example and the table. Order:
 
 1. `Name: what it is` (and the bun/Node API it mirrors, if any).
-2. The JS usage as code in a ```js fence, not described in words.
+2. The JS usage as indented code, not described in words.
 3. Arguments and result as aligned columns, with the accepted forms, the
    default and the range in the description.
 4. `throws`: which error type, for what.
@@ -1497,10 +1542,8 @@ Example, after `ffi-read.h`:
 ````c
 /* read: direct memory reads, no DataView or ArrayBuffer (bun:ffi's read).
  *
- * ```js
- * read.u8(ptr, byteOffset);
- * read.i64(ptr); // a bigint
- * ```
+ *   read.u8(ptr, byteOffset);
+ *   read.i64(ptr);      a bigint
  *
  *   number|bigint|buffer  ptr         address, or an ArrayBuffer/view
  *   number                byteOffset  default 0, may be negative
@@ -1530,7 +1573,7 @@ int js_cfunction_parse(JSContext*, JSValueConst spec, Sig* out);
 /* ... returns NULL with an exception pending. */
 Sig* js_sig_new(JSContext*, JSValueConst spec);
 
-/* ... never throws: returns 0 on success, non-zero if `v` is not an address
+/* ... never throws: returns 0 on success, non-zero if v is not an address
  * (the caller picks the error). */
 int js_to_address(JSContext*, void** out, JSValueConst v);
 ```
@@ -1588,9 +1631,9 @@ One line of code with the surprise in a trailing comment beats four lines
 of prose, and it is what the next reader greps for:
 
 ```c
-JS_DefinePropertyValue(ctx, obj, atom, v, flags);  // takes `v`, not `atom`: free the atom
-JS_SetPropertyStr(ctx, obj, "k", v);               // takes `v`
-JS_GetPropertyStr(ctx, obj, "k");                  // returns a new ref: free it
+JS_DefinePropertyValue(ctx, obj, atom, v, flags);  /* takes v, not atom: free the atom */
+JS_SetPropertyStr(ctx, obj, "k", v);               /* takes v */
+JS_GetPropertyStr(ctx, obj, "k");                  /* returns a new ref: free it */
 ```
 
 ## 19. Verifying a binding actually works

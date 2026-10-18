@@ -8,3 +8,23 @@
   qjsm external natives now implemented (cmake.md): module.cmake include, link, builtin registration; stdc++ added for C++ modules; open symbol collisions listed
 - 2026-10-14
   documented hide_static_symbols (ld -r, nm, objcopy --localize-symbols), HIDE_STATIC_SYMBOLS and <name>_EXPORT_SYMBOLS (cmake.md, section 21); replaces the open symbol-collision note
+- 2026-10-16
+  added per-module copies of static core lib globals and the native-method hand-off pattern (section 8)
+- 2026-10-17
+  added finalizer-safe allocators (runtime, not context), no re-runnable steps around user JS, cesu8 strings and boxing without JS_ToObject
+- 2026-10-18
+  comment rules: no markdown (fences, backticks) in comments, light punctuation, no // in C, no stray */ inside a comment
+- 2026-10-18
+  comment rules: tables may use unicode line-drawing characters
+- 2026-10-18
+  naming and style: no cplusplus guards in headers only a C native module consumes
+- 2026-10-18
+  code style: no braces around a one-statement body of if/else/for/while
+- 2026-10-18
+  code style: initialize at declaration, or fold the assignment into the test
+- 2026-10-18
+  code style: group same-type declarations on one line, uninitialized names first
+- 2026-10-18
+  comment style: no semicolon in comment text, bare names instead of backquotes
+- 2026-10-18
+  comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long

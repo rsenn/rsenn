@@ -2,3 +2,15 @@
   added a Tools section pointing at tool-registry (describe and runtime-diff for portability, list-exports, resolve-imports, debugger)
 - 2026-10-15
   section 5 debugging rewritten around the scriptable qjsm-debugger (--plain, --json, -x, --timeout, library, -e attach)
+- 2026-10-16
+  added json to modules.yaml (quickjs-only; read/write gotchas, use global JSON instead)
+- 2026-10-18
+  code style: no braces around a one-statement body of if/else/for/while
+- 2026-10-18
+  code style: initialize at declaration, or fold the assignment into the test
+- 2026-10-18
+  code style: group same-type declarations on one line, uninitialized names first
+- 2026-10-18
+  comment style: no semicolon in comment text, bare names instead of backquotes
+- 2026-10-18
+  comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long

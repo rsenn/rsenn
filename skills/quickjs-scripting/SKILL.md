@@ -110,6 +110,9 @@ quickjs-only.
 - **Network globals**: `fetch`, `Request`, `Response`, `Headers`, `FormData`, `URL`, `AbortController`, `Bun.serve`
   exist on qjsm (built from qjs-modules after 2026-10-21) only when qjs-lws is in the module path, loaded on first
   use. Test for a global qjs-lws lacks (`typeof structuredClone`) to decide whether to `import 'globals'`, not `URL`.
+- **Intl**: qjsm (built from qjs-modules after 2026-10-21) has an English-only `Intl` global: every locale formats as
+  en-US. Only `UTC`, fixed offsets (`'+05:30'`) and the local zone work as `timeZone`; `toLocaleString()` and
+  `localeCompare()` do not use it, so call `Intl.NumberFormat`/`DateTimeFormat`/`Collator` directly for portable output.
 - **Arguments**: user arguments are `process.argv.slice(2)` on all runtimes.
 - **Script location**: `import.meta.filename`/`dirname` work on qjsm (built from qjs-modules after 2026-10-21),
   node 20.11+, bun, deno; `import.meta.main` only on qjsm, bun, deno, node 24.2+ (undefined on older node).

@@ -37,3 +37,5 @@
   portability rules: node: prefix resolves on qjsm, only for node module names
 - 2026-10-21
   portability rules: network globals from qjs-lws on qjsm, lazy and only when installed
+- 2026-10-21
+  portability rules: english-only Intl global on qjsm, its time zones and toLocaleString gap

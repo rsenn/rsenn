@@ -144,3 +144,20 @@ modules:
       - "Passing { stdio: 'pipe', encoding: 'utf8' } to spawnSync threw 'not a function' on quickjs. To capture output portably, have the shell write to a file (execSync(`cmd > ${tmp}`)) and read it back with fs."
       - "The exit status is result.status on all four runtimes."
       - "Only the synchronous forms were compared across runtimes; treat exec/spawn (async) stream behaviour as unverified."
+
+  json:
+    project: qjs-modules
+    kind: native
+    compatibility: quickjs
+    import: { quickjs: json }
+    doc: doc/native/json.md
+    source: quickjs-json.c                 # built into qjsm
+    use: >
+      Streaming and extended JSON: JsonParser/JsonPushParser (pull and push
+      tokenizers, comments allowed), JsonWriter/JsonSerializer (JSON5-style
+      output options), JSONL.parse/parseChunk (Bun's shape). For a plain parse
+      or stringify use the global JSON.parse/JSON.stringify: they exist on all
+      four runtimes.
+    notes:
+      - "Do not use json.read()/json.write() in a script (2026-10-16 build): read() leaves string escapes undecoded ('\"a\\\\nb\"' keeps a backslash-n), returns null-prototype objects, accepts '[01]', raw newlines in strings and trailing commas, and throws InternalError/ReferenceError instead of SyntaxError; write() ignores toJSON and Date (write(new Date(0)) is '{}'), emits undefined properties as null and accepts cycles and BigInt. Use JSON.parse/JSON.stringify."
+      - "node, bun and deno have no 'json' module; only JSONL has a counterpart (Bun.JSONL), imports differ."

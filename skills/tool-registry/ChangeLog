@@ -30,3 +30,11 @@
   qjs-ffi-genbindings gotchas updated for missing-symbol stubs on all targets, default arguments, by-value classes and template instances
 - 2026-10-15
   qjs-ffi-genbindings gotchas updated for --out-auto, wrappers on C++ functions and methods, non-type template arguments, defaults in describe and jsdoc
+- 2026-10-15
+  qjs-ffi-genbindings gotchas: missing-symbol stub verified on node 26, nested template instances and a class with one base by value
+- 2026-10-20
+  resolve-imports gotchas: list-imports misses late, require and dynamic imports, -f is a no-op
+- 2026-10-20
+  resolve-imports now on module-lexer: status verified, modes for -m and bundling, -u needs -m, stale installed module-lexer gotcha
+- 2026-10-21
+  resolve-imports: node_modules resolution through import.meta.resolve, search-path modules stay imports, bundle name clash gotcha

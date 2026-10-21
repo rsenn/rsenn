@@ -191,19 +191,26 @@ tools:
     path: /usr/local/bin/resolve-imports.js
     group: js-analysis
     rating: 4
-    status: partial
+    status: verified
     what: >-
       Resolves/flattens/merges ES module graphs; --list-imports, --check-imports,
-      --remove-unused, --show-dependencies, bundling (-f/-m), module maps (-M name=path),
+      --remove-unused, --show-dependencies, bundling (default mode), merging (-m), module maps (-M name=path),
       userscript output. The nearest thing to a bundler/lint for qjsm scripts.
     modes:
       imports: resolve-imports.js --list-imports -q FILE      # "file:module names"
       deps: resolve-imports.js -d FILE
-      unused: resolve-imports.js -u FILE
+      unused: resolve-imports.js -m -u FILE   # rewrites FILE in place: one import per module, unused names dropped
+      merge: resolve-imports.js -m FILE       # rewrites FILE in place, side-effect imports kept
+      bundle: resolve-imports.js -M lexer=./lib/lexer -o out.js FILE   # -M NAME=PATH turns a bare name into a file import
     gotchas:
       - "--help lists flags with no descriptions."
-      - "Only --list-imports run so far."
-    verified: "2026-10-14 --list-imports on a 3-line script"
+      - "-u without -m is ignored and the default bundle mode runs; with -m it rewrites the file."
+      - "Parses with lib/module-lexer.js since 2026-10-20 (late, dynamic and require imports are listed); a qjsm whose installed module-lexer.js predates print()/merge() fails to load the tool: run with QUICKJS_MODULE_PATH=<build>;<repo>/lib (absolute paths) or reinstall."
+      - "--list-imports exits 1 on an unresolvable static import, like --check-imports."
+      - "Resolves with qjsm's import.meta.resolve since 2026-10-21: node_modules packages (package.json exports/imports/main, conditions node, import, default) are found and bundled; a bare name on QUICKJS_MODULE_PATH (lexer/c.js) stays an import instead of failing. Needs a qjsm with the loaders_packages builtin (check qjsm -l)."
+      - "Bundles concatenate files without renaming: two files with the same top-level name give a bundle that does not load (magic-string + sourcemap-codec, intToChar)."
+      - "-f (--flatten) and -i (--imports) have no effect: the options are never read; the default mode bundles."
+    verified: "2026-10-21 bundle, -C, -G, -m, --list-imports on utilities/*.js; --list-imports -p on magic-string/dist/index.mjs"
 
   runtime-diff:
     path: /usr/local/bin/runtime-diff.js
@@ -323,7 +330,7 @@ tools:
       - "Without --library symbols are looked up in RTLD_DEFAULT."
       - "Output is for the qjs-ffi (script) route; the quickjs-native-bindings route is hand-written C. Use the IR to design the latter."
       - "The installed command runs /usr/local/share/qjs-ffi (a copy); to try a checkout run qjsm <qjs-ffi>/tools/gen-bindings.js with the qtool --env module path."
-      - "A struct and a function of one name: the class is NAME_t. A symbol missing from the library is a stub that throws on call (all targets; node untested, no node:ffi here). C++: a literal default argument may be left out of a call; a trivially copyable class (ImVec2) and a template instance (cv::Size_<int>, Vec<float, 3>) are bound by value; std::string, nested instances and non-literal defaults are not. --describe/--jsdoc show defaults. --handle/--out/--owned-return are per function name (--out-auto guesses out*/pp* and handle ** parameters), qjs target only; --out and --owned-return reach C++ functions and methods as ns::Class::method:arg, --handle does not; a handle nobody closed is closed by GC in no fixed order (sqlite3_close can fail with SQLITE_BUSY while statements are open)."
+      - "A struct and a function of one name: the class is NAME_t. A symbol missing from the library is a stub that throws on call (all targets, tested on node 26). C++: a literal default argument may be left out of a call; a trivially copyable class (ImVec2, also with one plain base) and a template instance (cv::Size_<int>, Vec<float, 3>, W<Size_<int>>) are bound by value; std::string and non-literal defaults are not. --describe/--jsdoc show defaults. --handle/--out/--owned-return are per function name (--out-auto guesses out*/pp* and handle ** parameters), qjs target only; --out and --owned-return reach C++ functions and methods as ns::Class::method:arg, --handle does not; a handle nobody closed is closed by GC in no fixed order (sqlite3_close can fail with SQLITE_BUSY while statements are open)."
     verified: "2026-10-15 nanovg (87 bound), C++ defaults and by-value classes/templates (tests/cxx/defaults.hpp, cxxvalue.hpp), sqlite (loads without --exclude; open/prepare/step/column text via --out/--handle/--cstring), tests/cxx/wrappers.h"
 
   qjs-ffi-genstructs:

@@ -1,0 +1,4 @@
+- 2026-10-21
+  created: rules.yaml with 50 atomic rules and 20 contexts, collected from the comment sections of diet-coding, quickjs-native-bindings and quickjs-scripting; scripts/rules-for resolves a context
+- 2026-10-21
+  /comment-style takes FILE, FILE:LINE and FILE:FIRST-LAST arguments: interactive per-comment review with a proposed default, scripts/select-comments (extract-comments.js based, with lint), scripts/make-sed (sed script per file, diff, safety check)

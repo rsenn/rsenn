@@ -1,0 +1,86 @@
+#!/usr/bin/env python3
+# select-comments: list the comments a /comment-style run works on, as NDJSON.
+#   select-comments TARGET...
+# TARGET is FILE (all comments of the file), FILE:LINE (the comment that
+# covers that line) or FILE:FIRST-LAST (every comment overlapping the range).
+# Uses extract-comments.js; one record per comment:
+#   id file start end (line, column) kind raw indent trailing next
+#   lang   c | cpp | js, from the extension
+#   lint   names of the rules the text breaks, checkable by machine
+#   next   first code line after the comment, to guess the context
+import sys, os, re, json, subprocess
+
+LANG = {'.c': 'c', '.h': 'c', '.cc': 'cpp', '.cpp': 'cpp', '.cxx': 'cpp', '.hpp': 'cpp',
+        '.hh': 'cpp', '.js': 'js', '.mjs': 'js', '.cjs': 'js'}
+
+def pos(s):
+  f, l, c = s.rsplit(':', 2)
+  return f, int(l), int(c)
+
+def targets(args):
+  out = {}
+  for a in args:
+    m = re.match(r'^(.*?):(\d+)(?:[-:](\d+))?$', a)
+    if m and os.path.exists(m.group(1)):
+      lo = int(m.group(2))
+      out.setdefault(m.group(1), []).append((lo, int(m.group(3) or lo)))
+    elif os.path.exists(a):
+      out.setdefault(a, None)
+    else:
+      sys.exit('select-comments: no such file: ' + a)
+  return out
+
+def text_of(raw):
+  # comment text without delimiters, one string per line
+  lines = []
+  for l in raw.split('\n'):
+    l = re.sub(r'^\s*(/\*+|\*+/?|//+[!/]?)\s?', '', l)
+    l = re.sub(r'\s*\*/\s*$', '', l)
+    lines.append(l)
+  return lines
+
+def lint(raw, kind, lang):
+  bad, lines = [], text_of(raw)
+  body = [l for l in lines if l.strip()]
+  if body and re.match(r'[A-Z][a-z]', body[0]) and not re.match(r'[A-Z][A-Za-z0-9]*[:.(]', body[0]):
+    bad.append('text.lowercase-start')
+  if any(';' in l for l in body) and not any(l.startswith('  ') for l in body):
+    bad.append('text.no-semicolon')
+  if any(len(l) > 75 for l in lines):
+    bad.append('text.width-75')
+  if any('`' in l for l in body) and lang != 'js':
+    bad.append('text.bare-names')
+  if kind == 'line' and lang == 'c':
+    bad.append('delim.c-block-only')
+  if len(body) > 4 and not any(l.startswith('  ') or '|' in l for l in body):
+    bad.append('shape.max-4-lines')
+  return bad
+
+def main(args):
+  if not args:
+    sys.exit(__doc__)
+  n = 0
+  for f, ranges in targets(args).items():
+    lang = LANG.get(os.path.splitext(f)[1].lower())
+    if not lang:
+      sys.exit('select-comments: no known language for ' + f)
+    p = subprocess.run(['extract-comments.js', '-n', '-L', 'start,end', f],
+                       capture_output=True, text=True)
+    if p.returncode:
+      sys.exit(p.stderr)
+    src = open(f, encoding='utf-8').read().split('\n')
+    for rec in map(json.loads, filter(None, p.stdout.split('\n'))):
+      _, sl, sc = pos(rec['start'])
+      _, el, ec = pos(rec['end'])
+      if ranges is not None and not any(sl <= hi and el >= lo for lo, hi in ranges):
+        continue
+      nxt = next((l.strip() for l in src[el:el + 6] if l.strip()), '')
+      n += 1
+      print(json.dumps({
+        'id': n, 'file': f, 'lang': lang, 'kind': rec['kind'],
+        'start': [sl, sc], 'end': [el, ec], 'raw': rec['comment'],
+        'indent': re.match(r'\s*', src[sl - 1]).group(0) if sc == 1 else ' ' * (sc - 1),
+        'trailing': bool(src[sl - 1][:sc - 1].strip()),
+        'next': nxt, 'lint': lint(rec['comment'], rec['kind'], lang)}, ensure_ascii=False))
+
+main(sys.argv[1:])

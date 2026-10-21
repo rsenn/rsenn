@@ -1,0 +1,65 @@
+#!/usr/bin/env python3
+# make-sed: turn the decided comment rewrites into sed scripts.
+#   make-sed DECISIONS.ndjson OUTDIR [--apply]
+# Each line of DECISIONS is a select-comments record plus "new", the
+# replacement comment text (delimiters included, lines joined with \n; the
+# indent is added to every line after the first by this script).
+# Writes OUTDIR/NN-<file>.sed per file and OUTDIR/apply.sh, which runs
+# sed -i -f on each file. Addresses are original line numbers, so one pass
+# per file is enough whatever the line count of the new text. A record is
+# refused when the file no longer holds the old text at its position.
+# With --apply the scripts run at once; either way a unified diff of the
+# result is printed first (the files are copied, nothing changes until
+# apply.sh runs).
+import sys, os, json, subprocess, tempfile, shutil, difflib
+
+def esc(l):
+  return l.replace('\\', '\\\\')
+
+def main():
+  if len(sys.argv) < 3:
+    sys.exit(__doc__)
+  recs = [json.loads(l) for l in open(sys.argv[1]) if l.strip()]
+  out = sys.argv[2]
+  os.makedirs(out, exist_ok=True)
+  byfile = {}
+  for r in recs:
+    if r.get('new') is not None and r['new'] != r['raw']:
+      byfile.setdefault(r['file'], []).append(r)
+  apply_sh = ['#!/bin/sh', 'set -e']
+  for i, (f, rs) in enumerate(sorted(byfile.items())):
+    src = open(f, encoding='utf-8').read().split('\n')
+    cmds = []
+    for r in sorted(rs, key=lambda r: r['start']):
+      (sl, sc), (el, ec) = r['start'], r['end']
+      if sl == el:
+        old = src[sl - 1][sc - 1:ec - 1]
+      else:
+        old = '\n'.join([src[sl - 1][sc - 1:]] + src[sl:el - 1] + [src[el - 1][:ec - 1]])
+      if old != r['raw']:
+        sys.exit('make-sed: %s:%d changed since selection, select again' % (f, sl))
+      pre, post = src[sl - 1][:sc - 1], src[el - 1][ec - 1:]
+      new = r['new'].split('\n')
+      ind = r.get('indent', '') if not r['trailing'] else ' ' * (sc - 1)
+      lines = [pre + new[0]] + [ind + l if l else l for l in new[1:]]
+      lines[-1] += post
+      rng = str(sl) if sl == el else '%d,%d' % (sl, el)
+      cmds.append('%sc\\\n%s' % (rng, '\\\n'.join(esc(l) for l in lines)))
+    name = '%02d-%s.sed' % (i, f.strip('/').replace('/', '_'))
+    open(os.path.join(out, name), 'w').write('\n'.join(cmds) + '\n')
+    apply_sh.append("sed -i -f '%s' '%s'" % (os.path.abspath(os.path.join(out, name)), os.path.abspath(f)))
+    # dry run on a copy
+    with tempfile.TemporaryDirectory() as t:
+      cp = os.path.join(t, os.path.basename(f))
+      shutil.copy(f, cp)
+      subprocess.run(['sed', '-i', '-f', os.path.join(out, name), cp], check=True)
+      sys.stdout.writelines(difflib.unified_diff(
+        open(f, encoding='utf-8').read().splitlines(True), open(cp, encoding='utf-8').read().splitlines(True),
+        'a/' + f, 'b/' + f))
+  open(os.path.join(out, 'apply.sh'), 'w').write('\n'.join(apply_sh) + '\n')
+  os.chmod(os.path.join(out, 'apply.sh'), 0o755)
+  print('# %d comments in %d files; scripts in %s' % (sum(map(len, byfile.values())), len(byfile), out), file=sys.stderr)
+  if '--apply' in sys.argv:
+    subprocess.run([os.path.join(out, 'apply.sh')], check=True)
+
+main()

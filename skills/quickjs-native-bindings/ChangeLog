@@ -28,3 +28,9 @@
   comment style: no semicolon in comment text, bare names instead of backquotes
 - 2026-10-18
   comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long
+- 2026-10-18
+  added js_class_define and js_object_from_target (utils.h) to the class section, one registration and one constructor tail for all classes
+- 2026-10-20
+  qjsm-linked modules and embedded lib js shadow QUICKJS_MODULE_PATH, test with the rebuilt build-tree qjsm
+- 2026-10-21
+  comment rules moved to the comment-style skill (rules.yaml); the Comments section and the comment style edit bullets now point there

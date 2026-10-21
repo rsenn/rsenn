@@ -14,3 +14,14 @@
   comment style: no semicolon in comment text, bare names instead of backquotes
 - 2026-10-18
   comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long
+- 2026-10-20
+  portability rule: qjsm console.error writes to stdout
+- 2026-10-20
+  diagnostics rule: qjsm console.error goes to stderr from now, older builds to stdout
+- 2026-10-20
+  running: QUICKJS_MODULE_PATH entries must be absolute when a test starts qjsm in another cwd
+- 2026-10-21
+  portability: import.meta.resolve on all four runtimes, the parent argument only on qjsm and bun
+  running: a compiled-in lib/loaders module imports only std and os
+- 2026-10-21
+  comment rules moved to the comment-style skill (rules.yaml); the Comments section and the comment style edit bullets now point there

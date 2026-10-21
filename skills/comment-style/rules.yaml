@@ -1,0 +1,700 @@
+# comment-style: database of comment rules for C-like languages (C, C++, JS).
+#
+# Two parts. `rules` holds atomic rules, one fact each, canonically named
+# <group>.<name>. `contexts` composes rulesets for a place where a comment
+# is written, named "<language> | <flavor> | <kind>".
+#
+# rule fields
+#   rule    the instruction, one fact
+#   langs   which languages it governs: c-like (C, C++, JS), c, cpp, js
+#   from    skill the rule was collected from (diet-coding, quickjs-native-
+#           bindings, quickjs-scripting); where the skills differ, the rule
+#           is the merged form and `note` says what was decided
+#   example optional, a literal that shows the rule
+#   note    optional, a decision or caveat
+#
+# context fields
+#   extends contexts whose rules are included first (resolve depth first)
+#   rules   rule names added by this context
+#   about   when it applies
+#
+# context grammar
+#   language  C-like | C | C++ | JS
+#   flavor    any | diet | quickjs | script (rsenn JS header-block style)
+#   kind      any | file | prototype | implementation | member | table |
+#             js-facing | class | function | data-shape | inline
+#   "any" in a slot is the base ruleset every more specific context
+#   in that language extends.
+#
+# precedence: the project's own CLAUDE.md wins over every rule here
+# (rule precedence.project-rules).
+
+rules:
+
+  # --- precedence ---------------------------------------------------------
+
+  precedence.project-rules:
+    rule: >-
+      The project's own comment rules (its CLAUDE.md) win over these where
+      they differ.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting, diet-coding]
+
+  # --- text: how the words are written ------------------------------------
+
+  text.lowercase-start:
+    rule: >-
+      A comment starts lowercase, unless its first word is an identifier
+      that starts uppercase. Applies to every comment, new or rewritten.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+    example: "/* CFunction: ... */   /* Map: ... */   /* JSON.parse ... */"
+
+  text.fragments-not-sentences:
+    rule: >-
+      Later sentences are fragments, not new capitalised ones.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+    note: >-
+      the old wording allowed a later sentence after a semicolon;
+      text.no-semicolon supersedes that.
+
+  text.no-semicolon:
+    rule: >-
+      Comment text has no semicolon, so a grep for names ending in a
+      semicolon finds only code. Split into two fragments, or use a comma
+      or a dash. A semicolon appears only inside real C or JS code.
+    langs: c-like
+    from: [diet-coding, quickjs-native-bindings, quickjs-scripting]
+
+  text.width-75:
+    rule: >-
+      Text is 75 columns at most, measured after the leading comment
+      prefix (" * " or "// " or "/* "). With the prefix that is 78, so a
+      closing " */" still fits.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  text.plain-sentences:
+    rule: >-
+      Write sentences a reader takes in on one pass: subject, verb,
+      concrete fact, in that order. No hedging, no throat-clearing.
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  text.light-punctuation:
+    rule: >-
+      Plain words, short sentences, no decorative quotes or parentheses.
+      Quote only a literal the reader must see exactly, such as an error
+      message.
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  text.bare-names:
+    rule: >-
+      A name in a comment is bare, no backquotes or quotes around it:
+      write that opaque is b. A name is an identifier, a file or a
+      parameter. In a doxygen comment use \param, \return and the like.
+    langs: c-like
+    from: [diet-coding, quickjs-native-bindings]
+    example: "opaque is b   not   `opaque` is `b`"
+    note: >-
+      concerns names only; a code snippet is governed by the code.*
+      rules.
+
+  text.no-history:
+    rule: >-
+      State the current behavior and, if not obvious, the one reason it
+      has to be that way. No "used to X, now Y", no BUGS or TODO.md
+      entries, no issue names, no "confirmed via repro X". History belongs
+      in the commit message.
+    langs: c-like
+    from: [diet-coding, quickjs-native-bindings, quickjs-scripting]
+
+  text.name-the-real-value:
+    rule: >-
+      Name what each parameter is for in plain words, and give the real
+      value where it is a message, not jargon like "prefixes the error
+      messages".
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+    example: '"dlopen: symbol not found"   "cannot read x.json"'
+
+  # --- content: what is worth a comment -----------------------------------
+
+  content.say-what-code-cannot:
+    rule: >-
+      A comment says what the code cannot: the contract at the top of a
+      function, and the one reason for anything that looks wrong.
+    langs: c-like
+    from: [diet-coding]
+
+  content.show-dont-tell:
+    rule: >-
+      Show a concrete input and its result, a literal value, a call or a
+      before/after pair before, or instead of, describing it in prose.
+    langs: c-like
+    from: [diet-coding, quickjs-native-bindings, quickjs-scripting]
+    example: '{ abs: <function> }   "a==" -> "a", ""'
+
+  content.first-line-says-what:
+    rule: >-
+      A function's comment says in plain words, in its first line, what
+      the function does. After two lines a reader who has not seen the
+      code can say what goes in and what comes out; if not, rewrite it.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  content.contract-above-function:
+    rule: >-
+      Put the contract in a short comment above the function: what it
+      returns in the edge cases (empty input, not found, error).
+    langs: c
+    from: [diet-coding]
+
+  content.explain-noop-finalizer:
+    rule: >-
+      A deliberately empty finalizer carries a comment saying why nothing
+      is released there (a resource entangled with another native
+      subsystem that may be gone during GC).
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  content.quirk-as-code:
+    rule: >-
+      An API quirk or runtime difference is one line of code with the
+      surprise in a trailing comment, not four lines of prose.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+    example: |
+      JS_GetPropertyStr(ctx, obj, "k");   /* returns a new ref: free it */
+      fs.readFileSync("x");               // throws ENOENT
+
+  # --- shape: the comment is a picture, not a paragraph --------------------
+
+  shape.scannable:
+    rule: >-
+      A comment is something the eye takes in as a shape, like a table,
+      not a paragraph read start to end.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  shape.member-1-2-lines:
+    rule: A struct-member comment is 1 or 2 lines, right on the member.
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  shape.max-4-lines:
+    rule: >-
+      A comment that explains behavior is 4 lines at most. For more,
+      restructure (shape.restructure-when-long) instead of writing a
+      longer paragraph.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+    note: the example and the table of a header block do not count.
+
+  shape.restructure-when-long:
+    rule: >-
+      When the rationale needs more room: a one-line summary, then a
+      short list (one point per fact) or a table. Never an unbroken block
+      of sentences.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  shape.no-packed-block:
+    rule: >-
+      Summary line, example, parameter columns and returns are separate
+      paragraphs, split by an empty comment line (" *" in a block).
+    langs: c-like
+    from: [diet-coding, quickjs-native-bindings, quickjs-scripting]
+
+  shape.one-per-function:
+    rule: One comment per function, never one block shared by several.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  shape.brief-first:
+    rule: >-
+      A comment on a function prototype starts with a brief of one or two
+      lines, then the rest in separate paragraphs.
+    langs: c-like
+    from: [diet-coding]
+
+  shape.doxygen-when-long:
+    rule: >-
+      When a comment grows past about 4 lines, or its text refers to
+      argument names, make it a doxygen comment.
+    langs: c-like
+    from: [diet-coding]
+
+  # --- delim: comment syntax ----------------------------------------------
+
+  delim.c-block-only:
+    rule: >-
+      In C never use // comments, not even trailing ones; always
+      /* ... */.
+    langs: c
+    from: [quickjs-native-bindings]
+    note: >-
+      for C++ the sources say nothing, see open_questions at the end.
+
+  delim.js-line-inside-block-outside:
+    rule: >-
+      Inside a function or after a statement use //; for a block use
+      /* ... */ with " * " on each line.
+    langs: js
+    from: [quickjs-scripting]
+
+  delim.no-terminator-inside:
+    rule: >-
+      A comment contains */ only where it ends. Check the text for a glob
+      or path such as lib/*/x.c, a division next to a pointer, or a nested
+      comment opener; reword it (lib/<module>/x.c) instead of escaping it.
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  # --- code: code inside a comment ------------------------------------------
+
+  code.c-plain-indented:
+    rule: >-
+      Plain text, no markdown idioms: no ``` fences. Code in a comment is
+      plain lines indented by 2 spaces more than the comment text.
+    langs: c
+    from: [quickjs-native-bindings]
+
+  code.js-fenced:
+    rule: >-
+      Multi-line code in a comment is fenced, ```js for JS and ```sh for
+      shell, each fence on its own comment line.
+    langs: js
+    from: [quickjs-scripting]
+
+  code.js-inline-backticks:
+    rule: A one-line snippet stays in single backticks.
+    langs: js
+    from: [quickjs-scripting]
+    note: >-
+      a snippet, not a name; names stay bare (text.bare-names).
+
+  # --- param: parameters and results ----------------------------------------
+
+  param.aligned-columns:
+    rule: >-
+      A comment that describes parameters gives each its own line, 2-space
+      indent, then type, name and description as aligned columns (pad so
+      every description starts at the same column).
+    langs: c-like
+    from: [diet-coding, quickjs-native-bindings, quickjs-scripting]
+    example: |
+      /* one-line summary of what the function does.
+       *
+       *   const char*  name   what this argument is / controls
+       *   size_t       len    what this argument is / controls
+       *
+       *   returns ssize_t     what the return value means
+       */
+
+  param.returns-throws:
+    rule: >-
+      The result follows the parameters as its own paragraph: returns,
+      and throws (which error type, for what).
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  param.doxygen-form:
+    rule: >-
+      A doxygen comment lists the parameters in aligned columns (type,
+      name and description each start at the same column), then the
+      return type and its meaning. The detailed description follows the
+      brief, or follows the parameters when it refers to them.
+    langs: c-like
+    from: [diet-coding]
+
+  param.only-where-needed:
+    rule: >-
+      A non-doxygen comment describes a parameter or the return value
+      only where the caller needs it. The detailed description follows
+      the brief, or the parameters when it refers to them.
+    langs: c-like
+    from: [diet-coding]
+
+  # --- table: tables in comments ---------------------------------------------
+
+  table.unicode-lines-ok:
+    rule: >-
+      A table may use the unicode line-drawing characters
+      (┌ ─ ┬ ┐ │ ├ ┼ ┤ └ ┴ ┘); aligned columns stay fine too.
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  table.equal-rows:
+    rule: Every row of a table is the same width; count columns, not bytes.
+    langs: c-like
+    from: [quickjs-native-bindings]
+
+  table.where-code-is-table:
+    rule: >-
+      Where the code is a table (a switch, a lookup Map, a list of flags),
+      comment it as a table, "key | meaning" rows above it.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  table.conversions:
+    rule: >-
+      Conversions per kind or type go in a table above the switch that
+      does them: kind, C type, JS in, JS out.
+    langs: c
+    from: [quickjs-native-bindings]
+    example: |
+      /*  kind     C type     JS in           JS out
+       *  I32      int32_t    Number          Number
+       *  I64      int64_t    Number|bigint   bigint
+       */
+
+  table.magic-accessors:
+    rule: >-
+      Magic-dispatched accessors get a table above the
+      JS_CGETSET_MAGIC_DEF list: magic | JS property | meaning.
+    langs: c
+    from: [quickjs-native-bindings]
+
+  table.exports-list:
+    rule: >-
+      The module's exports are listed in the init function, one line per
+      name, in the order they are added, so the public surface is visible
+      at once.
+    langs: c
+    from: [quickjs-native-bindings]
+
+  table.data-shape:
+    rule: >-
+      A comment that describes an object or JSON format lists the keys in
+      a table, then shows one entry as literal code with its notes after
+      //. An optional key is written key?; a key present only under a
+      condition says the condition in its row.
+    langs: js
+    from: [quickjs-scripting]
+    example: |
+      /* a symbol spec of dlopen(): one entry of symbols.
+       *
+       *   key       holds
+       *   args      argument types, default none
+       *   returns   return type, default "void"
+       *
+       * ```js
+       * { abs: { args: ["i32"], returns: "i32" } }  // abs(-5) is 5
+       * ```
+       */
+
+  # --- block: fixed-shape blocks -------------------------------------------------
+
+  block.file-banner-c:
+    rule: >-
+      Each .c file starts with a banner: the JS names it implements, what
+      it depends on, and the one rule that holds throughout.
+    langs: c
+    from: [quickjs-native-bindings]
+    example: |
+      /* c-function.c: CFunction, close(), and the variable accessors.
+       * depends on: ffi-type.c (signatures), js-helpers.c (pointer conversion).
+       * rule: the callable object is its own opaque holder, no lookup per call. */
+
+  block.file-banner-js:
+    rule: >-
+      A script or module starts with a banner: the exports, the runtimes
+      it needs, the one rule that holds throughout.
+    langs: js
+    from: [quickjs-scripting]
+    example: |
+      /* config.js: readJSON, writeJSON.
+       * runs on qjsm, node, bun and deno (fs from "fs", no std).
+       * rule: paths are used as given, never resolved against the script. */
+
+  block.public-header-doc:
+    rule: >-
+      The public header declares every public function with a comment,
+      the same comment a man page would carry.
+    langs: c
+    from: [diet-coding]
+
+  block.js-facing-header:
+    rule: >-
+      Whatever C exposes to JS (a function, a class, an object spliced
+      into the export list) is explained once, in a block at its
+      declaration: in the .h for what other files call, above the
+      definition for a static. It reads like the JS docs, in JS terms.
+      Order: (1) Name: what it is, and the bun/Node API it mirrors;
+      (2) the JS usage as code; (3) arguments and result as aligned
+      columns with accepted forms, default and range; (4) throws;
+      (5) one line on how it is wired in (JS_OBJECT_DEF entry, defaults).
+    langs: c
+    from: [quickjs-native-bindings]
+    note: the 4-line cap does not count the example and the table.
+    example: |
+      /* read: direct memory reads, no DataView or ArrayBuffer (bun:ffi's read).
+       *
+       *   read.u8(ptr, byteOffset);
+       *   read.i64(ptr);      a bigint
+       *
+       *   number|bigint|buffer  ptr         address, or an ArrayBuffer/view
+       *   number                byteOffset  default 0, may be negative
+       *
+       *   returns  Number, bigint (i64, u64) or pointer (ptr), by member name
+       *   throws   TypeError for a NULL pointer
+       *
+       * spliced into the export list:
+       * JS_OBJECT_DEF("read", js_ffiread_funcs, FFI_READ_COUNT, ...).
+       */
+
+  block.js-header:
+    rule: >-
+      A function, class or module others call gets a header block. Order:
+      (1) name: what it is, and the Node/Bun/Deno API it mirrors;
+      (2) the usage as code in a ```js fence; (3) arguments as aligned
+      columns, accepted forms and defaults in the description;
+      (4) returns and throws; (5) one line on where it is exported, if
+      not obvious.
+    langs: js
+    from: [quickjs-scripting]
+    example: |
+      /* readJSON: reads and parses a JSON file; Node's fs + JSON.parse in one.
+       *
+       * ```js
+       * const cfg = readJSON("config.json", { fallback: {} });
+       * ```
+       *
+       *   string  path              file to read
+       *   object  options.fallback  returned when the file is missing
+       *
+       *   returns  the parsed value
+       *   throws   SyntaxError for bad JSON; Error if missing and no fallback
+       */
+
+  block.class-same-shape:
+    rule: >-
+      A class gets the same block as a function: the constructor call, one
+      line per method and getter, then throws. Internals (ownership, why a
+      pointer is held) go in the short comments at the code.
+    langs: c-like
+    from: [quickjs-native-bindings, quickjs-scripting]
+
+  block.error-contract:
+    rule: >-
+      Every internal helper states its error contract in one of three
+      fixed forms: "returns 0, or -1 with an exception pending", "returns
+      NULL with an exception pending", "never throws: returns 0 on
+      success, non-zero if v is not an address (the caller picks the
+      error)". A helper that ignores a conversion failure says so too.
+    langs: c
+    from: [quickjs-native-bindings]
+    example: |
+      /* ... returns 0, or -1 with an exception pending. */
+      int js_cfunction_parse(JSContext*, JSValueConst spec, Sig* out);
+
+  # --- tag: greppable prefixes ----------------------------------------------------
+
+  tag.c-quickjs-gotchas:
+    rule: >-
+      Tag the recurring gotchas with a fixed prefix so a warning is one
+      grep away: refcount: (who owns a reference and who frees it),
+      borrowed: (a pointer valid only until a named point),
+      exception pending: (a path that returns with JS_EXCEPTION set),
+      JS thread only: (never from another OS thread), little-endian:
+      (relies on byte order).
+    langs: c
+    from: [quickjs-native-bindings]
+
+  tag.js-portability:
+    rule: >-
+      Tag a runtime difference so it is one grep away: "qjsm only:" (uses
+      std, os or a qjs-* module other runtimes lack), "node:" / "bun:" /
+      "deno:" (a branch or workaround for that runtime), "async:" (returns
+      a Promise on one runtime, a value on another).
+    langs: js
+    from: [quickjs-scripting]
+
+# ---------------------------------------------------------------------------
+# contexts: a ruleset per place a comment is written
+# ---------------------------------------------------------------------------
+
+contexts:
+
+  "C-like | any | any":
+    about: every comment in C, C++ and JS
+    rules:
+      - precedence.project-rules
+      - shape.scannable
+      - text.lowercase-start
+      - text.fragments-not-sentences
+      - text.no-semicolon
+      - text.width-75
+      - text.plain-sentences
+      - text.light-punctuation
+      - text.bare-names
+      - text.no-history
+      - content.say-what-code-cannot
+      - content.show-dont-tell
+      - shape.max-4-lines
+      - shape.restructure-when-long
+      - shape.no-packed-block
+      - shape.one-per-function
+      - delim.no-terminator-inside
+
+  "C | any | any":
+    about: any comment in a C file
+    extends: ["C-like | any | any"]
+    rules:
+      - delim.c-block-only
+      - code.c-plain-indented
+
+  "C++ | any | any":
+    about: any comment in a C++ file
+    extends: ["C-like | any | any"]
+    rules:
+      - code.c-plain-indented
+
+  "JS | any | any":
+    about: any comment in a JS or MJS file
+    extends: ["C-like | any | any"]
+    rules:
+      - delim.js-line-inside-block-outside
+      - code.js-fenced
+      - code.js-inline-backticks
+      - content.quirk-as-code
+
+  # --- C | diet --------------------------------------------------------------
+
+  "C | diet | implementation":
+    about: a function body or the comment above a definition in lib/<module>/
+    extends: ["C | any | any"]
+    rules:
+      - content.contract-above-function
+      - content.first-line-says-what
+
+  "C | diet | prototype":
+    about: a declaration in lib/<name>.h
+    extends: ["C | any | any"]
+    rules:
+      - block.public-header-doc
+      - content.first-line-says-what
+      - shape.brief-first
+      - shape.doxygen-when-long
+      - param.doxygen-form
+      - param.only-where-needed
+      - param.returns-throws
+      - param.aligned-columns
+      - text.name-the-real-value
+
+  # --- C | quickjs -------------------------------------------------------------
+
+  "C | quickjs | any":
+    about: base for binding code, C and C++ share it
+    extends: ["C | any | any"]
+    rules:
+      - tag.c-quickjs-gotchas
+      - content.quirk-as-code
+      - content.first-line-says-what
+      - text.name-the-real-value
+      - table.unicode-lines-ok
+      - table.equal-rows
+      - table.where-code-is-table
+
+  "C | quickjs | file":
+    about: top of a quickjs-*.c or binding source file
+    extends: ["C | quickjs | any"]
+    rules:
+      - block.file-banner-c
+
+  "C | quickjs | member":
+    about: a struct member
+    extends: ["C | quickjs | any"]
+    rules:
+      - shape.member-1-2-lines
+
+  "C | quickjs | prototype":
+    about: an internal helper prototype or declaration
+    extends: ["C | quickjs | any"]
+    rules:
+      - block.error-contract
+      - shape.brief-first
+      - param.aligned-columns
+      - param.returns-throws
+
+  "C | quickjs | js-facing":
+    about: a function, class or object visible to JS, declared in the .h or above a static definition
+    extends: ["C | quickjs | any"]
+    rules:
+      - block.js-facing-header
+      - block.class-same-shape
+      - block.error-contract
+      - param.aligned-columns
+      - param.returns-throws
+
+  "C | quickjs | table":
+    about: a switch, accessor list or export list
+    extends: ["C | quickjs | any"]
+    rules:
+      - table.conversions
+      - table.magic-accessors
+      - table.exports-list
+
+  "C | quickjs | implementation":
+    about: inside a function body of a binding
+    extends: ["C | quickjs | any"]
+    rules:
+      - content.explain-noop-finalizer
+
+  "C++ | quickjs | any":
+    about: the same as "C | quickjs | any" in a .cpp binding
+    extends: ["C++ | any | any", "C | quickjs | any"]
+
+  # --- JS | script -----------------------------------------------------------------
+
+  "JS | script | file":
+    about: top of a script or module
+    extends: ["JS | any | any"]
+    rules:
+      - block.file-banner-js
+      - tag.js-portability
+
+  "JS | script | function":
+    about: a function or method others call
+    extends: ["JS | any | any"]
+    rules:
+      - block.js-header
+      - content.first-line-says-what
+      - text.name-the-real-value
+      - param.aligned-columns
+      - param.returns-throws
+
+  "JS | script | class":
+    about: a class others construct
+    extends: ["JS | script | function"]
+    rules:
+      - block.class-same-shape
+
+  "JS | script | data-shape":
+    about: a comment describing an object or JSON format
+    extends: ["JS | any | any"]
+    rules:
+      - table.data-shape
+      - table.equal-rows
+
+  "JS | script | table":
+    about: a switch, lookup Map or list of flags
+    extends: ["JS | any | any"]
+    rules:
+      - table.where-code-is-table
+      - table.unicode-lines-ok
+      - table.equal-rows
+
+  "JS | script | inline":
+    about: inside a function or after a statement
+    extends: ["JS | any | any"]
+    rules:
+      - tag.js-portability
+
+# the sources left these undecided; ask the user before inventing
+open_questions:
+  - "C++ comment delimiter: is // allowed? delim.c-block-only is C only."
+  - "JS | jsdoc | *: no source rules exist for @param/@returns style; the header block of JS | script | function is the only documented JS shape."

@@ -1,0 +1,35 @@
+#!/usr/bin/env python3
+# rules-for: print the resolved ruleset of a comment context.
+#   rules-for "C | quickjs | prototype"     rules, extends resolved
+#   rules-for --list                        all contexts
+#   rules-for --check                       every referenced name exists
+import sys, os, yaml
+
+db = yaml.safe_load(open(os.path.join(os.path.dirname(__file__), '..', 'rules.yaml')))
+rules, ctxs = db['rules'], db['contexts']
+
+def resolve(name, seen=None):
+  seen = seen if seen is not None else []
+  for e in ctxs[name].get('extends', []):
+    resolve(e, seen)
+  for r in ctxs[name].get('rules', []):
+    if r not in seen:
+      seen.append(r)
+  return seen
+
+if len(sys.argv) != 2:
+  sys.exit(__doc__)
+arg = sys.argv[1]
+if arg == '--list':
+  for c, v in ctxs.items():
+    print('%-34s %s' % (c, v['about']))
+elif arg == '--check':
+  bad = [r for c in ctxs for r in resolve(c) if r not in rules]
+  bad += [e for v in ctxs.values() for e in v.get('extends', []) if e not in ctxs]
+  print('ok: %d rules, %d contexts' % (len(rules), len(ctxs)) if not bad else 'missing: %s' % bad)
+  sys.exit(bool(bad))
+else:
+  if arg not in ctxs:
+    sys.exit('unknown context, try --list')
+  for r in resolve(arg):
+    print('%s\n  %s' % (r, ' '.join(rules[r]['rule'].split())))

@@ -178,17 +178,13 @@ Conventions to copy exactly, so code reads like the library:
   language runtime truly needs unwinding.
 - **Portability goes behind a macro in one header,** not `#ifdef` sprinkled through
   functions. If a platform lacks a call, add one replacement file for that call.
-- **Comments say what the code cannot:** the contract at the top of a function, and the one
-  reason for anything that looks wrong. Show an example (`"a==" -> "a", ""`) before describing
-  one in prose. Keep them short; history belongs in the commit message.
+- **Comments** follow the `comment-style` skill: `C | diet | implementation` for a function, `C | diet | prototype` for a declaration in `lib/<name>.h`. History belongs in the commit message.
 - **Style of the library:** 2-space indent, `if(` without a space, return type on its own line
   and the function name in column 0 (so `grep '^name('` finds a definition), `{` on the line of
   the `if`/`for`, one statement per line.
   **No braces around a one-statement body** of `if`/`else`/`for`/`while`: `if(remainder)` newline `remainder++;` and `while(cond && (0x03 & j))` newline `out[j++] = c;`. Braces only for two or more statements (or to disambiguate a dangling `else`).
   Initialize a variable in its declaration when the value is known there; do not declare it and assign it on a later line. When declaration and first assignment cannot be adjacent and the variable is only tested, fold the assignment into the test, as long as readability holds and the line stays reasonably short (a short right-hand side and a simple comparison). A blank line separates the declarations from the statements that follow.
   Group declarations of the same base type at one scope into one declaration; pointers to that type join it with their own asterisks. Order within the line: names without an initializer first, then initialized ones from the simplest initializer to the most complex; a variable another initializer depends on comes before its dependant. Keep an initialized variable on its own line when the initializer is a call or expression that does not fit comfortably, when it has side effects whose order matters, when the line would pass about 80 columns, or when the group would hold more than about four names. Never merge types that differ in indirection depth or qualifiers (const, volatile) just to save a line.
-  Comment text has no semicolon, so a grep for names ending in a semicolon finds only code; split into two fragments or use a comma or a dash. A semicolon appears only inside real C or JS code. Names in a comment are bare, no backquotes or quotes around them: write that opaque is b. In a doxygen comment use \param, \return and the like instead.
-  A comment on a function prototype starts with a brief of one or two lines, then the rest in separate paragraphs, never one crammed block. When a comment grows past about 4 lines or its text refers to argument names, make it a doxygen comment. A doxygen comment lists the parameters in aligned columns (type, name and description each start at the same column, padded to fit) and then the return type and its meaning. A non-doxygen comment describes a parameter or the return value only where the caller needs it. In both forms the detailed description follows the brief, or follows the parameters when it refers to them.
 
 ## 5. Build for size
 

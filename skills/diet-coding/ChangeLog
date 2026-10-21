@@ -10,3 +10,5 @@
   comment style: no semicolon in comment text, bare names instead of backquotes
 - 2026-10-18
   comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long
+- 2026-10-21
+  comment rules moved to the comment-style skill (rules.yaml); the Comments section and the comment style edit bullets now point there

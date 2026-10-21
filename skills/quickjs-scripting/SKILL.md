@@ -28,12 +28,10 @@ How to edit:
 - state the current rule and its reason in a few lines; no session history
 - verify before writing (run it, `diff` it, `grep` it); never record a guess
 - prefer one precise line over a paragraph; merge duplicates instead of appending
-- follow the comment and style rules already in this file
+- comments follow the `comment-style` skill; code style follows the rules already in this file
 - code style: **No braces around a one-statement body** of `if`/`else`/`for`/`while`: `if(remainder)` newline `remainder++;` and `while(cond && (0x03 & j))` newline `out[j++] = c;`. Braces only for two or more statements (or to disambiguate a dangling `else`).
 - code style: Initialize a variable in its declaration when the value is known there; do not declare it and assign it on a later line. When declaration and first assignment cannot be adjacent and the variable is only tested, fold the assignment into the test, as long as readability holds and the line stays reasonably short (a short right-hand side and a simple comparison). A blank line separates the declarations from the statements that follow.
 - code style: Group declarations of the same base type at one scope into one declaration; pointers to that type join it with their own asterisks. Order within the line: names without an initializer first, then initialized ones from the simplest initializer to the most complex; a variable another initializer depends on comes before its dependant. Keep an initialized variable on its own line when the initializer is a call or expression that does not fit comfortably, when it has side effects whose order matters, when the line would pass about 80 columns, or when the group would hold more than about four names. Never merge types that differ in indirection depth or qualifiers (const, volatile) just to save a line.
-- comment style: Comment text has no semicolon, so a grep for names ending in a semicolon finds only code; split into two fragments or use a comma or a dash. A semicolon appears only inside real C or JS code. Names in a comment are bare, no backquotes or quotes around them: write that opaque is b. In a doxygen comment use \param, \return and the like instead.
-- comment style: A comment on a function prototype starts with a brief of one or two lines, then the rest in separate paragraphs, never one crammed block. When a comment grows past about 4 lines or its text refers to argument names, make it a doxygen comment. A doxygen comment lists the parameters in aligned columns (type, name and description each start at the same column, padded to fit) and then the return type and its meaning. A non-doxygen comment describes a parameter or the return value only where the caller needs it. In both forms the detailed description follows the brief, or follows the parameters when it refers to them.
 - the skill dir is a symlink into the `rsenn` repo; leave committing that
   repo to the user, and mention in your reply what you changed here
 
@@ -101,8 +99,13 @@ quickjs-only.
   ArrayBuffer where node returns a Buffer.
 - **Booleans**: coerce results that are compared or printed (`!!fs.existsSync(p)`).
 - **Exit** with `process.exit(n)`, not `std.exit`.
+- **Diagnostics**: `console.error`/`warn` go to stderr on qjsm built from qjs-modules `src/qjsm.c` after
+  2026-10-20; an older installed qjsm writes them to stdout. Where stdout is data, use `process.stderr.write(...)`.
 - **Timing**: `import { performance } from 'perf_hooks'`; qjsm has no global.
 - **Arguments**: user arguments are `process.argv.slice(2)` on all runtimes.
+- **Resolving a specifier**: `import.meta.resolve(spec)` works on qjsm (built from qjs-modules after
+  2026-10-21), node, bun and deno, and finds `node_modules` packages everywhere. A second argument (the parent)
+  works only on qjsm and bun: node ignores it without `--experimental-import-meta-resolve`, deno throws.
 - **Child processes**: do not rely on `execSync`/`spawnSync` returning captured
   output on qjsm; redirect to a file and read it (see the `child_process` notes).
 - Prefer the synchronous fs API in short scripts; use promises only when the
@@ -123,6 +126,15 @@ Look at `qjsm -l` before assuming a module exists: the installed
 `/usr/local/lib/quickjs/*.js` can be older than the repo's `lib/` (seen with
 `fsPromises`). When behaviour contradicts a doc, the installed build wins for
 what the user will actually run; report the mismatch.
+
+A `lib/` module compiled into qjsm (`BUILTINS_COMPILED`) may import only other builtins that qjsc can follow
+from its directory: `lib/loaders/*.js` use `std` and `os`, since `import 'fs'` fails to compile there
+(`could not load module filename 'node/events'`).
+
+To run against a repo's `lib/` instead, give absolute paths:
+`QUICKJS_MODULE_PATH="$PWD/build/<triplet>;$PWD/lib"`. A relative entry breaks
+a child qjsm a test starts in another cwd: the module silently resolves to the
+installed copy instead.
 
 ## 4. Verifying portability
 
@@ -162,117 +174,19 @@ qjsm only: reproduce with the check script, then break and print on qjsm.
 
 ## Comments
 
-These rules govern every comment you write or rewrite in a script or
-module. A comment is something the eye takes in as a shape, like a table,
-not a paragraph to read start to end. The project's own rules (its
-`CLAUDE.md`) win where they differ.
+Every comment follows the `comment-style` skill; load it and print the
+ruleset of the context you are writing in (`comment-style/scripts/rules-for`):
 
-- Start lowercase, unless the first word is an identifier that starts
-  uppercase (`Map: ...`, `JSON.parse ...`). Later sentences are fragments
-  or follow after `;`, not new capitalised ones.
-- Text is 75 columns at most, measured after the leading ` * ` or `// `,
-  so a closing ` */` still fits in 78.
-- Inside a function or after a statement use `//`; for a block use
-  `/* ... */` with ` * ` on each line.
-- Any comment that explains behavior: 4 lines max. If more is needed,
-  restructure: a one-line summary, then a list or a table, never an
-  unbroken block of sentences.
-- Never cite issues, `TODO.md`, "confirmed via repro X" or what the code
-  used to do. State the current rule and, if not obvious, its reason; the
-  history belongs in the commit message.
-- Show instead of tell: a literal value, a call or a before/after pair
-  beats a sentence describing it.
-- Multi-line code in a comment is fenced, ` ```js ` for JS and ` ```sh `
-  for shell, each fence on its own comment line. A one-line snippet stays
-  in single backticks.
-- A comment on a function says in plain words, in its first line, what it
-  does. After two lines a reader who has not seen the code can say what
-  goes in and what comes out; if they cannot, rewrite it.
-- One comment per function, never one block shared by several. Name what
-  each parameter is for in plain words, with the real value when it is a
-  message (`"cannot read x.json"`), not jargon.
-- Never a packed block: summary, example, parameter columns and `returns`
-  are separate paragraphs split by an empty ` *` line.
+| What you write | Context |
+|---|---|
+| top of a script or module (banner) | `JS \| script \| file` |
+| function or method others call | `JS \| script \| function` |
+| class | `JS \| script \| class` |
+| object or JSON format | `JS \| script \| data-shape` |
+| switch, lookup Map, list of flags | `JS \| script \| table` |
+| inside a function, after a statement | `JS \| script \| inline` |
 
-### A function, class or module others call gets a header block
-
-Order:
-
-1. `name: what it is` (and the Node/Bun/Deno API it mirrors, if any).
-2. The usage as code in a ` ```js ` fence.
-3. Arguments as aligned columns, accepted forms and defaults in the
-   description.
-4. `returns` and `throws`: which value, which error type, for what.
-5. One line on where it is exported, if not obvious.
-
-```js
-/* readJSON: reads and parses a JSON file; Node's fs + JSON.parse in one.
- *
- * ```js
- * const cfg = readJSON("config.json");
- * const cfg = readJSON("config.json", { fallback: {} });
- * ```
- *
- *   string  path              file to read
- *   object  options.fallback  returned when the file is missing
- *
- *   returns  the parsed value
- *   throws   SyntaxError for bad JSON; Error if missing and no fallback
- */
-export function readJSON(path, options = {}) {
-```
-
-A class gets the same shape: the constructor call, one line per method and
-getter, then `throws`.
-
-### Shapes of data: a table for the keys, code for one entry
-
-A comment that describes an object or JSON format lists the keys in a
-table, then shows one entry as literal code with its notes after `//`.
-
-```js
-/* a symbol spec of dlopen(): one entry of `symbols`.
- *
- *   key       holds
- *   args      argument types, default none
- *   returns   return type, default "void"
- *   abi       libffi ABI name, default the platform's
- *
- * ```js
- * { abs: { args: ["i32"], returns: "i32" } }  // abs(-5) is 5
- * ```
- */
-```
-
-An optional key is written `key?`; a key that is only present under a
-condition says the condition in its row, not in a paragraph below.
-
-### The same helps in every script
-
-- **File banner**: the exports, the runtime(s) it needs, the one rule that
-  holds throughout.
-
-  ```js
-  /* config.js: readJSON, writeJSON.
-   * runs on qjsm, node, bun and deno (fs from "fs", no std).
-   * rule: paths are used as given, never resolved against the script. */
-  ```
-- **Where the code is a table** (a `switch`, a lookup `Map`, a list of
-  flags), comment it as a table: `key | meaning` rows above it.
-- **Portability tags**, so a runtime difference is one `grep` away:
-
-  | Tag | Use for |
-  | --- | --- |
-  | `qjsm only:` | uses `std`, `os` or a qjs-* module that other runtimes lack |
-  | `node:` / `bun:` / `deno:` | a branch or workaround for that runtime |
-  | `async:` | the function returns a Promise on one runtime, a value on another |
-
-- **A runtime quirk as one line of code**, with the surprise after `//`:
-
-  ```js
-  std.loadFile("x");       // returns null, does not throw, when x is missing
-  fs.readFileSync("x");    // throws ENOENT
-  ```
+The project's own `CLAUDE.md` wins where it differs.
 
 ## Adding a module
 

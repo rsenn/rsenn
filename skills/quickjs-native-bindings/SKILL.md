@@ -37,12 +37,10 @@ How to edit:
 - state the current rule and its reason in a few lines; no session history
 - verify before writing (run it, `diff` it, `grep` it); never record a guess
 - prefer one precise line over a paragraph; merge duplicates instead of appending
-- follow the comment and style rules already in this file
+- comments follow the `comment-style` skill; code style follows the rules already in this file
 - code style: **No braces around a one-statement body** of `if`/`else`/`for`/`while`: `if(remainder)` newline `remainder++;` and `while(cond && (0x03 & j))` newline `out[j++] = c;`. Braces only for two or more statements (or to disambiguate a dangling `else`).
 - code style: Initialize a variable in its declaration when the value is known there; do not declare it and assign it on a later line. When declaration and first assignment cannot be adjacent and the variable is only tested, fold the assignment into the test, as long as readability holds and the line stays reasonably short (a short right-hand side and a simple comparison). A blank line separates the declarations from the statements that follow.
 - code style: Group declarations of the same base type at one scope into one declaration; pointers to that type join it with their own asterisks. Order within the line: names without an initializer first, then initialized ones from the simplest initializer to the most complex; a variable another initializer depends on comes before its dependant. Keep an initialized variable on its own line when the initializer is a call or expression that does not fit comfortably, when it has side effects whose order matters, when the line would pass about 80 columns, or when the group would hold more than about four names. Never merge types that differ in indirection depth or qualifiers (const, volatile) just to save a line.
-- comment style: Comment text has no semicolon, so a grep for names ending in a semicolon finds only code; split into two fragments or use a comma or a dash. A semicolon appears only inside real C or JS code. Names in a comment are bare, no backquotes or quotes around them: write that opaque is b. In a doxygen comment use \param, \return and the like instead.
-- comment style: A comment on a function prototype starts with a brief of one or two lines, then the rest in separate paragraphs, never one crammed block. When a comment grows past about 4 lines or its text refers to argument names, make it a doxygen comment. A doxygen comment lists the parameters in aligned columns (type, name and description each start at the same column, padded to fit) and then the return type and its meaning. A non-doxygen comment describes a parameter or the return value only where the caller needs it. In both forms the detailed description follows the brief, or follows the parameters when it refers to them.
 - the skill dir is a symlink into the `rsenn` repo; leave committing that
   repo to the user, and mention in your reply what you changed here
 
@@ -435,6 +433,19 @@ else, including every getter/setter/method: it additionally checks the
 class ID matches and throws a `TypeError` + returns NULL on mismatch,
 which matters because a method can technically be called with the wrong
 `this`.
+
+### Class registration and constructors: do not repeat them per class
+
+When a module has several classes, the registration (`JS_NewClassID`, `JS_NewClass`, prototype with its function list,
+constructor, `JS_SetConstructor`, `JS_SetClassProto`) and the "object with the prototype of new_target" tail of every
+constructor are the same code each time. qjs-modules has them in `utils.h`:
+
+```c
+JSValue ctor = js_class_define(ctx, &class_id, &class_def, js_foo_ctor, 1, proto_funcs, countof(proto_funcs), &proto);
+obj = js_object_from_target(ctx, new_target, class_id);   /* JS_EXCEPTION: free what the constructor owns */
+```
+
+No static proto or ctor variables are needed: the fallback prototype is `JS_GetClassProto(ctx, id)`.
 
 ## 4. `JSValue` ownership cheat-sheet
 
@@ -1452,189 +1463,19 @@ project-wide testing convention, not the one-file copy.
 
 ## Comments
 
-These rules govern every comment you write or rewrite in a binding. Keep
-comments short and readable, not a running log of debugging history — and not a packed block of prose either. A comment should be
-something the reader's eye takes in as a shape, the way a table or a
-diagram is, not something they have to read start to end to parse.
+Every comment follows the `comment-style` skill; load it and print the
+ruleset of the context you are writing in (`comment-style/scripts/rules-for`):
 
-- Struct-member comments: 1-2 lines, right on the member.
-- Any other comment explaining behavior: 4 lines max. If the full
-  rationale genuinely needs more room, don't write a longer paragraph —
-  restructure: a one-line summary, then a short list (one point per
-  fact), or the argument table below. Never let a comment become an
-  unbroken block of sentences; break it into pieces the eye can scan.
-- Never reference `BUGS` / `TODO.md` entries, issue names, or "confirmed
-  via repro X" in a comment — that history belongs in the commit message
-  not in the source. State the current rule and its reason, not how it
-  was discovered or what broke before it existed.
-- Prefer showing over telling: when a C expression, a literal value, or
-  a short before/after pair makes the point, put that in the comment
-  instead of describing it in words.
-- If a comment describes a function's parameters, give each one its own
-  line: 2-space indent, then type, name, and description as aligned
-  columns (pad names so the descriptions all start at the same column):
-  ```
-  /* one-line summary of what the function does.
-   *
-   *   const char*  name   what this argument is / controls
-   *   size_t       len    what this argument is / controls
-   *
-   *   returns ssize_t     what the return value means
-   */
-  ```
-- Write sentences a reader can take in on one pass: subject, verb,
-  concrete fact, in that order. No hedging, no throat-clearing, no
-  "used to X / now Y" history — state the current behavior and, if it's
-  not obvious, the one reason it has to be that way.
-- A comment starts lowercase, unless its first word is an identifier that
-  starts with an uppercase letter (`CFunction: ...`, `JSClassDef.call ...`).
-  Applies to every comment you write, rewritten or new. Later sentences in
-  a comment are fragments or follow after `;`, not new capitalised ones.
-- Comment text is 75 columns at most, measured after the leading ` * `
-  (or `/* `); with the prefix that is 78, so a closing ` */` still fits.
-- Plain text, no markdown idioms in comments: no ``` fences, and no
-  backticks, neither around code nor for quoting. Code in a comment is
-  plain lines indented by 2 spaces more than the comment text; an
-  identifier is written bare (ptr, JS_FreeCString).
-- Go light on punctuation and quotation marks: plain words, short
-  sentences, no decorative quotes or parentheses. Quote only a literal
-  the reader must see exactly, such as an error message.
-- In C code never use // comments, not even trailing ones; always
-  /* ... */.
-- A comment contains */ only where it ends. Check the text for a glob or
-  path such as lib/*/x.c, a division next to a pointer, or a nested
-  comment opener; reword it (lib/<module>/x.c) instead of escaping it.
-- A table in a comment may use unicode line-drawing characters
-  (┌ ─ ┬ ┐ │ ├ ┼ ┤ └ ┴ ┘); aligned columns stay fine too. Keep every row
-  the same width, and count columns, not bytes.
-- A function's comment says what the function does, in plain words, in its
-  first line. After two lines a reader who has not seen the code can say
-  what goes in and what comes out; if they cannot, rewrite it.
-- Show one concrete input and its result instead of describing the shape:
-  `{ abs: <function> }` beats "an object with one entry per key".
-- One comment per function, never one block shared by several. Name what
-  each parameter is for in plain words, with the real value where it is a
-  message (`"dlopen: symbol not found"`), not jargon like "prefixes the
-  error messages".
-- Never a packed block of text. Summary line, example, parameter columns
-  and `returns` are separate paragraphs, split by an empty ` *` line.
+| What you write | Context |
+|---|---|
+| top of a `.c` file (banner) | `C \| quickjs \| file` |
+| struct member | `C \| quickjs \| member` |
+| internal helper (error contract) | `C \| quickjs \| prototype` |
+| function, class or object visible to JS | `C \| quickjs \| js-facing` |
+| conversion switch, accessor list, export list | `C \| quickjs \| table` |
+| inside a function body | `C \| quickjs \| implementation` |
 
-The project's own comment rules (its `CLAUDE.md`) win over these where they
-differ, as in section 0.
-
-### A JS-facing function, class or object gets a header block
-
-Whatever C exposes to JS (a function, a class, an object spliced into the
-export list) is explained once, in a block at its declaration: in the `.h`
-for what other files call, above the definition for a `static`. The block
-reads like the JS docs, in JS terms, and is the one place the 4-line prose
-cap does not count the example and the table. Order:
-
-1. `Name: what it is` (and the bun/Node API it mirrors, if any).
-2. The JS usage as indented code, not described in words.
-3. Arguments and result as aligned columns, with the accepted forms, the
-   default and the range in the description.
-4. `throws`: which error type, for what.
-5. One line on how it is wired in (`JS_OBJECT_DEF(...)` entry, `defaults`).
-
-Example, after `ffi-read.h`:
-
-````c
-/* read: direct memory reads, no DataView or ArrayBuffer (bun:ffi's read).
- *
- *   read.u8(ptr, byteOffset);
- *   read.i64(ptr);      a bigint
- *
- *   number|bigint|buffer  ptr         address, or an ArrayBuffer/view
- *   number                byteOffset  default 0, may be negative
- *
- *   returns  Number, bigint (i64, u64) or pointer (ptr), by member name
- *   throws   TypeError for a NULL pointer
- *
- * spliced into the export list:
- * JS_OBJECT_DEF("read", js_ffiread_funcs, FFI_READ_COUNT, ...).
- */
-````
-
-The same shape serves a class: constructor usage, then one line per
-method/getter, then `throws`. Internals (ownership, why a pointer is
-held) go in the 4-line comments at the code, not in this block.
-
-### State the error contract of every internal helper
-
-Use one of three fixed forms. A caller cannot tell from the signature
-whether a failed return leaves an exception pending, and guessing wrong
-either loses the error or throws twice:
-
-```c
-/* ... returns 0, or -1 with an exception pending. */
-int js_cfunction_parse(JSContext*, JSValueConst spec, Sig* out);
-
-/* ... returns NULL with an exception pending. */
-Sig* js_sig_new(JSContext*, JSValueConst spec);
-
-/* ... never throws: returns 0 on success, non-zero if v is not an address
- * (the caller picks the error). */
-int js_to_address(JSContext*, void** out, JSValueConst v);
-```
-
-A helper that ignores a conversion failure (`JS_ToInt32` leaves an
-exception pending when it fails) says so too, or its caller checks
-`JS_HasException()` and the next reader wonders why.
-
-### Where the code is a table, comment it as a table
-
-Three places come up in every binding:
-
-- Conversions per kind or type, above the `switch` that does them:
-
-  ```c
-  /*  kind     C type     JS in           JS out
-   *  I32      int32_t    Number          Number
-   *  U32      uint32_t   Number          Number
-   *  I64      int64_t    Number|bigint   bigint
-   *  POINTER  void *     Number|buffer   Number|bigint
-   */
-  ```
-
-- Magic-dispatched accessors (section 5), above the `JS_CGETSET_MAGIC_DEF`
-  list: `magic | JS property | meaning`.
-- The module's exports, in the init function: one line per name, in the
-  order they are added, so the file's public surface is visible at once.
-
-### Each `.c` file starts with a banner
-
-Name the JS names it implements, what it depends on, and the one rule that
-holds throughout:
-
-```c
-/* c-function.c: CFunction, close(), and the variable accessors.
- * depends on: ffi-type.c (signatures), js-helpers.c (pointer conversion).
- * rule: the callable object is its own opaque holder, no lookup per call. */
-```
-
-### Tag the recurring gotchas
-
-A fixed prefix makes a warning one `grep` away and reads the same everywhere:
-
-| Tag | Use for |
-| --- | --- |
-| `refcount:` | who owns a reference and who frees it |
-| `borrowed:` | a pointer valid only until a named point (`JS_FreeCString`, the next call) |
-| `exception pending:` | a path that returns with `JS_EXCEPTION` already set |
-| `JS thread only:` | a function that must never run from another OS thread (section 13) |
-| `little-endian:` | code that relies on byte order |
-
-### A QuickJS API quirk: show the call, not a paragraph
-
-One line of code with the surprise in a trailing comment beats four lines
-of prose, and it is what the next reader greps for:
-
-```c
-JS_DefinePropertyValue(ctx, obj, atom, v, flags);  /* takes v, not atom: free the atom */
-JS_SetPropertyStr(ctx, obj, "k", v);               /* takes v */
-JS_GetPropertyStr(ctx, obj, "k");                  /* returns a new ref: free it */
-```
+The project's own `CLAUDE.md` wins where it differs, as in section 0.
 
 ## 19. Verifying a binding actually works
 
@@ -1655,6 +1496,11 @@ work done:
    'stk'` silently loading `/usr/local`'s copy instead of the just-built
    one) - always confirm you're actually exercising the code you just
    changed, not a cached older `.so`.
+   `QUICKJS_MODULE_PATH` is not enough for a module linked *into*
+   `qjsm` (qjs-modules' `textcode`, `misc`, ...), nor for `lib/*.js`, which
+   `qjsm` embeds at build time: those resolve before the path. Rebuild the
+   `qjsm` target and run `build/<triplet>/qjsm`, and rebuild again after
+   every `lib/*.js` edit.
 3. **Watch for a `JSClassID` collision if two independently-built copies
    of the QuickJS core can coexist in one process** (one binary statically
    embeds its own QuickJS core while a dynamically-loaded `.so` links a

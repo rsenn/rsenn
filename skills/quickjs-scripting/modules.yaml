@@ -80,6 +80,9 @@ modules:
       - "existsSync() returns undefined, not false, for a missing path (lib/fs.js:802 has no `return false`). Write `!!fs.existsSync(p)` if the result is compared or printed."
       - "fs.promises is undefined on quickjs; use fsPromises (below)."
       - "Bare 'fs' works on quickjs, node and bun; deno needs the import map (or the node: prefix, which quickjs cannot resolve)."
+      - "readFileSync('/proc/self/status', 'utf-8') returns '' on quickjs (std.loadFile returns null): both size the read by stat, which is 0 for /proc. Read /proc files with os.open + os.read into a fixed buffer."
+      - "openSync(path, 'w+') (a string flag) returns a std FILE object on quickjs, a number on node/bun. Pass it only to fs functions, never do arithmetic or comparisons on it. readvSync/writevSync flush it and use its fileno()."
+      - "An fd out of range (-1) throws ERR_OUT_OF_RANGE on node/bun before the call, a SyscallError with code EBADF on quickjs."
 
   fsPromises:
     project: qjs-modules

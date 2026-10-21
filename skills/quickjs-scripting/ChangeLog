@@ -25,3 +25,15 @@
   running: a compiled-in lib/loaders module imports only std and os
 - 2026-10-21
   comment rules moved to the comment-style skill (rules.yaml); the Comments section and the comment style edit bullets now point there
+- 2026-10-21
+  fs notes: readFileSync and std.loadFile give empty results for /proc files, read them with os.read
+- 2026-10-21
+  fs notes: openSync with a string flag returns a FILE on quickjs, out-of-range fd error differs
+- 2026-10-21
+  portability rules: an import and a local declaration with the same name silently shadow on qjsm
+- 2026-10-21
+  portability rules: import.meta filename, dirname and main per runtime
+- 2026-10-21
+  portability rules: node: prefix resolves on qjsm, only for node module names
+- 2026-10-21
+  portability rules: network globals from qjs-lws on qjsm, lazy and only when installed

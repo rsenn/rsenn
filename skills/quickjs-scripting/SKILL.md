@@ -87,7 +87,9 @@ quickjs-only.
 - **Bare specifiers for built-ins** as listed in each entry's `import.quickjs`
   (`fs`, `process`, `perf_hooks`, `child_process`). They resolve on qjsm, node
   and bun. Deno needs `--import-map=<skill>/deno-import-map.json`.
-- **qjsm cannot resolve the `node:` prefix** and cannot alias names. Where the
+- **`node:<name>`** resolves on qjsm built from qjs-modules after 2026-10-14 (`lib/loaders/node.js`), for
+  Node's own module names only: `node:deep`, `node:sqlite` throw `ERR_UNKNOWN_BUILTIN_MODULE` (after 2026-10-21).
+  `node:os` fails, qjsm's `os` is not Node's. An older installed qjsm has no `node:` at all. Where the
   specifier differs between runtimes (today only `fsPromises` vs
   `fs/promises`), put that one import in its own small file
   (`fsp.mjs`) and provide one variant of that file per runtime, or use the
@@ -99,10 +101,18 @@ quickjs-only.
   ArrayBuffer where node returns a Buffer.
 - **Booleans**: coerce results that are compared or printed (`!!fs.existsSync(p)`).
 - **Exit** with `process.exit(n)`, not `std.exit`.
+- **A local declaration never shares a name with an import**: qjsm accepts `import { writev } from 'misc'` next to
+  `export function writev` (a SyntaxError in node) and the local one wins, so a call meant for the import recurses.
+  Import native helpers under a prefix (`writev as sys_writev`).
 - **Diagnostics**: `console.error`/`warn` go to stderr on qjsm built from qjs-modules `src/qjsm.c` after
   2026-10-20; an older installed qjsm writes them to stdout. Where stdout is data, use `process.stderr.write(...)`.
 - **Timing**: `import { performance } from 'perf_hooks'`; qjsm has no global.
+- **Network globals**: `fetch`, `Request`, `Response`, `Headers`, `FormData`, `URL`, `AbortController`, `Bun.serve`
+  exist on qjsm (built from qjs-modules after 2026-10-21) only when qjs-lws is in the module path, loaded on first
+  use. Test for a global qjs-lws lacks (`typeof structuredClone`) to decide whether to `import 'globals'`, not `URL`.
 - **Arguments**: user arguments are `process.argv.slice(2)` on all runtimes.
+- **Script location**: `import.meta.filename`/`dirname` work on qjsm (built from qjs-modules after 2026-10-21),
+  node 20.11+, bun, deno; `import.meta.main` only on qjsm, bun, deno, node 24.2+ (undefined on older node).
 - **Resolving a specifier**: `import.meta.resolve(spec)` works on qjsm (built from qjs-modules after
   2026-10-21), node, bun and deno, and finds `node_modules` packages everywhere. A second argument (the parent)
   works only on qjsm and bun: node ignores it without `--experimental-import-meta-resolve`, deno throws.

@@ -1096,6 +1096,12 @@ complexity only for a genuinely dynamic/external index space.
 
 ## 11. Enum/constant export at scale
 
+**A module export list takes only functions, strings, numbers and `JS_OBJECT_DEF`**: `JS_SetModuleExportList`
+calls `abort()` on any other entry, e.g. `JS_PROP_UNDEFINED_DEF` (a property list on an object accepts it). A
+constant that only some platforms define still needs a value when JS imports it by name
+(`import { F_GETPATH } from 'misc'` is a SyntaxError if it is missing): export a sentinel like `-1` in the
+`#else` branch.
+
 For a handful of constants, `JS_PROP_INT32_DEF(name, value, flags)` /
 `JS_PROP_INT64_DEF` / `JS_PROP_DOUBLE_DEF` as rows in the same
 `JSCFunctionListEntry[]` table as your functions is enough. Wrap it in a
@@ -1370,6 +1376,14 @@ meaningfully more machinery.
   with `JS_FreeValueRT`/`JS_FreeAtomRT`/`js_free_rt` (`walk_close_rt`). `vector_init(&v, ctx)` and libc
   `realloc(p, 0)` as `NULL, NULL` allocator are the wrong choice here; valgrind also flags the latter
   ("realloc() with size 0").
+- **A `JS_ToCString` result cannot be kept past the call that made it into a finalizer**: there is no
+  `JS_FreeCStringRT`, only `JS_FreeCString(ctx, ...)`. Copy the bytes into `js_malloc` memory instead (Blob
+  string parts). A native object holding refs to other JS objects (`JSValue` in its opaque) adds a `.gc_mark`
+  that `JS_MarkValue`s them.
+- **Leak check per operation without valgrind**: qjsm's at-exit pool is "possibly lost" noise even for
+  `console.log(1)`. Run the same script twice with N and 25·N rounds under `qjsm -d` (dumps
+  `JS_ComputeMemoryUsage` at exit) and `diff` the dumps: equal counts mean nothing leaks per round.
+- **This QuickJS's `cutils.h` has no `dbuf_realloc`**: reserve with `dbuf_claim(&db, len)` before `dbuf_put`s.
 - **A pull/step machine that calls user JS (`toJSON`, replacers, getters) must never re-run a step.** The old
   "step again after the sink blocked, skipping what was delivered" design runs the JS twice. Write each step into
   an unbounded `DynBuf` and let `read(n)` serve from it (JsonSerializer).

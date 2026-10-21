@@ -34,3 +34,7 @@
   qjsm-linked modules and embedded lib js shadow QUICKJS_MODULE_PATH, test with the rebuilt build-tree qjsm
 - 2026-10-21
   comment rules moved to the comment-style skill (rules.yaml); the Comments section and the comment style edit bullets now point there
+- 2026-10-21
+  finalizer section: no JS_FreeCStringRT so copy string bytes, gc_mark for held refs, leak check by diffing qjsm -d dumps, dbuf_claim instead of dbuf_realloc
+- 2026-10-21
+  section 11: module export lists abort on JS_PROP_UNDEFINED_DEF, export a sentinel for platform-only constants

@@ -89,11 +89,14 @@ quickjs-only.
   and bun. Deno needs `--import-map=<skill>/deno-import-map.json`.
 - **`node:<name>`** resolves on qjsm built from qjs-modules after 2026-10-14 (`lib/loaders/node.js`), for
   Node's own module names only: `node:deep`, `node:sqlite` throw `ERR_UNKNOWN_BUILTIN_MODULE` (after 2026-10-21).
-  `node:os` fails, qjsm's `os` is not Node's. An older installed qjsm has no `node:` at all. Where the
+  `node:os` is Node's os after 2026-10-21 (`lib/node/os.js`), bare `os` stays QuickJS's. An older installed qjsm has
+  no `node:` at all. Where the
   specifier differs between runtimes (today only `fsPromises` vs
   `fs/promises`), put that one import in its own small file
   (`fsp.mjs`) and provide one variant of that file per runtime, or use the
   `*Sync` functions from `fs`. Never scatter runtime tests through the script.
+- **`std.loadFile()` returns `''` for `/proc` and `/sys` files** (their size is 0): read them with
+  `std.open(p, 'r').readAsString()`. `fs.readFileSync` has the same gap on qjsm (node reads them).
 - **Never import `std` or `os`** (quickjs-only) in a portable script. The
   same jobs are done by `process` and `fs`.
 - **Text vs bytes**: always pass an encoding for text (`readFileSync(p, 'utf8')`);

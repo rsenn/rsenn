@@ -39,3 +39,5 @@
   portability rules: network globals from qjs-lws on qjsm, lazy and only when installed
 - 2026-10-21
   portability rules: english-only Intl global on qjsm, its time zones and toLocaleString gap
+- 2026-10-21
+  node:os now resolves to lib/node/os.js, std.loadFile returns empty for /proc files

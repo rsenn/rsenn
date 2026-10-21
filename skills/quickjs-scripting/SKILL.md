@@ -185,6 +185,13 @@ qjsm-debugger -e -c --plain -x cmds.txt                    # attach to QUICKJS_D
 - `watch` single-steps, so it is slow; `return` is unsupported; the installed `qjs` may be a stale 32-bit build,
   use `qjsm-debugger`
 
+A script that needs a terminal (line editing, raw mode, ^C) runs in a detached tmux pane: `new-session -d ... cat`,
+`set-option window-size manual`, `resize-window -x 40 -y 14`, then `respawn-pane -k` with the command, `send-keys`
+(`-l` for text, `paste-buffer -p` for a bracketed paste) and `capture-pane -p [-e]` plus `display -p
+'#{cursor_x},#{cursor_y}'`. Without `window-size manual` the `-x` size is ignored. Limit it with
+`systemd-run --scope -p RuntimeMaxSec=90`, not `timeout`: `timeout` forwards the terminal's SIGINT to its child,
+so each ^C arrives twice.
+
 Manual: `~/Sources/quickjs/qjs-debugger/README.md` and `doc/json-protocol.md`. Use it when a script misbehaves on
 qjsm only: reproduce with the check script, then break and print on qjsm.
 

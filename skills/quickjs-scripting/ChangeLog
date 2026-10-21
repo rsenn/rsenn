@@ -41,3 +41,5 @@
   portability rules: english-only Intl global on qjsm, its time zones and toLocaleString gap
 - 2026-10-21
   node:os now resolves to lib/node/os.js, std.loadFile returns empty for /proc files
+- 2026-10-21
+  debugging: driving a tty script in tmux, timeout doubles a terminal sigint

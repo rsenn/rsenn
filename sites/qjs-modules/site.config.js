@@ -135,6 +135,7 @@ export default {
         ['doc/js/timers.md', 'docs/js/timers.html', 'timers'],
         ['doc/js/timersPromises.md', 'docs/js/timersPromises.html', 'timers/promises'],
         ['doc/js/globals.md', 'docs/js/globals.html', 'globals (opt-in)'],
+        ['doc/js/intl.md', 'docs/js/intl.html', 'intl (Intl, English only)'],
         ['doc/js/perf_hooks.md', 'docs/js/perf_hooks.html', 'perf_hooks'],
         ['doc/js/module.md', 'docs/js/module.html', 'module'],
         ['doc/js/require.md', 'docs/js/require.html', 'require'],

@@ -449,6 +449,35 @@ tools:
       - "A fur or hair edge keeps some background colour on thin strands (guided or matting alike); a tap-based segment gives a cleaner mask than u2netp on fur."
     verified: "2026-10-28 duck, flower 12 MP, grey long-hair cat, two cats; tests/unittests/test_opencv_imgproc_tool.js 13/13"
 
+  ollama-repl:
+    path: /usr/local/bin/ollama-repl
+    project: qjs-lws
+    group: delegate
+    rating: 3
+    status: partial
+    what: >-
+      Local-LLM coding agent (ollama / gemini / openai) with file tools (read_file, grep, edit_file,
+      insert_above, write_file, for_each, run_command, ask_user), rooted at --root. A job to hand a
+      small model: repetitive, well-specified edits (one doc comment per function, one rename per
+      file) that would cost Claude tokens but need no judgment. Interactive on a tty, line mode when
+      stdin or stdout is a pipe: one prompt or /command per line in, `<model>> ` printed once each
+      time it is ready for the next line, no escape sequences.
+    modes:
+      models: ollama-repl --provider ollama --model list         # = `ollama list`
+      one_job: printf '%s\n/exit\n' "$PROMPT" | ollama-repl --model M --root DIR   # run_command asks y/N on the next line
+      batch: "printf '/each <cmd printing one item per line> :: <task, {} = item>\n/exit\n' | ollama-repl --model M --root DIR"
+      inspect: "/diff and /undo (restore what the last prompt changed) as lines of the same pipe"
+      shared_session: "user runs `ollama-repl --listen [--no-system] [--name NAME]` in a terminal (Claude never starts it; ollama-repl-ctl waits for one and says so on stderr) in a terminal; Claude Code runs `ollama-repl-ctl list` | `ollama-repl-ctl [-s NAME|PID|MODEL] send LINE` (prints the reply, exit 0 when idle, 3 = session waits for the user's y/N or ask_user answer, 124 timeout) | `ollama-repl-ctl watch`. Same conversation as on the terminal; lines show there as `[remote]> ...`."
+    gotchas:
+      - "Session state is written to the CURRENT directory, not --root: <model>.json (resumed next run! use /clear first, or run from a scratch cwd) and <model>-<tag>.log. Run it from a scratch directory."
+      - "A small model (4B) is only reliable per item: use /each (fresh conversation per item), never 'do all 25' in one prompt. Default num_ctx 16384 (--num-ctx)."
+      - "--yes lets the model's run_command execute without approval: an unattended agent. Only on a throwaway copy of the project (git worktree / cp -r); the auto-mode classifier refuses it otherwise, and without --yes a piped run answers the y/N prompt from the NEXT input line."
+      - "Review the result with /diff before keeping it; the model has deleted neighbouring declarations when editing (see qjs-lws examples/ollama-repl/TODO.md)."
+      - "/each is edit-oriented: a read-only item gets 'no change made - retrying once' and a non-answer. Use a plain send for questions. /clear drops the system prompt too; re-send it."
+      - "Control socket (--listen): only the terminal user can answer run_command approvals / ask_user; `send` exits 3 and tells so, do not retry it. A remote line discards what the user has half-typed. Sessions live in $XDG_RUNTIME_DIR/ollama-repl/ (<pid>.sock/.json); `list` drops stale ones."
+      - "Output order in pipe mode: the reply streams to stdout between two prompts; with --stream tokens arrive as they are produced."
+    verified: "2026-10-30 --no-system + delegate flow (/system file, edit job, /clear) with qwen2.5-coder; three named sessions at once (-s NAME, ambiguity error), ctl waiting for a session that starts 3 s later; pipe mode, prompt, /model /tools /system /clear /exit, --model list; --listen + ollama-repl-ctl list/send (/model, /tools, a qwen2.5-coder read_file round trip, exit 0); NOT run: --yes jobs (denied by the permission classifier), the exit-3 path"
+
   search:
     path: /usr/local/bin/search
     project: qjs-lws

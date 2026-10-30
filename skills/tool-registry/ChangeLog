@@ -46,3 +46,15 @@
   extract-c: -S/--split-lib (lib/<name>.h + lib/<name>/<fn>.c with follow-ups), recorded in tools.yaml modes/gotchas and diet-coding use
 - 2026-10-30
   extract-c: -J/--join-lib and -M/--amalgamate (reverse of -S), tools.yaml modes
+- 2026-10-30
+  registered ollama-repl (qjs-lws): piped delegation modes, session files land in the cwd, --yes caveat; status partial
+- 2026-10-30
+  ollama-repl: --listen control socket and ollama-repl-ctl (shared_session mode, exit codes, approvals stay on the terminal)
+- 2026-10-30
+  ollama-repl: --no-system; SKILL.md section on delegating to local models, DELEGATION.md (learned results), delegate-system.md
+- 2026-10-30
+  description and index row mention delegating to local models
+- 2026-10-30
+  DELEGATION.md: terminal mirrors remote session, read-only nudge bug fixed in ollama-repl
+- 2026-10-30
+  delegation rules: never start ollama-repl (ctl waits, user starts it), pick sessions by --name, suggest harness improvements to the user

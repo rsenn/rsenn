@@ -30,6 +30,7 @@ Rating: 5 = reach for it routinely, 3 = good when the situation fits, 1 = skip.
 | **qjs-debugger / qjsm-debugger** | gdb-style JS debugger (repl/server/dap) | 4 | batch/json/library verified; qjs binary stale (32-bit) | scripting & bindings (JS-side debugging) |
 | **qjs-ffi-describe.js** | qjsm-only entry of describe | 3 | help | prefer the .sh |
 | **opencv-imgproc** | photo cutout and tap-to-segment (u2netp, MobileSAM/SAM), NDJSON output, RGBA with soft alpha | 4 | duck, flower, fur, two cats; 13 tests | scripting (image jobs), the wild-beauty collage server |
+| **ollama-repl** | local-LLM coding agent with file tools; piped line mode so Claude Code can hand it repetitive edits | 3 | pipe mode and commands; model round trip not run | delegating bulk mechanical edits (per-function comments, renames) on a throwaway copy |
 | **search** | SerpApi web search | 2 | not run (paid API) | scripted batch research only |
 | **extract-structs** | legacy struct extractor | 1 | help only | none; use `extract-c -t` |
 

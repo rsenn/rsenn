@@ -1,6 +1,6 @@
 ---
 name: tool-registry
-description: Central registry of the command-line tools (the qjs-* utilities from qjs-modules, qjs-ffi, qjs-debugger and qjs-lws: extract-c, source-scanner, nm-symbols, runtime-diff, qjs-ffi-describe, qjs-ffi-genbindings, qjsm-debugger, list-exports, resolve-imports, highlight, jsonpp, ...) and the learning loop for employing them inside the development skills. Use before analysing C or JS sources, comparing APIs or runtimes, finding dead code, or preparing docs - to find which tool answers the question, how to call it, and what is known about it; and whenever a tool taught something new, the user suggests a new way to use a tool, or a tool needs an improvement. Required by diet-coding, quickjs-native-bindings, quickjs-scripting, github-pages, release-management and remote-targets.
+description: Central registry of the command-line tools (the qjs-* utilities from qjs-modules, qjs-ffi, qjs-debugger and qjs-lws: extract-c, source-scanner, nm-symbols, runtime-diff, qjs-ffi-describe, qjs-ffi-genbindings, qjsm-debugger, list-exports, resolve-imports, highlight, jsonpp, ...) and the learning loop for employing them inside the development skills; also how to offload bulk mechanical jobs to local models through ollama-repl (start, brief, retry with /clear, record what worked). Use before analysing C or JS sources, comparing APIs or runtimes, finding dead code, or preparing docs - to find which tool answers the question, how to call it, and what is known about it; and whenever a tool taught something new, the user suggests a new way to use a tool, or a tool needs an improvement, or a bulk mechanical job could be delegated to a local model. Required by diet-coding, quickjs-native-bindings, quickjs-scripting, github-pages, release-management and remote-targets.
 ---
 
 # tool-registry: know the tools, use them, get better at it
@@ -77,6 +77,45 @@ say in the reply what changed here.
 
 A skill that depends on this one carries exactly this stanza and nothing more; tool details are
 never copied into it (they would rot).
+
+## Delegating work to a local model (ollama-repl)
+
+Offload bulk, mechanical, well-specified jobs (a doc comment per function, a rename per file, a
+summary per file) to a local model through `ollama-repl`; Claude stays the supervisor. Read
+[`DELEGATION.md`](DELEGATION.md) first: it records which model and prompt worked for which kind of
+job. Models: `ollama-repl --provider ollama --model list`.
+
+1. **Never start ollama-repl yourself, never headless.** A session needs the user's terminal (approvals,
+   watching the work). Run `ollama-repl-ctl send ...`: with no session it prints
+   `waiting for an ollama-repl --listen session` on stderr and blocks (default 10 min, `-t SECS`), and
+   that message shows on this terminal so the user can start one: `ollama-repl --listen --no-system
+   --name NAME --model M` (`--no-system`: Claude brings its own prompt). Several sessions can
+   listen at once; pick by name with `ollama-repl-ctl -s NAME send ...` (`ollama-repl-ctl list`
+   shows name, model, root). If the wait times out, tell the user what to start and stop; do not work
+   around it.
+2. **Brief** it: `ollama-repl-ctl send '/system file <path>'` with [`delegate-system.md`](delegate-system.md)
+   or your own text (a file, because `send` flattens newlines).
+3. **Give one job at a time** with `ollama-repl-ctl send '<job>'`; read the output. A repeated job
+   over many things: `send '/each <cmd listing items> :: <task, {} = item>'` (fresh conversation per
+   item). Check the result yourself (`send /diff`, read the file): a small model reports success
+   that did not happen.
+4. **Not as wanted?** Try again from nothing: `send /clear` (drops context, system prompt and
+   project scan), re-send `/system`, rephrase the job smaller; `/undo` restores what the last prompt
+   changed. Try another model (new session) before a third attempt. `send /system +<text>` adds a
+   rule without losing the context.
+5. **Exit 3** from `send`: the model asked for a y/N or `ask_user` answer, which only the user at a
+   terminal can give. Tell the user or choose a job that needs no `run_command`; never retry blindly.
+6. **Learn**: before finishing, add a row to `DELEGATION.md` (job type, model, prompt used, result,
+   verdict, date) and fix `tools.yaml` gotchas of `ollama-repl` if the run showed one. A verdict
+   needs the result checked, not the model's claim.
+
+Never use `--yes` unless the user said so: it lets the model run shell commands unattended.
+
+**Improving the harness.** If the work shows a way to make ollama-repl itself better (a missing
+command, a bad default, a prompt hint that backfires, something `ollama-repl-ctl` should expose),
+suggest it to the user instead of changing it: say what and why in a line or two. The source is
+`~/Sources/quickjs/qjs-lws/examples/ollama-repl/` (its `TODO.md` is where agreed items go). Record
+the idea in `PROPOSALS.md` (owner project qjs-lws) the same way as for any other tool.
 
 ## Adding a new tool
 

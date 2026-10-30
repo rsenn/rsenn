@@ -12,3 +12,11 @@
   comment style: prototype comments get a brief first, doxygen with aligned parameter columns when long
 - 2026-10-21
   comment rules moved to the comment-style skill (rules.yaml); the Comments section and the comment style edit bullets now point there
+- 2026-10-30
+  style: declarations only at block start (C89, Borland C++ 5.5 as litmus test), fold assignment into if/while test when the line stays within 78 columns
+- 2026-10-30
+  style: enums on one line when within 78 columns, else clang-format layout (one enumerator per line, trailing comma)
+- 2026-10-30
+  types: use lib/uint*.h names (uint8, int32, ...) instead of stdint _t types where the project provides them
+- 2026-10-30
+  style: added pointer/const, casts, literals, macros, include order, 78-column line width and truth-test rules

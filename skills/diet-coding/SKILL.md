@@ -160,7 +160,7 @@ Conventions to copy exactly, so code reads like the library:
 ## 4. Writing the code
 
 - **Types.** `size_t` for sizes and indices, `unsigned` for bit patterns, fixed-width types from
-  `typedefs.h`/`uint*.h` only where the width is part of the contract. A boolean member of a
+  `typedefs.h`/`uint*.h` only where the width is part of the contract. In libowfat, c-utils, shish, or any project whose `lib/uint[0-9]*.h` provide `{u,}int{8,16,32,64}`, use those names (`uint8`, `int32`, `uint64`) and never the stdint ones with the `_t` suffix (`uint8_t`, `int32_t`), and do not include `<stdint.h>`. A boolean member of a
   struct is a one-bit field (`unsigned flag : 1;`); an integer member takes the type of the
   value it will hold, not the narrowest that fits.
 - **Pointer loops** over arrays are as good as index loops and often smaller; pick whichever
@@ -183,8 +183,18 @@ Conventions to copy exactly, so code reads like the library:
   and the function name in column 0 (so `grep '^name('` finds a definition), `{` on the line of
   the `if`/`for`, one statement per line.
   **No braces around a one-statement body** of `if`/`else`/`for`/`while`: `if(remainder)` newline `remainder++;` and `while(cond && (0x03 & j))` newline `out[j++] = c;`. Braces only for two or more statements (or to disambiguate a dangling `else`).
-  Initialize a variable in its declaration when the value is known there; do not declare it and assign it on a later line. When declaration and first assignment cannot be adjacent and the variable is only tested, fold the assignment into the test, as long as readability holds and the line stays reasonably short (a short right-hand side and a simple comparison). A blank line separates the declarations from the statements that follow.
+  **Declarations only at the beginning of a block** (a brace group: function body, or the body of an `if`/`for`/`while`/bare `{ }`), before any statement. That is C89, so even Borland C++ 5.5 compiles it; we do not target such compilers, but they make a good test. No `for(size_t i = 0; ...)`, no declaration in the middle of a block; open a `{ }` group when a variable is needed only for a stretch of code.
+  **Enums:** if the whole `typedef enum { A = 1, B = 2 } name;` fits in 78 columns, keep it on one line, without a trailing comma. If it does not, write it the way clang-format would, so nobody has to run it: `typedef enum {` on the first line, one enumerator per line indented 2 spaces, a trailing comma after the last one, then `} name;` in column 0.
+  Initialize a variable in its declaration when the value is known there; do not declare it and assign it on a later line. A blank line separates the declarations from the statements that follow.
+  **Fold an assignment into the test** when the variable is only set to be tested: write `if((i = address_scan(&p[s], &addr))) {` (extra parentheses mark the assignment as intended), not `i = address_scan(&p[s], &addr);` + blank line + `if(i) {`. Same for `while`. Do it whenever the whole `if(<cond>) {` (or `while(<cond>) {`) stays on one line of at most 78 columns; if it would not fit, keep the separate assignment. Do not fold when the variable is also needed between the assignment and the test, or when the condition already has several `&&`/`||` terms and readability suffers.
   Group declarations of the same base type at one scope into one declaration; pointers to that type join it with their own asterisks. Order within the line: names without an initializer first, then initialized ones from the simplest initializer to the most complex; a variable another initializer depends on comes before its dependant. Keep an initialized variable on its own line when the initializer is a call or expression that does not fit comfortably, when it has side effects whose order matters, when the line would pass about 80 columns, or when the group would hold more than about four names. Never merge types that differ in indirection depth or qualifiers (const, volatile) just to save a line.
+  **Pointers and `const`:** the star hugs the type, `const char* in`, not `const char *in`. A pointer parameter that is only read is `const` (all inputs of `byte_*`/`str_*`).
+  **Casts:** make signed/unsigned and width changes explicit, `(size_t)(t - in)`, with no space after the cast. Prefer `sizeof(*ptr)` to `sizeof(type)` so the size follows the variable.
+  **Literals:** unsigned constants carry a `u`/`ul` suffix. Hex for masks and bit patterns, decimal for counts. No magic numbers: name them with an enum or a `#define` in the header.
+  **Macros:** parenthesize every argument and the whole expression, wrap multi-statement macros in `do { ... } while(0)`, and use UPPER_CASE for macros and constants only. A function-like macro that could be a function (and is not a one-line accessor in a header) is a function, in its own file.
+  **Includes:** the module's own header first (`#include "../<name>.h"`), then other `lib/` headers, then system headers last. A file includes only what it uses, and a header never pulls in `<stdio.h>`.
+  **Line width:** code stays within 78 columns, like the `if(`/`while(` and enum rules above. Break a long expression before the operator and indent the continuation 4 spaces.
+  **Truth tests:** `if(!p)` rather than `if(p == NULL)`, `if(n)` rather than `if(n != 0)`, `!*t` for the end of a string. `NULL` is for pointers only and `'\0'` for chars only.
 
 ## 5. Build for size
 

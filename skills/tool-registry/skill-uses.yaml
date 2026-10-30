@@ -21,8 +21,9 @@ diet-coding:
     evidence: "2026-10-14 shish: -l -p '^sh_' found 8 functions in 4 s"
   - tool: extract-c
     when: "enforcing 'one function per file' on a legacy .c that has several"
-    how: "extract-c -s lib/<mod>/ lib/<mod>.c      # <name>.c per function, with the preamble"
-    state: proposed
+    how: "extract-c -S lib [-A] <mod>.c <mod>.h     # lib/<mod>.h + lib/<mod>/<fn>.c, includes per file, follow-ups printed; fix libc calls and style by hand afterwards"
+    state: tried
+    evidence: "2026-10-30 c-utils uri.c/uri.h (af4c6082): output differs from the hand split only by the hand edits"
   - tool: extract-c
     when: "finding dead code in lib/ and src/ (candidates for removal)"
     how: "extract-c -i -c -C 0 -l lib src ; extract-c -d -m main -l src lib"
@@ -126,6 +127,10 @@ quickjs-native-bindings:
     evidence: "2026-10-15 qjs-debugger test/run.sh, library test (dbg.launch/break/continue/eval)"
 
 quickjs-scripting:
+  - tool: opencv-imgproc
+    when: "a script or tool needs a photo cut out (subject on transparent PNG), a tap-to-segment, or an NDJSON image job runner"
+    how: "QUICKJS_MODULE_PATH=<qjs-opencv>/build/x86_64-linux-gnu qtool opencv-imgproc cutout --in a.jpg --out b.png --trim   # NDJSON on stdout, result is the last line"
+    state: proposed
   - tool: runtime-diff
     when: "adding a module to modules.yaml or verifying a 'compatibility' line; deciding if a function is portable"
     how: "cd qjs-modules && runtime-diff -a <module>      # replaces guessing; paste 'present in [...]' into notes"

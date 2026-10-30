@@ -47,6 +47,9 @@ tools:
       function_source: extract-c.js -F function -p '^name$' DIR  # JSON with .text
       types: extract-c.js -t [-F struct|typedef|enum] FILE       # JSON IR, offsets+sizes
       split_one_per_file: extract-c.js -s OUTDIR FILE.c          # <name>.c per function (diet!)
+      split_into_lib: extract-c.js -S lib [-A] [--name N] N.c N.h   # lib/N.h + lib/N/<fn>.c, follow-ups printed (-A applies)
+      join_lib: extract-c.js -J lib --name N -o OUTDIR           # reverse: OUTDIR/N.h + N.c
+      amalgamate: extract-c.js -M lib --name N [--guard G] [-o F]  # header + #ifdef N_IMPL + all .c (checked: gcc -fsyntax-only with -DURI_IMPL)
       unused_identifiers: extract-c.js -i -c -C 0 -l DIR...      # 0 references
       unreachable: extract-c.js -d -m main -l DIR...             # not reachable from entry points
       macros: extract-c.js -F define,macro -l FILE
@@ -56,6 +59,8 @@ tools:
       - "-i reports data tables (`*_ops`, `*_tag`) with 0 references although they are used via macros or registration: treat 0-ref DATA as candidates, 0-ref FUNCTIONs as stronger evidence."
       - "Without -E macro-generated functions/uses are invisible; use -E for heavily macro-driven code."
       - "-t on `struct buffer` (lib/buffer.h) gives size:null although all fields have sizes (trailing/unresolved member?). Do not trust total size for structs with null; sum fields."
+      - "-S needs a clean git tree for -A (edits CMakeLists.txt, rewrites includes, git rm/add); exit 2 = warnings to decide (shared helpers or data, unprefixed names, globals, banners/trailing comments). It never replaces libc calls or fixes style: it lists libc calls per file (`libc:` lines). Header gets `/* */` placeholders; conditional `#ifdef X_H` blocks in the header stay verbatim."
+      - "-S: a non-static function absent from the header and used by one function becomes static in that function's file; programs are added as the first lib of program(<prog> ...), tests/CMakeLists.txt link_libraries is only a reminder."
       - "Positional args are files or DIRs; a shell glob that matches nothing (src/*.c with nested dirs) just yields 'cannot read' / an exception."
     verified: "2026-10-14 on shish src/ lib/"
 
@@ -407,6 +412,42 @@ tools:
       - "Scripts: see quickjs-scripting for when to debug instead of print."
     speed: "~0.5 s per session (spawn + connect); ~1 round trip per stop with locals"
     verified: "2026-10-15 batch, json, library, attach (both directions), dap client, server client; qjs-debugger/test/run.sh 12/12"
+
+  opencv-imgproc:
+    path: ~/Sources/quickjs/qjs-opencv/tools/opencv-imgproc.js   # not installed: runs from the repo
+    project: qjs-opencv
+    group: image
+    rating: 4
+    status: verified
+    what: >-
+      Photo cutout and tap-to-segment for collage, every output line NDJSON (`event`: progress | result | log, last
+      stdout line is the result, exit codes per doc/opencv-imgproc.md S9). cutout: u2netp salient matte, guided-filter
+      or alphamat refinement, edge defringe, foreground colour estimation, rest image (soft hole, Telea or FSR fill),
+      outlines, trim with offset. prepare + segment: MobileSAM (default) or SAM, embedding cached by photo sha256,
+      taps (+/-) or a box, up to 3 candidates. Also clip, palette, info, capabilities. Output is an RGBA PNG/WebP with a
+      soft alpha. Models are never bundled: models/ holds them (git-ignored), sha1 and licence per model in `capabilities`.
+    modes:
+      cutout: "QUICKJS_MODULE_PATH=<qjs-opencv>/build/x86_64-linux-gnu qtool opencv-imgproc cutout --in photo.jpg --out cut.png --trim --progress"
+      prepare: "... qtool opencv-imgproc prepare --in photo.jpg --cache-dir cache     # ~1.3 s cold (mobilesam), 0.3 s warm"
+      segment: "... qtool opencv-imgproc segment --in photo.jpg --cache-dir cache --point 480,330 --candidates 3 --pick best --trim --out cut.png"
+      quick_preview: "... segment ... --preview-size 1024     # 12 MP photo in 0.8 s, 240 MB"
+      two_phase: "... qtool opencv-imgproc segment --in photo.jpg --cache-dir cache --point 0.5,0.5 --units norm --view-size 1024 --out wand.png   # preview line at ~0.6 s (12 MP, warm), final line last; files wand.preview.png and wand.png"
+      info: "... qtool opencv-imgproc capabilities      # which models load, opencv version, options"
+      tests: "QUICKJS_MODULE_PATH=<build> qjsm tests/unittests/test_opencv_imgproc_tool.js   # in qjs-opencv; model tests skip without weights"
+    speed: >-
+      cutout 12 MP: 5.3 s, 1.1 GB; 1 MP: ~1 s. segment (mobilesam): cold 1.3-2.4 s, 0.5 GB; the big sam: cold 8 s,
+      7.5 GB. --refine matting is 13 s for no visible gain over guided; --rest-fill fsr is 13 s, telea 0.5 s.
+    gotchas:
+      - "It imports the `opencv` native module: the installed /usr/local/lib/<triplet>/quickjs/opencv.so can be older than the repo. Always set QUICKJS_MODULE_PATH=<qjs-opencv>/build/<triplet> (qtool prepends it); with the stale one it dies on a missing binding."
+      - "Weights are looked up in --models-dir, env WB_MODELS_DIR, else <repo>/models; the cache in --cache-dir, env WB_CACHE_DIR, else <repo>/cache. Missing file: E_MODEL (exit 8), a copy of the model name and path is in the error."
+      - "SAM's own score is not a quality ranking (a partial mask can outscore the whole subject): use --candidates 3 and --pick 0|1|2, or give --box to pick by overlap. The decoder has no box input, a box is a centre tap plus best IoU."
+      - "mobilesam candidates: one tap gives sub-part, part, whole (1,2,3 of the 4 decoder masks), several taps give 0,2,3. The decoder wants orig_im_size [1024,1024] so that the taps stay in the 1024 frame."
+      - "The big sam encoder needs 7.5 GB of RAM cold regardless of engine or threads: prefer mobilesam unless a photo needs it."
+      - "Output is block-buffered when piped: the tool flushes every line itself (emit), a phase result would otherwise arrive at exit. Any new writer to stdout must go through emit."
+      - "An installed copy (<prefix>/bin) looks for models in ~/.local/share/opencv-imgproc/models, /usr/local/share/... and caches in ~/.cache/opencv-imgproc (a checkout uses <repo>/models, <repo>/cache); --models-dir and WB_MODELS_DIR win."
+      - "Two touching subjects are one component for `cutout --subjects all`; split them with segment taps."
+      - "A fur or hair edge keeps some background colour on thin strands (guided or matting alike); a tap-based segment gives a cleaner mask than u2netp on fur."
+    verified: "2026-10-28 duck, flower 12 MP, grey long-hair cat, two cats; tests/unittests/test_opencv_imgproc_tool.js 13/13"
 
   search:
     path: /usr/local/bin/search

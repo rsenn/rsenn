@@ -14,11 +14,22 @@ for d in /usr/local/lib/quickjs "/usr/local/lib/$(uname -m)-linux-gnu/quickjs"; 
 done
 [ -n "${QUICKJS_MODULE_PATH:-}" ] && p="$QUICKJS_MODULE_PATH;$p"
 export QUICKJS_MODULE_PATH="$p"
+# path of a tool: the `path:` in tools.yaml (a leading ~ is expanded) when the entry has one and it is
+# executable, else /usr/local/bin/<tool> or <tool>.js. A tool that is not installed (qjs-opencv's
+# opencv-imgproc) runs from its repo; give it the build dir: QUICKJS_MODULE_PATH=<build> qtool <tool> ...
+toolpath() {
+  y="$(dirname "$0")/../tools.yaml"
+  r=$(awk -v t="$1" '$0 == "  " t ":" { on = 1; next } on && /^  [^ ]/ { exit } on && $1 == "path:" { print $2; exit }' "$y")
+  r=$(printf '%s' "$r" | sed "s|^~|$HOME|")
+  [ -n "$r" ] && [ -x "$r" ] && { echo "$r"; return; }
+  f=/usr/local/bin/$1; [ -x "$f" ] || f=$f.js
+  echo "$f"
+}
 case "${1:-}" in
   --env) echo "$QUICKJS_MODULE_PATH"; exit 0 ;;
   --check)
     for t in $(sed -n '/^tools:/,$ s/^  \([a-z0-9.-]*\):$/\1/p' "$(dirname "$0")/../tools.yaml"); do
-      f=/usr/local/bin/$t; [ -x "$f" ] || f=$f.js
+      f=$(toolpath "$t")
       case "$t" in search) echo "skipped $t (queries SerpApi, needs a key; --help is a search)"; continue;; esac
       [ -x "$f" ] || { echo "MISSING $t"; continue; }
       o=$(timeout 8 "$f" --help </dev/null 2>&1)
@@ -27,5 +38,6 @@ case "${1:-}" in
   "") echo "usage: qtool <tool> [args...] | --check | --env" >&2; exit 2 ;;
 esac
 t=$1; shift
-f=/usr/local/bin/$t; [ -x "$f" ] || f=/usr/local/bin/${t%.js}.js
+f=$(toolpath "$t")
+[ -x "$f" ] || f=/usr/local/bin/${t%.js}.js
 exec "$f" "$@"

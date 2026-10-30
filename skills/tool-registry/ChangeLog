@@ -38,3 +38,11 @@
   resolve-imports now on module-lexer: status verified, modes for -m and bundling, -u needs -m, stale installed module-lexer gotcha
 - 2026-10-21
   resolve-imports: node_modules resolution through import.meta.resolve, search-path modules stay imports, bundle name clash gotcha
+- 2026-10-28
+  registered opencv-imgproc (qjs-opencv tools/); qtool takes a tool's path from tools.yaml when it is not installed in /usr/local/bin
+- 2026-10-28
+  opencv-imgproc 1.3.0: two-phase mode, flush rule and installed-copy directories recorded
+- 2026-10-30
+  extract-c: -S/--split-lib (lib/<name>.h + lib/<name>/<fn>.c with follow-ups), recorded in tools.yaml modes/gotchas and diet-coding use
+- 2026-10-30
+  extract-c: -J/--join-lib and -M/--amalgamate (reverse of -S), tools.yaml modes

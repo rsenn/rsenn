@@ -58,3 +58,5 @@
   DELEGATION.md: terminal mirrors remote session, read-only nudge bug fixed in ollama-repl
 - 2026-10-30
   delegation rules: never start ollama-repl (ctl waits, user starts it), pick sessions by --name, suggest harness improvements to the user
+- 2026-10-30
+  ollama-repl /model NAME: Claude may switch models over the socket

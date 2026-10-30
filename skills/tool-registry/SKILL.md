@@ -101,7 +101,7 @@ job. Models: `ollama-repl --provider ollama --model list`.
    that did not happen.
 4. **Not as wanted?** Try again from nothing: `send /clear` (drops context, system prompt and
    project scan), re-send `/system`, rephrase the job smaller; `/undo` restores what the last prompt
-   changed. Try another model (new session) before a third attempt. `send /system +<text>` adds a
+   changed. Try another model before a third attempt: `send '/model NAME'` (installed models only; `send '/model list'`), then `/clear` if the old context should not carry over. `send /system +<text>` adds a
    rule without losing the context.
 5. **Exit 3** from `send`: the model asked for a y/N or `ask_user` answer, which only the user at a
    terminal can give. Tell the user or choose a job that needs no `run_command`; never retry blindly.

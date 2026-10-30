@@ -473,6 +473,7 @@ tools:
       - "A small model (4B) is only reliable per item: use /each (fresh conversation per item), never 'do all 25' in one prompt. Default num_ctx 16384 (--num-ctx)."
       - "--yes lets the model's run_command execute without approval: an unattended agent. Only on a throwaway copy of the project (git worktree / cp -r); the auto-mode classifier refuses it otherwise, and without --yes a piped run answers the y/N prompt from the NEXT input line."
       - "Review the result with /diff before keeping it; the model has deleted neighbouring declarations when editing (see qjs-lws examples/ollama-repl/TODO.md)."
+      - "/model NAME switches model in the running session and keeps the context: /clear after it when the old conversation should not influence the new model. Only installed models; the session file/log keep the starting model's name."
       - "/each is edit-oriented: a read-only item gets 'no change made - retrying once' and a non-answer. Use a plain send for questions. /clear drops the system prompt too; re-send it."
       - "Control socket (--listen): only the terminal user can answer run_command approvals / ask_user; `send` exits 3 and tells so, do not retry it. A remote line discards what the user has half-typed. Sessions live in $XDG_RUNTIME_DIR/ollama-repl/ (<pid>.sock/.json); `list` drops stale ones."
       - "Output order in pipe mode: the reply streams to stdout between two prompts; with --stream tokens arrive as they are produced."

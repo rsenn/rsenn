@@ -8,6 +8,7 @@ local model". Models on this machine: `ollama-repl --provider ollama --model lis
 |---|---|---|---|---|---|
 | 2026-10-30 | one-line comment above each of 2 functions in a 2-function C file | qwen2.5-coder (ollama) | delegate-system.md via `/system file` | called for_each itself (the REPL hints that for "each"), both comments correct, nothing else touched, 23 s | works |
 | 2026-10-30 | `/each ls m.c :: Read {} and reply with the number of functions` (read-only question) | qwen2.5-coder | none (after `/clear`) | `/each` treats the item as an edit job: "no change made - retrying once", then asked for the next task instead of answering | does not work: ask read-only questions as a plain `send`, not `/each` |
+| 2026-10-30 | c-utils genmakefile path.c refactor: delete one function (and its header prototype) per job, 5 jobs | gemma4:e4b | delegate-system.md via `/system file` (absolute path; `~` is not expanded) | .c deletions worked 4 of 5 times; header-prototype deletion/replacement failed 3 of 3 (claimed success, header unchanged, or flattened a multi-line replacement to one line); one job (delete 4 functions) duplicated half the file and left orphaned doc comments, `/undo` only restored the last prompt; `/diff` shows the whole dirty tree, useless unless tree is clean; ctx 16384 overflowed after ~3 jobs without `/clear` | partly: one-function .c deletion only, check the header yourself, one deletion per job |
 
 ## Rules learned
 

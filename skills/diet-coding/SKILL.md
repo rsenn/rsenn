@@ -19,7 +19,11 @@ Check the repo for its own `CLAUDE.md` first; where it differs, it wins.
 2. **One directory per module, one public header per directory:** `lib/foo/`, `lib/foo.h`.
 3. **No stdio, no printf, no `<string.h>`, no `<stdlib.h>` in code that wants to be small.**
    Use the module primitives (`byte_*`, `str_*`, `fmt_*`, `scan_*`, `buffer_*`, `stralloc_*`,
-   `alloc`) instead.
+   `alloc`) instead. In libowfat, c-utils, shish and any other djb/fefe-style codebase this is
+   a prohibition, not advice: a libc function (`strchr`, `strstr`, `strlen`, `memcpy`,
+   `malloc`, `free`, `printf`, `atoi`, ...) **must not be called wherever the library has an
+   alternative**, in new code and in code you touch. Grep `lib/` and `../c-utils/lib/` first;
+   only when no primitive exists, add one (own file) rather than reaching for libc.
 4. **A string is a pointer and a length** whenever the length is known or can be kept. Scan for
    the NUL only at the border (argv, the environment, literals).
 5. **The caller owns memory.** Functions fill what you hand them; allocation is explicit, and
@@ -28,6 +32,8 @@ Check the repo for its own `CLAUDE.md` first; where it differs, it wins.
    says why". State lives in a struct the caller holds.
 7. **Measure.** Size is a test result, not a feeling (see "Measure").
 8. **Surgical.** Add the function the task needs, in its own file; do not rework neighbours.
+9. **Remove indirection.** No wrapper around a wrapper, no run-time lookup by name where a direct call
+   does, no generic routine used for one special case (see "Specific over generic").
 
 ## Tools
 
@@ -125,7 +131,52 @@ lib/
   goes in its own top-level directory built *from* `lib/`, with the same one-function-per-file
   layout, and is consumed by a thin wrapper. It does not go into `lib/`, which stays generic.
 
+## 2b. Specific over generic
+
+From Felix von Leitner's "Writing Small And Fast Software" (diet.pdf, 2001), the paper behind
+dietlibc and libowfat. Its thesis: indirection induces bloat and kills performance. The causes
+are negligence, over-eagerness (the ultimate all-encompassing API), bad merging (the same thing
+implemented twice) and layers of wrappers. The rules that follow from it:
+
+- **Write the specific interface first.** The problem is not well known yet, a broad API
+  implements unneeded things, and removing them later changes an API someone already relies on.
+  Generalize a routine **only if it costs nothing**.
+- **The argument test.** Strip the parameter names from the prototype: if it is still obvious
+  what each argument does, the interface is specific enough. `fmt_ulong(char*, unsigned long)`
+  passes, `__ltostr(char*, int, unsigned long, int, char)` does not (which int is the size,
+  which the base, what is the char?).
+- **Name the common flag combination instead of passing the flags.** `open_write(name)` beats
+  `open(name, O_WRONLY | O_CREAT, 0644)`; libowfat has `open_read`, `open_excl`, `open_append`,
+  `open_trunc`, `open_write`, `open_rw`, each one file, with the mode baked in. The same for
+  `stralloc_copys`/`copyb`/`copy` and `fmt_ulong`/`fmt_ulong0`/`fmt_xlong`: one function per
+  case, never one function with a mode argument.
+- **Extending an API: add a new function, never make an existing one more powerful.** Existing
+  callers keep their size and meaning; a program that does not need the new case never links it.
+  (`fmt_ulong0` is `fmt_ulong` plus zero padding, as its own function.)
+- **A variadic or flag-heavy entry point is a wrapper over the specific ones.** If you want it
+  for convenience, make it a macro over the specific functions (`stralloc_catm(sa, a, b, c)` is
+  a macro that appends a `(char*)0` sentinel and calls `stralloc_catm_internal`), so the specific
+  functions stay the primitives.
+- **Use the specific call, not the general one, when you only need a subset.** `write(fd, "x\n", 2)`
+  for a static string, not `fprintf`; `str_chr` not `strstr` for one character; a stack buffer
+  (`char buf[FMT_ULONG]`, or `alloca` where the size is a runtime value and small) for temporary
+  storage, not `malloc`.
+- **Data structure default: an array.** It resizes with one `realloc`, scans without trashing the
+  cache, and is freed in one call. Sort once and `bsearch`; a tree or hash only for sets that are
+  very dynamic or huge. Optimize for the common case, not the worst case.
+- **Look for the existing code before merging or adding.** Two implementations of the same job
+  after a merge (or a second check-in by a teammate) must be reduced to one; search the project
+  and `../c-utils/lib/` first (see the tools section).
+- **Do not leave debug code behind** (traces, `fprintf(stderr)`, dead `#if 0` blocks).
+  A diagnostic that must stay is `buffer_puts` + one flush, behind a macro that vanishes in
+  release builds.
+
 ## 3. Replace the libc, do not wrap it
+
+In the codebases named in rule 3 the table below is binding: a call on the left is a defect
+when the right-hand column exists in the tree (`malloc`/`free` become `alloc`/`alloc_free`,
+`stralloc` or an `arena`, depending on the module). Only a missing primitive justifies libc,
+and then only at the border (`main`, a syscall wrapper).
 
 | instead of | use | why |
 |---|---|---|
@@ -148,6 +199,13 @@ Conventions to copy exactly, so code reads like the library:
   `if(!(n = scan_ulong(s, &v)))` is the error test and `s += n` the advance.
 - **`byte_*` take `(ptr, len, ...)`; `str_*` take NUL-terminated strings; `*n` variants take a
   bound.** Argument order is destination first, then length, then source (`byte_copy(out, len, in)`).
+- **Copy and concatenation functions return the length written (or an index), never the
+  destination pointer.** `str_copy(out, in)` gives the length so the next append knows where to
+  go without a `strlen`; a returned pointer only invites `strcat(strcpy(...))` chains.
+- **Measure, then format straight into the buffer.** `fmt_*(NULL, v)` gives the size, so
+  `stralloc_readyplus(sa, fmt_ulong0(0, v, n))` reserves it and
+  `sa->len += fmt_ulong0(sa->s + sa->len, v, n)` writes in place, with no temporary and no
+  second pass over the text (that is all of `stralloc_catulong0`).
 - **Return `size_t` for an index or length (use `len` for "not found"), `int` for 0/-1/1
   statuses, and a pointer or `NULL` for allocation.** Never `-1` in an unsigned.
 - **`buffer` is `{x, p, n, a, op, cookie, deinit, fd}`:** `x` storage, `p` position, `n` fill, `a` size,
@@ -201,6 +259,15 @@ Conventions to copy exactly, so code reads like the library:
 - Compile with `-Os` (and `-ffunction-sections -fdata-sections`), link with `-Wl,--gc-sections`,
   then `strip`. Add `-fno-asynchronous-unwind-tables -fno-unwind-tables -fno-stack-protector`
   where the target allows it. `-flto` last, and only if it measurably shrinks the result.
+- **The compiler cannot remove what the linker must keep.** An external function in a `.o` stays
+  in that object, and every object named on the link line is linked whole: a lone
+  `char magic[] = "bloat";` in `a.c` appears in the binary (`grep bloat prog`) even if nothing
+  references it. Only objects *pulled from an archive* are dropped when unreferenced
+  (`--gc-sections` helps for the rest). This is the whole reason for one function per file.
+- **Shared libraries hide the size, they do not remove it.** The programmer no longer sees what
+  they depend on, the disk still holds all of it, demand paging loads in 4 KB granules (a page
+  with one used function is a whole page), and the data segments are coalesced. Prefer a static
+  link for a lean tool; a `.so` is for plug-ins and for code many processes really share.
 - **Link statically against a small libc** (dietlibc, musl) when you can: the one-function-
   one-file rule pays off exactly there, because unused objects never enter the executable.
   Keep a dynamic/glibc build working as the portable reference.
@@ -214,7 +281,9 @@ Conventions to copy exactly, so code reads like the library:
   instructions; avoid large `switch`es that become jump tables in `.rodata` when an `if` chain
   or a lookup in a short string does the job.
 - Do not use `inline` for size; use it for one-liners in headers (`byte_equal`) that the
-  compiler would otherwise call.
+  compiler would otherwise call. A plain `inline` function still emits an out-of-line copy and
+  an exported symbol; **`static inline`** leaves no symbol behind when every call is inlined, and
+  `static` keeps the name space clean. Check with `nm file.o`.
 
 ## 6. Measure
 
@@ -234,6 +303,16 @@ strace -c prog ...             # syscall count; one write per output line is a s
   path, link, confirm with `nm` that it is gone when that path is not referenced.
 - Also check speed where it is the point: a plain loop that fits the cache beats a clever one
   that does not. Measure with `time` over a large input, not by reading assembly.
+- **Treat `malloc` as expensive and count it.** Preload a wrapper that counts calls and prints
+  the total at exit (`LD_PRELOAD=./mymalloc.so prog`); thousands of allocations for a small job
+  is the smell. Hoist, reuse a `stralloc`, or take the memory from the stack or an arena.
+- **Profile, do not speculate.** Trading space for speed is not bad per se, but only where a
+  profile (`gprof`, `perf`) says the code is hot: enable the tradeoff options (`-O2`/`-O3`,
+  unrolling) per file for those, and keep the rest at `-Os`. Read the result with `nm` and
+  `objdump -d`; know what code the compiler really generated.
+- **Compare against the obvious baseline.** `string` + `iostream` hello world: ~387 KB static
+  C++ vs a few KB with `write`. Build the hello-world of the feature you are about to pull in
+  and look at its `size` before committing to it.
 
 ## 7. Checklist before you finish
 

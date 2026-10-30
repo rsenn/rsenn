@@ -20,3 +20,7 @@
   types: use lib/uint*.h names (uint8, int32, ...) instead of stdint _t types where the project provides them
 - 2026-10-30
   style: added pointer/const, casts, literals, macros, include order, 78-column line width and truth-test rules
+- 2026-10-30
+  added Specific over generic (from diet.pdf: argument-name test, named flag combinations, extend by adding functions, arrays first, no leftover debug code), linker/shared-library notes, static inline, malloc counting, profiling, copy returns length, measure-then-format
+- 2026-10-30
+  rule 3 and section 3: libc calls are forbidden wherever libowfat, c-utils, shish or any djb/fefe-style tree has an alternative

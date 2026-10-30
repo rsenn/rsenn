@@ -106,6 +106,7 @@ quickjs-only.
 - **Exit** with `process.exit(n)`, not `std.exit`.
 - **A local declaration never shares a name with an import**: qjsm accepts `import { writev } from 'misc'` next to
   `export function writev` (a SyntaxError in node) and the local one wins, so a call meant for the import recurses.
+  A hoisted local function also replaces the exporting module's binding for every other importer of that name.
   Import native helpers under a prefix (`writev as sys_writev`).
 - **Diagnostics**: `console.error`/`warn` go to stderr on qjsm built from qjs-modules `src/qjsm.c` after
   2026-10-20; an older installed qjsm writes them to stdout. Where stdout is data, use `process.stderr.write(...)`.
@@ -119,6 +120,7 @@ quickjs-only.
 - **Arguments**: user arguments are `process.argv.slice(2)` on all runtimes.
 - **Script location**: `import.meta.filename`/`dirname` work on qjsm (built from qjs-modules after 2026-10-21),
   node 20.11+, bun, deno; `import.meta.main` only on qjsm, bun, deno, node 24.2+ (undefined on older node).
+- **`import.meta.url` is a `file://` string**: derive a sibling path with `import.meta.url.replace(/^file:\/\//, '')` and `path.join`. `new URL('../x', import.meta.url).pathname` returned `'/'` on qjsm when qjs-lws was not loaded (checked 2026-10-28).
 - **Resolving a specifier**: `import.meta.resolve(spec)` works on qjsm (built from qjs-modules after
   2026-10-21), node, bun and deno, and finds `node_modules` packages everywhere. A second argument (the parent)
   works only on qjsm and bun: node ignores it without `--experimental-import-meta-resolve`, deno throws.
@@ -145,7 +147,8 @@ what the user will actually run; report the mismatch.
 
 A `lib/` module compiled into qjsm (`BUILTINS_COMPILED`) may import only other builtins that qjsc can follow
 from its directory: `lib/loaders/*.js` use `std` and `os`, since `import 'fs'` fails to compile there
-(`could not load module filename 'node/events'`).
+(`could not load module filename 'node/events'`). After editing such a file, rebuild qjsm: an import of it,
+even by absolute path, can load the compiled copy.
 
 To run against a repo's `lib/` instead, give absolute paths:
 `QUICKJS_MODULE_PATH="$PWD/build/<triplet>;$PWD/lib"`. A relative entry breaks

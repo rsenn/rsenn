@@ -43,3 +43,9 @@
   node:os now resolves to lib/node/os.js, std.loadFile returns empty for /proc files
 - 2026-10-21
   debugging: driving a tty script in tmux, timeout doubles a terminal sigint
+- 2026-10-22
+  a hoisted local function named like an import replaces the binding for every importer
+- 2026-10-22
+  rebuild qjsm after editing a lib file compiled into it
+- 2026-10-28
+  script location: import.meta.url is a file:// string, new URL(...).pathname gives / without qjs-lws

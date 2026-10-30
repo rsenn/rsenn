@@ -284,6 +284,12 @@ later, *unrelated* call, not at the read's own call site, which is what
 made it hard to trace back. The fix is mechanical: guard each read with
 `argc > int(i) + 1` before touching `argv[i + 1]`.
 
+**A wrapped C++ function that does no input validation is the binding's job to guard.** OpenCV contrib code
+(`alphamat::infoFlow`, parts of `photo`) segfaults on a wrong `Mat` type, depth or size instead of throwing
+`cv::Exception`. Check type/channels/size in the binding before the call and throw `TypeError`/`RangeError`; a
+`try { } catch(const cv::Exception&)` does not help. Test the bad-input case too: it shows up as a silent test-run
+exit 139, not a failure line.
+
 ## 3. A native class: constructor, finalizer, opaque data
 
 This is the canonical minimal class, from `quickjs/examples/point.c`
@@ -2062,6 +2068,18 @@ where the library actually lives:
   vendored version does export the symbol, while `check_symbol_exists()`
   (a header-only check that works identically whether the library is
   pre-built or not yet built) got the right answer either way.
+
+**A system library can be present but built without the feature the binding needs** (aubio without FFTW3 takes
+power-of-2 FFT sizes only). Probe behaviour, not metadata: `check_c_source_runs` calling the function with the
+size needed (`new_aubio_fft(254)`), and fall back to the vendored build when it fails (`FindAubio.cmake`; skip
+the probe when `CMAKE_CROSSCOMPILING`). pkg-config often reports `<include>` while the header sits in
+`<include>/<lib>/`, so test `EXISTS .../<header>` before trusting it.
+
+**A dependency the vendored library lacks a switch for** (aubio's CMake never enables FFTW3) is added after
+`add_subdirectory()` with `target_compile_definitions/include_directories/link_libraries(<target> PRIVATE ...)`
+(allowed from another directory). When that dependency is itself downloaded, use `ExternalProject_Add` into
+`third_party/<name>` (`DOWNLOAD_EXTRACT_TIMESTAMP TRUE`, `BUILD_BYPRODUCTS`, `CMAKE_POLICY_VERSION_MINIMUM=3.5` for
+old CMakeLists) and `add_dependencies(<target> <external>)`: its library is a plain path, not a target.
 
 **The one real exception - no `CMakeLists.txt` to `add_subdirectory()`
 at all:** Rubber Band's upstream build is Meson-only. A first attempt at

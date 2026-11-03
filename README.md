@@ -18,7 +18,7 @@ Systems software developer and embedded hardware engineer specializing in low-le
 *   **[qjs-debugger](https://github.com/rsenn/qjs-debugger/)** — A gdb-style source-level debugger for QuickJS, written in JavaScript, with a terminal REPL and a nanovg/glfw GUI frontend.
 *   **[ipe32](https://github.com/rsenn/ipe32/)** — The ind00r poly engine: a 32-bit polymorphic code engine in x86 assembly, with NASM, TASM and YASM builds.
 
-The `qjs-*` projects are built against my **[QuickJS fork](https://github.com/rsenn/quickjs/)** (branch `cxx-designated`): a CMake-ified `qjs` with a module search path and [Koushik Dutta](https://github.com/koush)'s [debugger implementation for QuickJS](https://github.com/koush/quickjs) (see also his [VS Code debug adapter](https://github.com/koush/vscode-quickjs-debug)). It is required to build them.
+The `qjs-*` projects are built against my **[QuickJS fork](https://github.com/rsenn/quickjs/)** (branch `main`): a CMake-ified `qjs` with a module search path and [Koushik Dutta](https://github.com/koush)'s [debugger implementation for QuickJS](https://github.com/koush/quickjs) (see also his [VS Code debug adapter](https://github.com/koush/vscode-quickjs-debug)). It is required to build them.
 
 ---
 

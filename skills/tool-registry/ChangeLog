@@ -60,3 +60,17 @@
   delegation rules: never start ollama-repl (ctl waits, user starts it), pick sessions by --name, suggest harness improvements to the user
 - 2026-10-30
   ollama-repl /model NAME: Claude may switch models over the socket
+- 2026-10-31
+  MODELS.md: global per-model harness notes (system prompts, failure modes), linked from SKILL.md; ollama-repl proposals in PROPOSALS.md
+- 2026-10-31
+  recorded the qwen3-coder:30b path.c deletion run in DELEGATION.md and MODELS.md
+- 2026-11-03
+  extract-c: recorded broken install (extract-c-split.js) and -J defects on arena/mmap in tools.yaml and PROPOSALS.md
+- 2026-11-03
+  extract-c -J: also fails on path, scan, c-utils dir (same two defects); fine for utf8 open str fmt byte hashmap
+- 2026-11-03
+  extract-c -J defects fixed by qjs-modules (verified), proposals marked done; dir needs c-utils include path
+- 2026-11-03
+  added move-modules (qjs-modules utilities, moves JS files and rewrites relative imports)
+- 2026-11-03
+  move-modules also rewrites provable path mentions in comments, strings and text

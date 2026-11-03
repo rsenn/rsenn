@@ -83,7 +83,7 @@ never copied into it (they would rot).
 Offload bulk, mechanical, well-specified jobs (a doc comment per function, a rename per file, a
 summary per file) to a local model through `ollama-repl`; Claude stays the supervisor. Read
 [`DELEGATION.md`](DELEGATION.md) first: it records which model and prompt worked for which kind of
-job. Models: `ollama-repl --provider ollama --model list`.
+job; [`MODELS.md`](MODELS.md) holds the per-model conclusions (system prompt that helped, failure modes, speed) for every model and provider. Models: `ollama-repl --provider ollama --model list`.
 
 1. **Never start ollama-repl yourself, never headless.** A session needs the user's terminal (approvals,
    watching the work). Run `ollama-repl-ctl send ...`: with no session it prints

@@ -62,6 +62,7 @@ tools:
       - "-S needs a clean git tree for -A (edits CMakeLists.txt, rewrites includes, git rm/add); exit 2 = warnings to decide (shared helpers or data, unprefixed names, globals, banners/trailing comments). It never replaces libc calls or fixes style: it lists libc calls per file (`libc:` lines). Header gets `/* */` placeholders; conditional `#ifdef X_H` blocks in the header stay verbatim."
       - "-S: a non-static function absent from the header and used by one function becomes static in that function's file; programs are added as the first lib of program(<prog> ...), tests/CMakeLists.txt link_libraries is only a reminder."
       - "Positional args are files or DIRs; a shell glob that matches nothing (src/*.c with nested dirs) just yields 'cannot read' / an exception."
+      - "-J (join_lib): fixed 2026-11-03 (internal headers inlined, #if around includes kept); verified arena mmap path scan utf8 open str fmt byte hashmap compile with -I shish -I shish/lib. Exit code 2 remains for pre-existing warnings (mmap_unmap defined twice under #if, mmap_msync_wasi not in header). c-utils `dir` compiles only with -I c-utils -I c-utils/lib (needs str_dup, which shish str.h lacks). Installed /usr/local/bin/extract-c.js gets extract-c-split.js after the next qjs-modules cmake install; until then run quickjs/qjs-modules/utilities/extract-c.js."
     verified: "2026-10-14 on shish src/ lib/"
 
   extract-comments:
@@ -281,6 +282,20 @@ tools:
       convert: html2md.js page.html | html2md.js https://example.org/doc
     verified: "2026-10-14 small snippet"
 
+  move-modules:
+    path: /usr/local/bin/move-modules.js
+    group: refactor
+    rating: 3
+    status: verified
+    what: >-
+      Moves JS files from a move map and rewrites every relative import/export-from/import()/new URL() of them,
+      editing only the specifier text. -n dry run, -g git mv, idempotent. Lists non-import mentions of old paths.
+    modes:
+      map: move-modules.js -n -m moves.map -r client -r tests
+      pair: move-modules.js -g a/x.js b/x.js
+    gotchas:
+      - "qjsm only (module-lexer). Not installed until the next cmake install of qjs-modules; run utilities/move-modules.js from the source tree."
+      - "Default excludes include lib: pass -X if importers live there."
   jsonpp:
     path: /usr/local/bin/jsonpp.js
     group: data

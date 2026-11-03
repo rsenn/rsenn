@@ -20,9 +20,9 @@ newly verified fact, or the user's own request — so the next session
 starts one step ahead instead of re-discovering the same thing. This
 isn't optional cleanup, it's the point of the skill: treat "did I update
 this file" as part of finishing the task, not a separate nice-to-have.
-Never do it silently, though — after adding something, notify the user
-of exactly what was added/changed and ask them to confirm it before
-treating it as settled. Small, incremental edits over time, not a
+No confirmation is needed before editing it (user instruction,
+2026-11-03) — just do it, and mention in the final report what was
+added/changed, plus a ChangeLog entry. Small, incremental edits over time, not a
 rewrite each time. Generic, reusable material (a debugging technique, a
 compiler gotcha, a cross-chip-family trap) belongs directly in this file
 or `hard-won-lessons.md`; project-specific facts (a board's pinout, one
@@ -1545,6 +1545,50 @@ programs sharing the same `lib/`.
     section's SDCC pic14 gotchas above; this is real, load-bearing
     context for step 4 above whenever the target compiler is SDCC
     rather than XC8, not a solved problem to assume away.
+
+- **Verified end to end 2026-11-03 (fixed-point display path, PIC16F876A,
+  XC8 v1.43):**
+  - `lib` is a git submodule (libpicp). A fresh checkout pins an old 2023
+    commit that lacks the portability fixes, `fixedmath`/`float24` and
+    `DEVICE_EMIT_CONFIG_WORD`; the working lib is `~/Sources/libpicp`
+    (4eee869 at that time). Check `git -C lib log` before trusting a build.
+  - **`build/targets.mk` is NOT dead for SDCC**: `build/sdcc.mk` includes
+    it after `vars.mk`, so its `LC_meter_HD44780_SOURCES`/`_DEFS` win.
+    `build/xc8.mk` only includes `vars.mk`. Add new sources/defines
+    (e.g. `fixedmath.c`, `-DUSE_FIXED=1`) to both files.
+  - `USE_FIXED=1` (uint32 fixed point via `lib/fixedmath`) fits the 16F876A
+    under XC8: 84.9% flash, 81.8% RAM. SDCC pic14 still fails: raising
+    `--stack-size 32` fixes "Out of stack Space" but then the link fails
+    with `Missing definition for symbol "STK13"` (muldiv_u32 passes too
+    many argument bytes for the runtime's STK registers).
+  - `lib/format.c` `format_number` printed digits reversed and padded via
+    `buffer_putch`; fixed (generate LSB first, print MSB first, pad via
+    `fn`). Float formatters are gated out under `USE_FIXED`.
+  - Display layout (16x2): label cols 0-7, reading `ppp.ff` right-aligned
+    cols 8-13, unit cols 14-15. Reading is uint16 x100, so max 655.35 per
+    unit.
+  - **mdb display test**: `tests/run_mdb_display.sh` links the real
+    `measure.c`/`print.c` against a stub LCD and reads the RAM shadow back.
+    mdb gotchas: mdb is at `/mnt/data/opt/microchip/mplabx/<v>/mplab_platform/bin/mdb.sh`;
+    `Print arr[i]` returns `null`, use `Print arr` (whole array as
+    `{67, 97, ...}`); disable the watchdog with `#pragma config WDTE = OFF`
+    in the test file or the sim resets endlessly; an array over one RAM
+    bank (96 bytes) fails with "could not find space", split into several
+    arrays; mdb exits nonzero, so use `|| true` under `set -e`; a run with
+    ~100 `Print` commands takes minutes, print whole arrays instead.
+
+- **XC8 v1.x float size is chosen at LINK time (verified 2026-11-03).**
+  `--double=N --float=N` given only to the compile (pass 1) step does not
+  change the linked float library: without the flags on the link line XC8
+  v1.43 silently links its default 24-bit library (PIC18F2550 test:
+  12,132 bytes at 24-bit, 16,636 at `--double=32`). Pass the same
+  `--double`/`--float` to both stages. **lc-meter rule (user, 2026-11-03):
+  never use 24-bit float there, precision matters most** - use the
+  `USE_FIXED` fixed-point path or genuine 32-bit. `build/xc8.mk` now sets
+  `FLOAT_FLAGS = --double=32 --float=32` for compile and link.
+- `format_float` in libpicp pulled in `log10`/`pow`/`floor` just to print
+  digits; rewritten with integer conversion + one multiply per decimal
+  (about 10% of the 16F876A flash instead of overflowing it).
 
 ## Open items / not yet explored
 

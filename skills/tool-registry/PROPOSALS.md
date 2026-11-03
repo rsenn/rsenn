@@ -21,6 +21,17 @@ Newest first inside each section. One precise line beats a paragraph.
 
 ## Per tool
 
+- [done 2026-11-03, uncommitted; takes effect after the next cmake install] **extract-c.js: install `extract-c-split.js` next to it.** The installed
+  `/usr/local/bin/extract-c.js` fails with `could not load module '/usr/local/bin/extract-c-split.js'`;
+  running `qjsm quickjs/qjs-modules/utilities/extract-c.js` from the source tree works.
+  Found 2026-11-03. Owner: qjs-modules (install list for utilities/).
+- [done 2026-11-03, uncommitted; verified: arena mmap path scan utf8 open str fmt byte hashmap give 0 gcc errors] **extract-c -J: output does not compile for `arena` and `mmap`.** (1) `*_internal.h` is neither
+  inlined nor copied, so `struct arena_chunk` is incomplete in `arena.c`; (2) `#if WINDOWS_NATIVE` around
+  `#include <windows.h>` is dropped (empty `#if/#else/#endif` left behind), so `mmap.c` includes
+  `<windows.h>` on Linux. Also emits `"lib/x.h"` includes. Repro: `-J shish/lib/ --name arena|mmap -o DIR`.
+  Same two defects also break `path` (internal.h), `scan` (config.h) and c-utils `dir` (dir_internal.h, unguarded
+  windows.h); `utf8 open str fmt byte hashmap` join and compile fine.
+  Found 2026-11-03. Owner: qjs-modules utilities/extract-c.js.
 - [open] **runtime-diff**: `loadFile('lib/describe.js')` is cwd-relative; resolve it via
   `import.meta.url`/the installed module path (`describe` is importable). Fails from any other dir.
 - [open] **nm-symbols**: add `--entry <symbol>` (default mode is hard-wired to `js_init_module`), so
@@ -55,6 +66,22 @@ Newest first inside each section. One precise line beats a paragraph.
 - [approved 2026-10-15, in qjs-ffi/TODO.md section 6; name clash, missing symbols, by-value unions, --cstring, --handle, --out, --owned-return, bun/deno/node stubs, literal default arguments, value classes, template instances, --out-auto and C++ wrappers done 2026-10-15] **qjs-ffi-genbindings** (found by doc/generated-vs-handwritten.md in qjs-ffi, 2026-10-15): struct and function with the same name break --structs output (lws_xos); symbols missing from the library abort the import; NVGcolor by value and unresolved C++ value types drop functions; unsigned char * returns are numbers; no finalizers for C handles. details in that page.
 - [open] **qjs-ffi-genbindings --emit-ir**: IR could serve as the shared input for extract-c-style queries
   (list functions/enums by prefix); consider an `ir-query` mode or document the IR schema.
+
+### ollama-repl (owner project qjs-lws)
+
+- [open] **Stop a tool-call loop.** qwen3:8b repeated one failing `edit_file` call 15+ times (about
+  16 s per round) until the connection dropped (2026-10-31). When the same tool name with identical
+  arguments occurs twice in a row, answer with a nudge ("this exact call just failed, read the file
+  again and change old_string"); on the third, abort the prompt and report it. Today `--max-rounds`
+  (40) is the only limit.
+- [open] **`/undo` did not restore files** after a prompt whose edits were then followed by /clear and
+  a new prompt (2026-10-31); `send /diff` shows the whole working tree. Wanted: `/diff PATH...` and an
+  undo that survives `/clear`.
+- [open] **`send` flattens newlines**, so a multi-line `old_string` or replacement cannot be given in
+  a job. Wanted: `send -f FILE` (or `@FILE`) that passes the file's text unchanged.
+- [open] **`/system file ~/x` is not expanded**; expand `~` (error was "cannot read ~/...").
+- [open] **Context overflow after about 3 jobs** at `--num-ctx` 16384 with whole files attached to
+  each prompt; clear automatically between `send` jobs, or attach only the files the job names.
 
 ## Done / declined
 

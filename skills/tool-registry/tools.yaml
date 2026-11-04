@@ -507,3 +507,55 @@ tools:
       - "NOT run: no --help (the argument is taken as the query and would hit the paid API). Read the source header for flags and the key variable before use; never test with throwaway queries."
       - "Claude already has WebSearch/WebFetch; employ only for scripted/batch research or when engines must be chosen."
     verified: "2026-10-14 source read"
+
+  genmakefile:
+    path: /usr/local/bin/genmakefile
+    project: c-utils
+    group: build
+    rating: 4
+    status: partial
+    what: >-
+      Generates build files (gmake, make, ninja, shell, batch, nmake, ...) for many compilers. For PIC:
+      -t xc8 (v1, mplink) and -t xc8-cc (v2+). --import-mplabx nbproject/configurations.xml
+      --mplabx-conf NAME takes chip, sources, flags, pack and toolchain version from a MPLAB X project
+      (c-utils a2097fde, 7bad3285, 4cca7e40). The xc8/xc8-cc features work in gmake, make, ninja, shell
+      and batch (batch only inspected, never run).
+    options_added_for_xc8cc:
+      "--code-offset HEX": "-mcodeoffset=HEX on compile and link; also read from the imported project (additional-options-code-offset)"
+      "--cflag F / --ldflag F": "repeatable, raw flags (the importer uses them for the MPLAB X properties; LDFLAGS may use $(BUILDDIR))"
+      "--program NAME": "image/hex name (importer: from nbproject/project.xml), output build/NAME.elf and NAME.hex"
+      "--pack Vendor/Name/Ver, --toolchain-version V": "DFP_DIR ?= pack dir and XC8_BIN ?= .../vV/bin defaults (importer fills both)"
+      "--no-universal-hex": "PIC18 + code offset otherwise adds NAME-universal.hex (needs ihextool vectors)"
+      "--dump-project": "print what --import-mplabx stands for (chip, sources, build type), then stop"
+    modes:
+      mplabx_project_to_makefile: >-
+        genmakefile -t xc8-cc -m gmake --import-mplabx nbproject/configurations.xml --mplabx-conf PIC18F25K50
+        --code-offset 0x2000 --create-bins -d build -o Makefile.picstick -D BOARD=1
+      other_backends: "same line with -m ninja -o Makefile.ninja (ninja -f Makefile.ninja) or -m shell -o Makefile.shell (sh ./Makefile.shell)"
+      dump_what_import_found: genmakefile ... --import-mplabx FILE --dump-project
+      override_at_build_time: "make -f Makefile.picstick EXTRA_CFLAGS=-DX=1 IHEXTOOL=/path/ihextool DFP_DIR=... XC8_BIN=..."
+    gotchas:
+      - "The installed /usr/local/bin build can be older than c-utils main: check `genmakefile --help | grep -- --cflag`; else run ~/Sources/c-utils/build/x86_64-linux-gnu/genmakefile (our gen-picstick.sh honours GENMAKEFILE=)."
+      - "-std=c90 from an MPLAB X project is replaced by c99 (stderr warning): XC8 2.31 ignores __interrupt() under c90, the ISR is not linked (warnings 1316, 967)."
+      - "Run it from inside the project dir with relative paths and -o in the project: with -o elsewhere the paths explode (SRCROOT is used beyond 3 levels). The xc8-cc hex also depends on the source path (relative vs absolute gave different RAM addresses in c-utils' own test, BUGS genmakefile-xc8cc-hex-depends-on-source-path): build every backend from the same dir to compare hexes."
+      - "Do not hand-edit the generated file: put changes into the command line (--cflag/--ldflag), a regenerate script (gen-picstick.sh), or make-variable overrides."
+      - "batch backend: every file ends with a command-less `<TAB> || GOTO FAIL` line cmd.exe rejects (BUGS, unfixed); nothing batch was run."
+      - "The free XC8 licence ignores -Os (advisory 2051), sizes are free-mode sizes."
+    verified: "2026-11-04 USB-Stack CDC_Serial_UART_Example.X, XC8 2.31: gmake, ninja and shell builds give byte-identical universal hex"
+
+  ihextool:
+    path: /usr/local/bin/ihextool
+    project: c-utils
+    group: firmware
+    rating: 4
+    status: partial
+    what: >-
+      Intel HEX: info, records, dump, merge, bin, frombin, verify, sum, and `vectors` (PIC18 GOTO stubs
+      so one hex works with and without a bootloader at an offset).
+    modes:
+      universal_hex: ihextool vectors -a 0x2000 [--vectors 0x00,0x08,0x18] -o app-universal.hex app.hex
+      check: "ihextool verify FILE ; ihextool info FILE (address ranges) ; ihextool bin -a 0x2000 FILE | md5sum (compare images)"
+    gotchas:
+      - "`vectors` is only in c-utils main (7bad3285); older installed builds lack it."
+      - "PIC16 (14-bit) is rejected: unsupported family. Vector targets inside a contiguous code run are NOT detected (0x0018 -> 0x2018 landed mid-ISR in a single-ISR layout): the application must put real code at each forwarded vector."
+    verified: "2026-11-04 CDC_Serial_UART_Example.X universal hex, verify + info + bin md5"

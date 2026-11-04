@@ -296,3 +296,20 @@ remote-targets:
     how: "on the target: QUICKJS_DEBUG_LISTEN_ADDRESS=0.0.0.0:9901 qjsm script.js ; here: ssh -L 9901:localhost:9901 target, then qjsm-debugger -e -c --plain -x cmds.txt"
     state: adopted
     evidence: "2026-10-15 stanza added; -e/-c attach verified locally both directions, not over ssh"
+
+mcu-firmware-engineer:
+  - tool: genmakefile
+    when: "a MPLAB X project (nbproject/) must also build from the command line, or a quick xc8/xc8-cc Makefile for a chip/board variant"
+    how: "put the call in a gen-<board>.sh next to the project (cd to the project dir first, -o and -d inside it) and generate: genmakefile -t xc8-cc -m gmake --import-mplabx nbproject/configurations.xml --mplabx-conf <CONF> --code-offset <hex> --create-bins -d build -o Makefile.<board> -D <BOARD>=1 ; commit both the script and the generated file; board differences via -D and #ifdef in the source, not forks of the example"
+    state: adopted
+    evidence: "2026-11-04 USB-Stack CDC_Serial_UART_Example.X (gen-picstick.sh, Makefile.picstick, eee637d): gmake, ninja, shell builds identical, XC8 2.31"
+  - tool: genmakefile
+    when: "the same project is built by someone without make (ninja or a plain script)"
+    how: "same line with -m ninja or -m shell: the XC8_BIN/DFP_DIR/IHEXTOOL/CODE_OFFSET defaults are in the file (env overrides); batch is generated but untested"
+    state: tried
+    evidence: "2026-11-04 4cca7e40: ninja and shell built with XC8 2.31"
+  - tool: ihextool
+    when: "an application hex built for a bootloader offset must also run without the bootloader (ICSP)"
+    how: "genmakefile emits the rule itself (NAME-universal.hex) for PIC18 with a code offset; by hand: ihextool vectors -a <offset> -o x-universal.hex x.hex ; then ihextool verify/info, and ihextool bin -a <offset> FILE | md5sum against the plain hex"
+    state: tried
+    evidence: "2026-11-04 USB-uC (ignores blocks below 0x2000): verify ok, bin md5 of 0x2000.. identical"

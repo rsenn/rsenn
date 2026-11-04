@@ -1,0 +1,14 @@
+- 2026-11-03
+  dropped the confirm-before-editing rule (user request), added lc-meter fixed-point/display findings and mdb gotchas
+- 2026-11-03
+  added xc8 link-time float library finding, lc-meter no-24-bit-float rule, small format_float
+- 2026-11-04
+  added the hardware-derived test range lesson (fixedmath up to 2^32, uH fallback) and pointers to the lc-meter docs
+- 2026-11-04
+  noted that our picsticks have a green user LED (D2) and a red power LED (D1)
+- 2026-11-04
+  added xc8-cc build, -std=c90 interrupt trap, universal bootloader hex and the 0x2018 vector lesson
+- 2026-11-04
+  added the lc-meter perfboard photo review method and pointer
+- 2026-11-04
+  added the gen-<board>.sh pattern for MPLAB X examples, backends, path caveat, installed-vs-main tool versions

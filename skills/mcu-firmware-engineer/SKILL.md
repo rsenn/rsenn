@@ -351,6 +351,52 @@ program at a time):
      program does no float math) are similarly harmless no-ops for this
      specific program, not something to "fix" preemptively.
 
+### XC8 v2 (xc8-cc) command-line build of a MPLAB X project, bootloader hex
+
+Verified 2026-11-04 on USB-Stack `CDC_Serial_UART_Example.X` (PIC18F25K50,
+XC8 2.31 at `/mnt/data/opt/microchip/xc8/v2.31/bin`, pack
+`/mnt/data/opt/microchip/mplabx/v5.35/packs/Microchip/PIC18F-K_DFP/1.3.84`).
+Tools: `genmakefile -t xc8-cc --import-mplabx ...` and `ihextool vectors`
+(see tool-registry `skill-uses.yaml` key `mcu-firmware-engineer`).
+
+- **`-std=c90` makes XC8 2.31 ignore `__interrupt()`** (warning 1316 "attribute
+  ignored", 967 "unused function isr"): the ISR is not linked, a USB firmware
+  is dead. MPLAB X projects of the USB-Stack set `-std=c90`; build with c99.
+  Always grep the compile output for 1316/967.
+- **Bootloader-offset hex (`-mcodeoffset=0x2000`) does not run standalone**:
+  erased flash is NOP, reset slides to 0x2000, but interrupt vector 0x0008
+  slides into 0x2000 (restart). Fix: add `GOTO 0x2000/0x2008/0x2018` at
+  0x0000/0x0008/0x0018 (`ihextool vectors -a 0x2000`). The USB-uC bootloader
+  skips every block below `PROG_REGION_START` and ignores ID/config records
+  (`bootloader.c` `safely_write_block`), so ONE `-universal.hex` serves both.
+  Standalone flashing programs the hex config words (check with piccfg).
+- **The bootloader forwards 0x0018 to 0x2018 unconditionally.** In XC8's
+  single-ISR layout the ISR body starts at 0x2008 and 0x2018 is mid-code. Give
+  0x2018 real code: `__interrupt(high_priority)` for the handler plus an EMPTY
+  `__interrupt(low_priority)` function (+18 bytes). Do NOT call the shared
+  handler from both ISRs: the compiler duplicates the call graph (+4 KB).
+  Keep `IPEN=0`; with it set, an unserviced low-priority source storms.
+- **How we use genmakefile for a vendor MPLAB X example (pattern, adopted
+  2026-11-04):** keep the vendor project untouched, add `gen-<board>.sh`
+  (cd to the project dir, `genmakefile -t xc8-cc -m gmake --import-mplabx
+  nbproject/configurations.xml --mplabx-conf <CONF> --code-offset <hex>
+  --create-bins -d build -o Makefile.<board> -D <BOARD>=1`) and the generated
+  `Makefile.<board>`; commit both, never hand-edit the Makefile. Board-specific
+  behaviour is one `#ifdef <BOARD>` block in the source (picstick: activity
+  LED + low-priority ISR), not a fork. `genmakefile` supports gmake/make,
+  ninja and shell for this (batch generated only); `-m ninja -o
+  Makefile.ninja` + `ninja -f Makefile.ninja`, or `-m shell` + `sh`. Run it
+  from inside the project: the hex depends on the source path spelling
+  (relative vs absolute gave different RAM addresses in c-utils' test).
+  Defaults for `XC8_BIN`, `DFP_DIR`, `IHEXTOOL`, `CODE_OFFSET` are in the
+  file and overridable (`make IHEXTOOL=...`, `EXTRA_CFLAGS=-DX=1`). The
+  installed `/usr/local/bin` genmakefile/ihextool may be older than c-utils
+  main: use `GENMAKEFILE=~/Sources/c-utils/build/x86_64-linux-gnu/genmakefile`.
+  Missing features go to the `c-utils` session (SendMessage) with a repro,
+  not into a local wrapper.
+- Free (non-licensed) XC8 ignores `-Os` ("optimization level 2" advisory);
+  sizes are those of the free mode.
+
 ### piccfg — dump config word (fuse) settings from a hex file
 
 `/usr/local/bin/piccfg` (source: `../c-utils/piccfg.c`).
@@ -905,6 +951,10 @@ session (`miditest`, `rgbtest`).
   assuming any picstick pin is "free"** — several vendor-pinout-JPEG
   labels are confirmed wrong against the real schematic netlist (see
   its §1).
+- **LED colours on OUR boards (user, 2026-11-04)**: the design has two
+  identical red LEDs (D1 Power, D2 User LED on RA4); the picsticks built
+  here have **D1 Power = red, D2 User LED = green**. "Green LED" = D2 =
+  RA4 = JP1-6, active high. Details in `pictest/picstick.md` §3.
 - **Design files — `/mnt/data/Projects/rsenn/picstick_25k50/`**:
   `picstick_25k50_v1.sch`/`.brd` (source of truth `picstick.md` was
   cross-checked against directly, not just the vendor pinout JPEG),
@@ -1589,6 +1639,21 @@ programs sharing the same `lib/`.
 - `format_float` in libpicp pulled in `log10`/`pow`/`floor` just to print
   digits; rewritten with integer conversion + one multiply per decimal
   (about 10% of the 16F876A flash instead of overflowing it).
+
+- **Derive test ranges from the hardware, not from the examples (lc-meter,
+  2026-11-04).** The first fixed-point Thomson code rejected counts above 46340
+  (F*F < 2^31) because the host sweep only covered 20000-40000 counts, while
+  the real tank (100 uH + 1 nF) rings at about 500 kHz = 50000 counts: every
+  reading would have been a range error. `lib/fixedmath.c` now handles divisors
+  up to 2^32-1 (carry bit in the restoring division). Inductance above 42.9 mH
+  overflows nH x 100 in a uint32 and is computed in uH instead.
+- **Perfboard photo review (2026-11-04)**: see `lc-meter/doc/PERFBOARD-REVIEW.md`.
+  Method that worked: compare the photos with the schematic jpg in `doc/`, read
+  resistor/inductor colour bands (the 100 uH choke looked like 1 mH), look for a
+  missing relay flyback diode, electrolytic polarity, flux corrosion and bridges,
+  then list continuity checks. Photos cannot verify solder-side connectivity.
+- Details of the whole lc-meter repair: `lc-meter/doc/LESSONS.md`,
+  `lc-meter/doc/FIXES.md` §8-§10.
 
 ## Open items / not yet explored
 

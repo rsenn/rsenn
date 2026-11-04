@@ -74,3 +74,7 @@
   added move-modules (qjs-modules utilities, moves JS files and rewrites relative imports)
 - 2026-11-03
   move-modules also rewrites provable path mentions in comments, strings and text
+- 2026-11-04
+  added genmakefile (xc8-cc, mplabx import) and ihextool (vectors) entries and mcu-firmware-engineer uses
+- 2026-11-04
+  genmakefile entry now lists the xc8-cc options, ninja/shell/batch support, the path caveat and how the picstick build uses it (gen script pattern)

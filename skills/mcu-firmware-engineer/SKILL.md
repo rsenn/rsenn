@@ -966,12 +966,55 @@ session (`miditest`, `rgbtest`).
   PIC18F25K50. Its own `README.md` says it originally shipped with the
   **Pinguino bootloader** (`Bootloader_v4.14_18f25k50_INTOSC.hex`), a
   *different* bootloader from the Johnny Drazi `USB-uC` one `pictest`'s
-  own build matrix targets (see below). **Open/unverified**: whether the
-  Pinguino bootloader's own app-region offset actually matches
-  `USB-uC`'s `PROG_REGION_START=0x2000` — don't assume they're
-  interchangeable without checking which bootloader a given physical
-  board is actually currently flashed with before choosing
-  `CODE_OFFSET`.
+  own build matrix targets (see below). **Resolved 2026-11-04 (read from
+  `/mnt/data/Projects/pinguino/pinguino-bootloaders` and `pinguino-ide`):
+  the offsets differ.** See "Which bootloader is on a picstick" below.
+### Which bootloader is on a picstick (Pinguino vs USB-uC)
+
+Facts read from the Pinguino sources (`pinguino-bootloaders/p8/usb/v4.x`,
+`Makefile.linux`, `src/main.c`, `src/vectors.c`, `src/hardware.h`;
+`pinguino-ide/pinguino/qtgui/pinguino_core/boards.py`, `uploader/uploader8.py`)
+and the shipped `hex/Bootloader_v4.14_18f25k50_INTOSC.hex` (decoded with
+`ihextool`/`piccfg`). Not checked against a real board (none attached
+2026-11-04). **The user's picsticks have no Pinguino bootloader (user, 2026-11-04):
+build with the USB-uC offset 0x2000 and the universal hex; the Pinguino rows
+are only needed for boards received with the original bootloader.**
+
+| | Pinguino v4.14 (what the design ships with; NOT on our boards) | USB-uC (Drazi; what OUR picsticks have, user 2026-11-04) |
+|---|---|---|
+| identify | `lsusb`: **04d8:feaa**, custom bulk protocol, no drive | **04d8:eb78**, mass storage drive |
+| application starts at | **0x0C00** (`APPSTART=0x0C00`, board table `memstart=0x0C00`, `memend=0x8000`) | 0x2000 |
+| bootloader size | 0x0000-0x0A33 | 0x0000-0x1FFF |
+| vectors | 0x00 GOTO 0x0A26 (bootloader), 0x08 GOTO 0x0C08, 0x18 GOTO 0x0C18 (in the hex) | 0x08 -> 0x2008, 0x18 -> 0x2018 |
+| bootloader mode | **only after the reset button** (`RCON`: NOT_POR && NOT_BOR && IPEN==0); a plug-in (power-on reset) starts the application at once | button / no application |
+| upload | host script: pinguino-ide `uploader8.py` (pyusb; commands READ_VERSION/READ_FLASH/WRITE_FLASH/ERASE_FLASH/RESET, 64 byte packets), IDE `pinguino-cmd` | copy the .hex onto the drive |
+| config words | the bootloader hex carries them and they stay: INTOSCIO, PLLSEL=PLL3X, CFGPLLEN=ON, CPUDIV=NOCLKDIV, LS48MHZ=SYS24X4, MCLRE=ON, LVP=OFF, WDTEN=SWON, BOREN=SBORDIS, BORV=190, PBADEN=OFF, CCP2MX=RC1, SDOMX=RC7, T3CMX=RC0, XINST=OFF | ignores the config records of the app hex too |
+
+- The uploader only sends hex records with `memstart <= address < memend`; all
+  below 0xC00 (including a hex's vector stubs at 0x0000) is silently dropped,
+  as with USB-uC. The config words of an application hex are never programmed
+  through either bootloader (they only matter when flashed with a programmer).
+- **An application built for USB-uC (`-mcodeoffset=0x2000`) does not run
+  properly on a Pinguino-bootloader board**: its reset slides over NOPs from
+  0x0C00 to 0x2000 and starts, but the interrupt vector forwarded to 0x0C08 does
+  the same and restarts the program, so the USB ISR never runs. Build for the
+  board that you have: `--code-offset 0xC00` for Pinguino (verified that the
+  CDC_Serial_UART_Example.X builds with it: reset at 0x0C00, ISR stub 0x0C08,
+  5297 bytes, 0x7400 bytes of flash available), `0x2000` for USB-uC.
+- One hex for all three cases (Pinguino, USB-uC, standalone) would need stubs at
+  0x0C00/0x0C08/0x0C18 pointing to 0x2000/0x2008/0x2018 as well as at
+  0/8/0x18; `ihextool vectors` can only place stubs at `V` with target `V+offset`
+  (a `--base` option for the stub location is not there yet; ask the c-utils
+  session if wanted).
+- Bootloader mode on the Pinguino board needs the picstick reset button (SW1,
+  JP2-1) with USB attached; udev rule: `pinguino-extra/rules/99-pinguino.rules`
+  (`ATTR{idVendor}=="04d8", ATTR{idProduct}=="feaa", MODE="0666"`).
+- Replacing the Pinguino bootloader by USB-uC needs an ICSP programmer (the
+  bootloader area is not writable through the bootloader).
+- Unverified: whether our USB-Stack application re-enumerates cleanly after the
+  Pinguino bootloader hands over (the bootloader leaves the USB module
+  running). Check on the first real flash.
+
 - **USB CDC/HID/MIDI work on this board** should reuse `USB-Stack`
   (CDC-ACM, USB-MIDI streaming) per `sources.yaml` — not MLA's USB
   stack, and not written from scratch — and, if it needs to coexist with

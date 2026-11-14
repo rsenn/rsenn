@@ -97,6 +97,7 @@ quickjs-only.
   `*Sync` functions from `fs`. Never scatter runtime tests through the script.
 - **`std.loadFile()` returns `''` for `/proc` and `/sys` files** (their size is 0): read them with
   `std.open(p, 'r').readAsString()`. `fs.readFileSync` has the same gap on qjsm (node reads them).
+- **Reading stdin on qjsm**: `fs.readFileSync('/dev/stdin')` throws `RangeError: invalid array index` (size 0) and `readFileSync(0)` fails with ENOENT. Loop `fs.readSync(0, buf.buffer)` until it returns 0, collect the chunks and decode once with `TextDecoder` (checked 2026-11-05 on a pipe).
 - **Never import `std` or `os`** (quickjs-only) in a portable script. The
   same jobs are done by `process` and `fs`.
 - **Text vs bytes**: always pass an encoding for text (`readFileSync(p, 'utf8')`);
@@ -121,6 +122,12 @@ quickjs-only.
 - **Script location**: `import.meta.filename`/`dirname` work on qjsm (built from qjs-modules after 2026-10-21),
   node 20.11+, bun, deno; `import.meta.main` only on qjsm, bun, deno, node 24.2+ (undefined on older node).
 - **`import.meta.url` is a `file://` string**: derive a sibling path with `import.meta.url.replace(/^file:\/\//, '')` and `path.join`. `new URL('../x', import.meta.url).pathname` returned `'/'` on qjsm when qjs-lws was not loaded (checked 2026-10-28).
+- **`bun:sqlite`** (Database, Statement, SQLiteError) resolves on qjsm built from qjs-modules after 2026-11-06, when the
+  native sqlite module is in the module path (`bun:<name>` maps to `bun/<name>`); node and deno have no such specifier.
+  Bun-only code, not portable: guard with `typeof Bun`.
+- **A backslash-u escape typed in a Bash command arrives as the character itself** (seen 2026-11-06 in a heredoc and in a
+  python script), so a regex written that way into a file holds a raw U+2028 and qjsm fails with "unexpected line
+  terminator in regexp" while node accepts it. Write such files with the Write tool, or build the escapes from chr(92).
 - **Resolving a specifier**: `import.meta.resolve(spec)` works on qjsm (built from qjs-modules after
   2026-10-21), node, bun and deno, and finds `node_modules` packages everywhere. A second argument (the parent)
   works only on qjsm and bun: node ignores it without `--experimental-import-meta-resolve`, deno throws.

@@ -12,3 +12,7 @@
   added the lc-meter perfboard photo review method and pointer
 - 2026-11-04
   added the gen-<board>.sh pattern for MPLAB X examples, backends, path caveat, installed-vs-main tool versions
+- 2026-11-04
+  recorded the Pinguino bootloader facts (APPSTART 0xC00, 04d8:feaa, vectors, entry on reset button, config words, uploader) and how it differs from USB-uC
+- 2026-11-04
+  our picsticks have USB-uC, not the Pinguino bootloader (user); marked the Pinguino table as reference only

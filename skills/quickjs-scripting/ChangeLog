@@ -49,3 +49,9 @@
   rebuild qjsm after editing a lib file compiled into it
 - 2026-10-28
   script location: import.meta.url is a file:// string, new URL(...).pathname gives / without qjs-lws
+- 2026-11-05
+  reading stdin on qjsm: readFileSync of /dev/stdin or 0 fails, use a readSync loop
+- 2026-11-06
+  noted bun:sqlite on qjsm in the portability rules
+- 2026-11-06
+  a backslash-u escape in a Bash command becomes the raw character, write regex escapes with the Write tool

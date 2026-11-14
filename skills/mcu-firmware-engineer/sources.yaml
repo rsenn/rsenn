@@ -775,3 +775,13 @@ entries:
       time a PIC-simulation question comes up.
     status: present
     added: 2026-08-28
+
+  - id: pinguino-bootloader
+    category: other
+    title: "Pinguino 8-bit USB bootloader v4.x (pinguino-bootloaders) and IDE uploader"
+    topic: "bootloader that picstick_25k50 boards originally ship with: APPSTART 0x0C00, VID:PID 04d8:feaa, vectors, entry condition, upload protocol, config words"
+    path: /mnt/data/Projects/pinguino/pinguino-bootloaders/p8/usb/v4.x (src/, Makefile.linux, hex/); /mnt/data/Projects/pinguino/pinguino-ide/pinguino/qtgui/pinguino_core/{boards.py,uploader/uploader8.py}
+    relevance: "decides the code offset (0xC00 vs USB-uC 0x2000) for anything built for a picstick; see SKILL.md 'Which bootloader is on a picstick'"
+    status: present
+    added: 2026-11-04
+

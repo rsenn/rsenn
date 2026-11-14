@@ -109,13 +109,34 @@ Library dependencies of any CMake project; no function carries a `qjs_` prefix.
 - `toolchain_divert()`/`toolchain_restore()`: set `PKG_CONFIG_LIBDIR` (host `.pc` dirs left out) and
   `CMAKE_PREFIX_PATH`/`CMAKE_INCLUDE_PATH`/`CMAKE_LIBRARY_PATH`, switch off the system paths of `find_*()`.
   `TOOLCHAIN_DIVERT=AUTO` skips the host's own toolchain, `ON`/`OFF` force it. Macros: call them inside a function.
-- `dep_declare(name DEPENDS ... PKGCONFIG ... HEADERS ... LIBRARIES ... FIND cmd BUILD cmd)`, option `BUILD_<NAME>`
-  forces a build. `dep_resolve(name SUFFIX s PIC b BINARY d SOURCE d)` finds the installed copy, and only without one
+  The toolchain file's own roots (`CMAKE_FIND_ROOT_PATH`, `CMAKE_PREFIX_PATH`) and its
+  `CMAKE_SYSTEM_INCLUDE_PATH`/`CMAKE_SYSTEM_LIBRARY_PATH` stay in and are searched first (a sysroot such as
+  `/usr/x86_64-w64-mingw32/sys-root/mingw` is not where the compiler keeps its C library, probing never finds it);
+  pkg-config looks in `<root>/lib/pkgconfig` and `share/pkgconfig` of every root, then the probed dir.
+- pkgcfg (c-utils) replaces pkg-config while diverted when found (`<triplet>-pkg-config`, else `pkgcfg`, or
+  `TOOLCHAIN_PKGCFG`): it rewrites the prefixes of foreign `.pc` files as it reads them (`PKGCFG_PATH_MAP`, list in
+  `TOOLCHAIN_PKGCONFIG_PATH_MAP` as `FROM=TO`). For a Windows target `/mingw64 /mingw32 /ucrt64 /clang64` map to the
+  first root with a `lib/pkgconfig`, and `<dir>/sysroot` to `<dir>/sys-root`. The map replaces
+  `PKG_CONFIG_SYSROOT_DIR` (it would be prepended to absolute paths); `toolchain_restore()` puts the environment back.
+- `dep_declare(name DEPENDS ... PKGCONFIG ... HEADERS ... LIBRARIES ... FIND cmd BUILD cmd [BUILDER cmake|autotools|tool]
+  [TOOLS ...])`, option `BUILD_<NAME>` is a tri-state `AUTO` (default), `ON` (build even when installed), `OFF`
+  (never build); the cache type is STRING, so use `dep_mode()`, not `if(${option})`. `dep_resolve(name SUFFIX s PIC b BINARY d SOURCE d)` finds the installed copy, and only without one
   (or with the option) resolves `DEPENDS` and calls `BUILD`. FIND and BUILD report with `dep_provide(name suffix
   SOURCE system|built ORIGIN ... INCLUDE_DIRS ... LIBRARIES ... LINK_FLAGS ... TARGETS ...)`.
 - `dep_include_dirs|libraries|link_flags|targets(name suffix OUT)` give the dep and what it was built with, link
   order kept; `dep_tree`, `dep_print_tree`; `dep_summary(DEFER)` prints one row per dependency and suffix when the
   configure ends: where it came from, and what it was built with.
+- Build policy (who decides whether a missing library is built), `BUILD_<lib>` and `MODULE_<m>` are ON/OFF/AUTO:
+  `BUILD_<lib>=ON` builds, `OFF` never; `MODULE_<m>=ON` builds a missing library (error when it cannot),
+  `AUTO` does not and switches the module off with a warning naming `-DMODULE_<m>=OFF` and `-DBUILD_<lib>=ON`.
+  `DEPS_BUILD` = `REQUESTED` (default: only what the two ask for) | `NONE` (a request is an error) | `CMAKE` (also
+  every missing library with a CMake build) | `ALL`. `DEPS_MISSING` = `DISABLE` (default) | `FAIL`.
+  A build kind the machine cannot run is never built (autotools on MSVC; `TOOLS` and `sh`/`make` must exist).
+- `dep_mode(value out)`, `dep_module_mode(module out)`, `dep_builder_usable(builder out [TOOLS ...])` (sets
+  `<out>_WHY`), `dep_gate(lib MODULE m BUILDER b [TOOLS ...] FOUND bool OUT var [OPTION BUILD_x])` yields
+  `FOUND`/`BUILD`/`SKIP` for a library a module needs; SKIP warns and is listed by `dep_summary` ("skipped for lack of a
+  library"). `dep_resolve` applies the same policy to registry deps (`<name> not found and not built (why)`).
+- `dep_summary` prints at STATUS level when `QUICKJS_MODULE_QUIET` is set, so it shows through a quiet module configure.
 - Used by qjs-modules `cmake/deps/BuildZlib.cmake` (`use_zlib`) and `BuildOpenSSL.cmake` (`use_openssl`), which keep
   their old result variables; the other `Build*.cmake` move over one at a time.
 - Gotcha: FIND/BUILD run in a function scope, so a variable a macro sets inside them is gone; hand it to

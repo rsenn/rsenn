@@ -10,6 +10,7 @@ scope per file in `cmake/MANIFEST`, drift tool `scripts/cmake-sync.sh`.
 | `FindQuickJS.cmake` | all, synced | `find_quickjs()`: installation or built source tree; `configure_quickjs()` |
 | `BuildQuickJS.cmake` | all, synced | `build_quickjs()`: clone/reuse + configure + build quickjs (`BUILD_QUICKJS`) |
 | `QuickJSModule.cmake` | all, synced | `quickjs_module_options()`, `config_module()`, `make_module()`, `compile_code()` |
+| `Deps.cmake` | qjs-modules for now, synced | generic, nothing quickjs-specific: toolchain prefix/includedir/libdir/pkgconfigdir and diversion of pkg-config and `find_*()`, dependency tree (`dep_declare`, `dep_resolve`, `dep_provide`, `dep_summary`) |
 | `qjsm.cmake` | qjs-modules only | what gets baked into `qjsm` (builtins) |
 | `Functions`, `Checks`, `Compat`, `UseMultiArch` | all, **not yet reconciled** | generic helpers; copies differ per project |
 | `Find<Lib>`, `Build<Lib>` of third-party libs | per project | never synced |
@@ -96,6 +97,29 @@ cached: drop the dependants and the dependencies go). Compiled in = `BUILTIN_MOD
 (use `node/x`). Names with `-` are emitted with `BUILTIN_COMPILED_AS(symbol, "name")`.
 The qjsm.c side (static imports of a builtin see only the builtin table) is in
 `qjs-modules/doc/qjsm-layout.md` 4.1.
+
+## Deps.cmake
+
+Library dependencies of any CMake project; no function carries a `qjs_` prefix.
+
+- `toolchain_*(OUT)`: triplet, prefix, includedir (list), libdir, pkgconfigdir (list), `is_native`, read from
+  the compiler (`-dumpmachine`, `-print-search-dirs`, `CMAKE_C_FLAGS` such as `-m32`, `CMAKE_SYSROOT`);
+  `musl-gcc` is recognised by name and gets `<arch>-linux-musl` dirs. Override with `TOOLCHAIN_PREFIX`,
+  `TOOLCHAIN_INCLUDEDIR`, `TOOLCHAIN_LIBDIR`, `TOOLCHAIN_PKGCONFIGDIR`.
+- `toolchain_divert()`/`toolchain_restore()`: set `PKG_CONFIG_LIBDIR` (host `.pc` dirs left out) and
+  `CMAKE_PREFIX_PATH`/`CMAKE_INCLUDE_PATH`/`CMAKE_LIBRARY_PATH`, switch off the system paths of `find_*()`.
+  `TOOLCHAIN_DIVERT=AUTO` skips the host's own toolchain, `ON`/`OFF` force it. Macros: call them inside a function.
+- `dep_declare(name DEPENDS ... PKGCONFIG ... HEADERS ... LIBRARIES ... FIND cmd BUILD cmd)`, option `BUILD_<NAME>`
+  forces a build. `dep_resolve(name SUFFIX s PIC b BINARY d SOURCE d)` finds the installed copy, and only without one
+  (or with the option) resolves `DEPENDS` and calls `BUILD`. FIND and BUILD report with `dep_provide(name suffix
+  SOURCE system|built ORIGIN ... INCLUDE_DIRS ... LIBRARIES ... LINK_FLAGS ... TARGETS ...)`.
+- `dep_include_dirs|libraries|link_flags|targets(name suffix OUT)` give the dep and what it was built with, link
+  order kept; `dep_tree`, `dep_print_tree`; `dep_summary(DEFER)` prints one row per dependency and suffix when the
+  configure ends: where it came from, and what it was built with.
+- Used by qjs-modules `cmake/deps/BuildZlib.cmake` (`use_zlib`) and `BuildOpenSSL.cmake` (`use_openssl`), which keep
+  their old result variables; the other `Build*.cmake` move over one at a time.
+- Gotcha: FIND/BUILD run in a function scope, so a variable a macro sets inside them is gone; hand it to
+  `dep_provide()` and let a thin `use_<dep>` macro in the caller's scope map it back.
 
 ## Syncing
 

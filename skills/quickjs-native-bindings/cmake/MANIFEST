@@ -16,4 +16,5 @@ Functions.cmake         *
 Checks.cmake            *
 Compat.cmake            *
 UseMultiArch.cmake      *
+Deps.cmake              qjs-modules
 qjsm-bytecode.cmake     qjs-modules

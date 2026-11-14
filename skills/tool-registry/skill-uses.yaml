@@ -274,6 +274,15 @@ release-management:
     how: "qjsm-debugger --json --timeout 120 -x cmds.txt script.js"
     state: adopted
     evidence: "2026-10-15 stanza added; batch/json verified locally on the qjs-debugger test suite"
+  - tool: pelist
+    when: "a Windows package (cpack zip/NSIS, MSYS2 package) must carry every DLL its exes and modules import"
+    how: "pelist -d app.exe | sort -u  # per binary, recurse into the DLLs found in the sysroot bin; the rest minus system DLLs is the bundle list. Verify with ntldd -D <sysroot>/bin app.exe (msys2-get.sh does this after an install)"
+    state: proposed
+  - tool: pelist
+    when: "release notes claim a stable Windows API: exports of a DLL between two tags"
+    how: "pelist -e X.dll > exports.<ver>.txt ; diff"
+    state: proposed
+
 
 remote-targets:
   - tool: nm-symbols
@@ -296,6 +305,22 @@ remote-targets:
     how: "on the target: QUICKJS_DEBUG_LISTEN_ADDRESS=0.0.0.0:9901 qjsm script.js ; here: ssh -L 9901:localhost:9901 target, then qjsm-debugger -e -c --plain -x cmds.txt"
     state: adopted
     evidence: "2026-10-15 stanza added; -e/-c attach verified locally both directions, not over ssh"
+  - tool: pelist
+    when: "mingw/msys/cygwin target: what a built .exe/.dll needs at run time, without Windows or wine"
+    how: "pelist -d X.dll ; pelist -e X.dll for its exports; resolution against a sysroot: ntldd -D <sysroot>/bin X.dll"
+    state: proposed
+  - tool: impgen
+    when: "a prebuilt DLL ships no import library and the mingw link fails (undefined reference)"
+    how: "impgen X.dll > X.def && x86_64-w64-mingw32-dlltool -d X.def -l libX.dll.a"
+    state: proposed
+  - tool: pkgcfg
+    when: "configure/cmake for a mingw or msys sysroot needs cflags/libs of packages installed there"
+    how: "PKG_CONFIG_PATH=<sysroot>/lib/pkgconfig pkgcfg --cflags --libs <pkg> ; the .pc prefix= must point at the sysroot (msys2-get.sh rewrites it)"
+    state: proposed
+  - tool: cofflist
+    when: "a mingw/MSVC .o or .obj needs inspection (imports, sections) on the Linux host"
+    how: "cofflist -i foo.o ; not for DLLs or archives"
+    state: proposed
 
 mcu-firmware-engineer:
   - tool: genmakefile

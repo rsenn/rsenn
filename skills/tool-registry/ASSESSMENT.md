@@ -33,6 +33,11 @@ Rating: 5 = reach for it routinely, 3 = good when the situation fits, 1 = skip.
 | **ollama-repl** | local-LLM coding agent with file tools; piped line mode so Claude Code can hand it repetitive edits | 3 | pipe mode and commands; model round trip not run | delegating bulk mechanical edits (per-function comments, renames) on a throwaway copy |
 | **search** | SerpApi web search | 2 | not run (paid API) | scripted batch research only |
 | **extract-structs** | legacy struct extractor | 1 | help only | none; use `extract-c -t` |
+| **pelist** | PE/DLL reader without Windows: dependencies, imports, exports, sections | 4 | -d -e -i on an MSYS2 DLL | remote-targets (mingw/msys), release-management (Windows bundles) |
+| **impgen** | DLL -> .def for dlltool import libraries | 3 | one DLL | remote-targets (link against a DLL without .dll.a) |
+| **pkgcfg** | pkg-config clone with -p/-m for other prefixes and hosts | 3 | zlib.pc from an MSYS2 sysroot; does not relocate prefix= | remote-targets (cross sysroots) |
+| **cofflist** | COFF object lister | 2 | only on a DLL and an archive (both rejected) | remote-targets, rarely |
+| **omflist** | OMF object lister | 1 | --help | none for mingw/msys/cygwin |
 
 ## Strategy notes
 

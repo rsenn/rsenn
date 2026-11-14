@@ -78,3 +78,5 @@
   added genmakefile (xc8-cc, mplabx import) and ihextool (vectors) entries and mcu-firmware-engineer uses
 - 2026-11-04
   genmakefile entry now lists the xc8-cc options, ninja/shell/batch support, the path caveat and how the picstick build uses it (gen script pattern)
+- 2026-11-14
+  added pelist, impgen, pkgcfg, cofflist and omflist (c-utils) with remote-targets and release-management uses

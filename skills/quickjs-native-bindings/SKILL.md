@@ -2122,6 +2122,31 @@ the `add_subdirectory()` shape applies, and weigh source-list maintenance
 against a second build-system dependency before picking direct
 compilation over `ExternalProject_Add` for a library like this.
 
+**A client library built from its git repository (`ExternalProject_Add GIT_REPOSITORY`, clone into
+`third_party/<repo>`; qjs-modules `cmake/deps/BuildLib{PQ,MariaDB,SQLite}.cmake`, `BuildOpenSSL.cmake`)** adds
+these, each hit for real:
+- **`GIT_SUBMODULES ""` skips submodules only under policy CMP0097 NEW**, and a project with
+  `cmake_minimum_required(VERSION 3.5)` has it OLD, so OpenSSL's test-only submodules (gigabytes) were cloned anyway.
+  Wrap the clone: `cmake_policy(PUSH)`, `cmake_policy(SET CMP0097 NEW)`, `ExternalProject_Add(...)`, `cmake_policy(POP)`.
+- **A dependency two scripts need (zlib for libarchive and OpenSSL, OpenSSL for libpq and MariaDB) goes through one
+  `use_<dep>(BINARY SUFFIX PIC)` macro** that picks the system copy or builds it once per SUFFIX
+  (`if(NOT TARGET <dep>_${SUFFIX})`), and sets `<DEP>_LIBRARIES_${SUFFIX}` plus `<DEP>_DEPENDS_${SUFFIX}` for DEPENDS;
+  two `build_<dep>()` calls for one SUFFIX die on a duplicate target name.
+- **Run an autotools or make build with `find_program(MAKE_PROGRAM NAMES gmake make)`, not `CMAKE_MAKE_PROGRAM`**:
+  under the Ninja generator the latter is ninja, which has no build file in the library's tree.
+- **A static archive built against a static OpenSSL with zlib needs `-lz -ldl -lpthread` in the consumer's configure**
+  (`LIBS=...`): libpq's `AC_CHECK_LIB(crypto, ...)` fails with undefined `inflate` otherwise. Export the same libraries
+  as plain flags (`<DEP>_LINK_FLAGS_${SUFFIX}`) next to the imported-target list.
+- **PostgreSQL's static `libpq.a` leaves `pg_char_to_encoding` and friends to `libpgcommon_shlib.a` and
+  `libpgport_shlib.a`** (the plain `libpgcommon.a` only has the `_private` names), so link the `_shlib` pair, in the
+  order libpq, pgcommon_shlib, pgport_shlib. `make -C src/interfaces/libpq all-static-lib install-lib-static` builds
+  only the static library and does not install `libpq-fe.h`: copy it (and `libpq-events.h`) yourself.
+- **MariaDB Connector/C 3.4.9 has no build without a TLS library** (`WITH_SSL=OFF` ends in "Invalid TLS/SSL option"),
+  so its script always needs OpenSSL. SQLite from git needs `tclsh` for `make sqlite3.c`; compile only that file.
+- **Prove the from-git path by linking, not by building**: compile a small program including every header and calling
+  one function per library against the archives (static) and with `-shared -Wl,-z,defs` (PIC), then `qjsm -e
+  'import(...)'` each module; `ldd -r` on a module `.so` shows undefined symbols a successful build hides.
+
 **A worth-extracting shared helper, not seven copies of the same
 logic:** six of these seven libraries need the exact same
 system-detection chain and the exact same static+PIC-forcing

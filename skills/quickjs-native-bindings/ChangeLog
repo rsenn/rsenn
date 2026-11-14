@@ -42,3 +42,7 @@
   section 22: probe a system library by running the needed call, patching a missing feature switch from outside, downloaded dependency via ExternalProject
 - 2026-10-28
   added the rule to validate input of unchecked wrapped C++ functions (alphamat infoFlow segfault)
+- 2026-11-14
+  section 22: libraries built from their git repository (CMP0097 for GIT_SUBMODULES, one use_<dep> macro per shared dependency, make program under Ninja, static libpq and OpenSSL link details, Connector/C needs TLS, link test)
+- 2026-11-14
+  added cmake/Deps.cmake: toolchain prefix/includedir/libdir/pkgconfigdir with diversion of pkg-config and find_*, dependency registry (dep_declare, dep_resolve, dep_provide), summary; scope qjs-modules in MANIFEST, documented in cmake.md

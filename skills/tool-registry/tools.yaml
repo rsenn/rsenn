@@ -559,3 +559,91 @@ tools:
       - "`vectors` is only in c-utils main (7bad3285); older installed builds lack it."
       - "PIC16 (14-bit) is rejected: unsupported family. Vector targets inside a contiguous code run are NOT detected (0x0018 -> 0x2018 landed mid-ISR in a single-ISR layout): the application must put real code at each forwarded vector."
     verified: "2026-11-04 CDC_Serial_UART_Example.X universal hex, verify + info + bin md5"
+
+  pelist:
+    path: /usr/local/bin/pelist
+    project: c-utils
+    group: windows-binaries
+    rating: 4
+    status: verified
+    what: >-
+      Reads PE32/PE32+ files (.exe, .dll) on any host without a Windows toolchain: DLL dependencies,
+      imports, exports, sections, headers, byte search. A cross-platform stand-in for objdump -p
+      and for ntldd, minus the resolving.
+    modes:
+      dll_deps: pelist -d X.dll                  # one imported DLL name per line, no path lookup
+      exports: pelist -e X.dll                   # LIBRARY / EXPORTS / "name @ ordinal" (def-file shape)
+      imports: pelist -i X.dll                   # "function  DLL"
+      layout: pelist -s X.dll ; pelist -O X.dll ; pelist -D X.dll   # sections, optional header, data directory
+      closure_in_sysroot: >-
+        walk deps: todo=X.exe; for d in $(pelist -d $f); do [ -f $SYSROOT/bin/$d ] (case-insensitive) -> recurse;
+        anything left that is not a Windows system DLL needs shipping (deployment bundle list)
+    gotchas:
+      - "-d prints names only; it does not say where they resolve. Use ntldd (resolves, with -D DIR) for the sysroot check, pelist where ntldd is absent or for a dependency list without running anything."
+      - "Several options at once (-d -e) print the groups one after the other, no headers for -d."
+    verified: "2026-11-14 libcharset-1.dll from the MSYS2 libiconv package: -d, -e, -i"
+
+  impgen:
+    path: /usr/local/bin/impgen
+    project: c-utils
+    group: windows-binaries
+    rating: 3
+    status: verified
+    what: >-
+      DLL -> .def file (LIBRARY + EXPORTS with ordinals), same text as `pelist -e`. First step of
+      making an import library for a DLL that ships none (then dlltool -d X.def -l libX.dll.a).
+    modes:
+      def_file: impgen X.dll > X.def
+      import_lib: impgen X.dll > X.def && x86_64-w64-mingw32-dlltool -d X.def -l libX.dll.a
+    gotchas:
+      - "No --help: running it without arguments or with --help prints nothing useful (qtool --check passes it only because it does not report a load failure)."
+      - "Writes to stdout, no -o."
+    verified: "2026-11-14 libcharset-1.dll"
+
+  pkgcfg:
+    path: /usr/local/bin/pkgcfg
+    project: c-utils
+    group: build
+    rating: 3
+    status: partial
+    what: >-
+      pkg-config clone: --cflags, --libs, --modversion, --path, --list-all, --list-path; -p PREFIX and
+      -m HOST pick the search directories for another prefix or target (cross builds).
+    modes:
+      flags: pkgcfg --cflags --libs zlib
+      other_prefix: pkgcfg -p /usr/x86_64-w64-mingw32/sysroot/mingw --cflags --libs zlib
+      env_search_path: PKG_CONFIG_PATH=$SYSROOT/lib/pkgconfig pkgcfg --cflags zlib
+      locate: pkgcfg --path zlib
+    gotchas:
+      - "It does not relocate: a package from MSYS2 carries prefix=/mingw64, so --cflags prints -I/mingw64/include whatever -p says. msys2-get.sh rewrites prefix= to the sysroot at install time; with that done the output is right."
+      - "-p with --libs printed -L/mingw64/lib twice (duplicate not removed)."
+      - "--list-all with no -p lists the host's packages (libcamera, javascriptcoregtk, ...)."
+    verified: "2026-11-14 zlib.pc from the MSYS2 zlib package, --cflags/--libs/--modversion/--path; --list-all on the host"
+
+  cofflist:
+    path: /usr/local/bin/cofflist
+    project: c-utils
+    group: windows-binaries
+    rating: 2
+    status: partial
+    what: >-
+      Like pelist for COFF object files (.o/.obj from mingw or MSVC): header, sections, symbols,
+      imports/exports. Takes one object; it does not open ar archives (.a, .lib, .dll.a).
+    modes:
+      object: cofflist -e foo.o ; cofflist -s foo.o
+    gotchas:
+      - "On a PE (.dll) it prints a garbage COFF header and then `not COFF`; on a .dll.a archive it also prints garbage: use pelist for DLLs, nm/ar for archives."
+    verified: "2026-11-14 negative runs only (DLL, .dll.a); no .o run yet"
+
+  omflist:
+    path: /usr/local/bin/omflist
+    project: c-utils
+    group: windows-binaries
+    rating: 1
+    status: partial
+    what: "Lists imports and exports of OMF objects (Borland/Watcom/Digital Mars). No mingw, msys or cygwin tool produces OMF."
+    modes:
+      list: omflist -i FILE ; omflist -e FILE
+    gotchas:
+      - "Only --help was run, on a PE file it prints the usage again."
+    verified: "2026-11-14 --help"

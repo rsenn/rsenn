@@ -766,6 +766,11 @@ version of this after OpenCV's concept directly:
   helpers are about) rather than leaving one sprawling file is the same
   underlying instinct one level up.
 
+**Helper design convention and live document: [`helpers.md`](helpers.md).** Array/object helpers follow OpenCV's
+`_InputArray`/`_OutputArray`/`_InputOutputArray` naming and semantics (spec, comparison with `mat.hpp`, per-project
+inventory, roadmap). Read it before writing or changing a helper, and **update it every time this skill is used**
+with what the work taught about helpers.
+
 **When to reach for this pattern**: not from the start (a small binding's
 few conversion helpers belong right next to the code that uses them, as
 in section 7). Split them out once either becomes true:

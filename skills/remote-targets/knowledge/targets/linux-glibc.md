@@ -12,6 +12,7 @@ Raspberry Pi and other Debian-style glibc boards. Definition: [../../targets.yam
 - `[seeded]` Match the board's glibc: a binary built against a newer glibc than the board's fails with `GLIBC_2.xx not found`. The rsynced sysroot avoids it.
 
 ## Test
+- `[verified 2026-11-20]` Cross from an x86_64 host with no cross gcc: host `clang --target=aarch64-linux-gnu --sysroot=<copy of the Pi's /usr> -fuse-ld=lld` (clang 22, lld). Copy the Pi's `usr/include`, `usr/lib` (keep `usr/lib/gcc` and `usr/include/c++`: crt files, libgcc, libstdc++ headers) and `usr/share/pkgconfig` with rsync once instead of building over an sshfs mount (about 1.2 GB; js-engines `make sysroot-pi`), make absolute symlinks relative, and add `/lib -> usr/lib` inside the copy. pkg-config needs `PKG_CONFIG_SYSROOT_DIR` and `PKG_CONFIG_LIBDIR=<sysroot>/usr/lib/aarch64-linux-gnu/pkgconfig:...`. `cfg-aarch64` (c-utils/cfg.sh) does all of it; a zlib hello built that way ran on the Pi 4 (zlib 1.2.11). Trap: the Pi OS tree can be a mix of releases (os-release said bullseye, libc.so.6 was glibc 2.36), so do not guess its glibc from `os-release`; read `libc.so.6`.
 - `[seeded]` Real: copy over and run via [ssh](../transports/ssh.md). Smoke: `qemu-aarch64 -L /usr/aarch64-linux-gnu ./prog` (`qemu-user-static`, `binfmt`) on the build host: reports "smoke-tested under qemu", not "tested on device". Hub: [activities/test.md](../activities/test.md).
 
 ## Debug
@@ -28,6 +29,9 @@ Raspberry Pi and other Debian-style glibc boards. Definition: [../../targets.yam
 
 ## Transfer
 - `[seeded]` `rsync -az -e ssh`, `scp`, sshfs ([sshfs](../transports/sshfs.md)); build on the host into the mount, run on the board. Hub: [activities/transfer.md](../activities/transfer.md).
+
+- `[verified 2026-11-15]` A Pi's userland can be older than the current Raspberry Pi OS: read `/etc/os-release` and `ldd --version` before choosing a sysroot or container (one board ran Debian 11 bullseye, glibc 2.31, cmake 3.18.4, gcc 10.2, 1.8 GB RAM). A matching sysroot without copying from the board: a `debian:<release>` arm64 image (`docker run --platform linux/arm64`, qemu-user) with the `-dev` packages installed, exported to a directory.
+- `[verified 2026-11-15]` Host clang with lld cross-compiles to aarch64 without a gcc cross package: `clang --target=aarch64-linux-gnu --sysroot=<dir> -fuse-ld=lld` (clang 22, lld on the host); pairs with `qemu-aarch64 -L <sysroot>` for smoke tests.
 
 ## Gotchas
 - `[seeded]` Headless first boot: enable ssh with an empty `ssh` file in the boot partition, user via `userconf.txt` or the imager; serial console needs `enable_uart=1` ([serial](../transports/serial.md)).

@@ -4,5 +4,27 @@
   tools stanza: debug a script on a device without a tty via qjsm-debugger -e -c over an ssh tunnel
 - 2026-10-22
   mingw: wine console tests need a tty (tmux), event injection, exit hang after focus event injection
+- 2026-11-15
+  added site raspi4 (real Pi 4, Debian 11 bullseye, ssh key login) with probed facts, workstation cross/docker/disk facts, linux-glibc bullets on matching the board's release and on clang+lld cross builds, two lessons
+- 2026-11-15
+  termux: native CMake reports Android as system name, CMake 4.5 policy warnings, openjpeg-tools split package
+- 2026-11-15
+  termux: runit service notes (termux-services, down file, packaged sshd dir) in knowledge, sshd service (port 22222, enabled) and localhost tunnel in sites.yaml
+- 2026-11-15
+  termux: bionic aligned_alloc declared only from API 28 (link check passes, header does not)
+- 2026-11-15
+  termux: tunnel runit service (reverse ssh with keepalives) in sites.yaml, lesson on the reverse-tunnel dependency
+- 2026-11-15
+  termux: opencv configure fails when 3rdparty download dirs vanish but the cmake cache still lists their hashes
+- 2026-11-20
+  termux: cross build against the sshfs-mounted Termux sysroot works with NDK r27c clang (-idirafter, rpath), not with NDK r10e gcc 4.9
 - 2026-11-20
   termux: cfg-termux (c-utils/cfg.sh) now cross-builds with NDK r27c against the sshfs-mounted sysroot; ssh to the phone answered a changed host key, run on device pending
+- 2026-11-20
+  termux: the cross-built binaries (NDK r27c, sshfs sysroot) ran on a real phone, Android 15 aarch64
+- 2026-11-20
+  linux-glibc: clang plus a local sysroot copy as the aarch64 cross route, verified on a Pi 4
+- 2026-11-20
+  termux: build against a local sysroot copy, not the sshfs mount
+- 2026-11-20
+  sites: raspi4 got the sshfs mount, sysroot dir, corrected glibc (2.36, mixed bullseye/bookworm) and the verified cross route; termux got the sysroot dir and the cross and fake-ndk facts

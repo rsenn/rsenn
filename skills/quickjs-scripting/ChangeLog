@@ -55,3 +55,15 @@
   noted bun:sqlite on qjsm in the portability rules
 - 2026-11-06
   a backslash-u escape in a Bash command becomes the raw character, write regex escapes with the Write tool
+- 2026-11-16
+  qjs-sound tests/errors-test.js: one process per case (qjsm tests/errors-test.js <case>), so a crash is reported
+  instead of ending the run. Case names are listed with --list; the harness asserts the call threw a TypeError, so a
+  call that returns normally (leaving the exception pending) fails the case rather than passing it.
+- 2026-11-19
+  noted that console.log goes through std.out.puts and the repl line editor through ttyWrite
+- 2026-11-19
+  qjsm -e takes no static import
+- 2026-11-19
+  noted fs.rmSync throwing on a missing path, os.exec without execve, and the AF_UNIX SockAddr length limit of this qjsm
+- 2026-11-20
+  url gotcha: relative URL resolution is fixed in qjsm builds after 2026-11-20

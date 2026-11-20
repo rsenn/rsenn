@@ -111,6 +111,17 @@ quickjs-only.
   Import native helpers under a prefix (`writev as sys_writev`).
 - **Diagnostics**: `console.error`/`warn` go to stderr on qjsm built from qjs-modules `src/qjsm.c` after
   2026-10-20; an older installed qjsm writes them to stdout. Where stdout is data, use `process.stderr.write(...)`.
+- **Redirecting output on qjsm**: `console.log` writes through `std.out.puts`, so replacing that one function
+  captures it (control sockets, a TUI transcript). The qjs-modules `repl` line editor draws with
+  `misc.ttyWrite(stdout, s)` and bypasses such a patch (checked 2026-11-19).
+- **`fs.rmSync` throws on a missing path** (`SyscallError`, unhandled when it is inside an async start-up); `os.remove`
+  returned an error code instead. Pass `{ force: true }` where the file may not exist (checked 2026-11-19). `os` has
+  `exec`, `dup`, `dup2`, `waitpid` but no `execve`: `exec(argv, { block: true })` runs the child and returns its exit
+  status, the parent stays alive (so a restart that must not nest processes cannot replace itself).
+- **`new SockAddr(AF_UNIX, path)` (sockets) can leave `sun_path` zero and a bind uses only `byteLength - 2` bytes of the
+  path**: in qjsm 757b576bf8ab-dirty `new SockAddr(AF_UNIX).byteLength` is 28, so 26 bytes of path; a longer path binds a
+  prefix (a directory: `EADDRINUSE`). Build the address from the raw struct (`new SockAddr(buf)`, family `setUint16(0,
+  AF_UNIX, true)` then the path bytes), keep paths under that limit and check it at run time (checked 2026-11-19).
 - **Timing**: `import { performance } from 'perf_hooks'`; qjsm has no global.
 - **Network globals**: `fetch`, `Request`, `Response`, `Headers`, `FormData`, `URL`, `AbortController`, `Bun.serve`
   exist on qjsm (built from qjs-modules after 2026-10-21) only when qjs-lws is in the module path, loaded on first
@@ -121,7 +132,7 @@ quickjs-only.
 - **Arguments**: user arguments are `process.argv.slice(2)` on all runtimes.
 - **Script location**: `import.meta.filename`/`dirname` work on qjsm (built from qjs-modules after 2026-10-21),
   node 20.11+, bun, deno; `import.meta.main` only on qjsm, bun, deno, node 24.2+ (undefined on older node).
-- **`import.meta.url` is a `file://` string**: derive a sibling path with `import.meta.url.replace(/^file:\/\//, '')` and `path.join`. `new URL('../x', import.meta.url).pathname` returned `'/'` on qjsm when qjs-lws was not loaded (checked 2026-10-28).
+- **`import.meta.url` is a `file://` string**: derive a sibling path with `import.meta.url.replace(/^file:\/\//, '')` and `path.join`. `new URL('../x', import.meta.url).pathname` returned `'/'` on a qjsm built before 2026-11-20 (lib/url.js dropped path segments when resolving a relative URL); it is correct after that, so keep the string form only for scripts that must run on an older installed qjsm.
 - **`bun:sqlite`** (Database, Statement, SQLiteError) resolves on qjsm built from qjs-modules after 2026-11-06, when the
   native sqlite module is in the module path (`bun:<name>` maps to `bun/<name>`); node and deno have no such specifier.
   Bun-only code, not portable: guard with `typeof Bun`.
@@ -146,6 +157,9 @@ qjsm -l                            # modules built into this qjsm
 qjsm -e 'import("fs").then(m => console.log(Object.keys(m).length))'   # probe one
 qjsm --std script.mjs              # exposes std/os to the script (quickjs-only)
 ```
+
+`qjsm -e` evaluates a script, not a module: a static `import` there is a SyntaxError (expecting '('). Use
+`import()` or write a scratch file.
 
 Look at `qjsm -l` before assuming a module exists: the installed
 `/usr/local/lib/quickjs/*.js` can be older than the repo's `lib/` (seen with

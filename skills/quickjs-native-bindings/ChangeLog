@@ -56,3 +56,9 @@
   helpers.md: findings log entry, ranked helper candidates for qjs-sound's three C++ bindings
 - 2026-11-16
   helpers.md: corrected the dispatch and constructor-table scope of the 2026-11-15 survey, findings entry for the helpers now in qjs-sound js-utils.hpp
+- 2026-11-19
+  tinytest eq compares with !=, arrays need a json compare
+- 2026-11-20
+  section 22: configure-time meson build of a system library, if(AUTO) truthiness, GLOB vs REMOVE_ITEM, depot_tools ninja, rpath stripping
+- 2026-11-20
+  MODULE_<m> is ON or OFF only, AUTO is an error; DEPS_MISSING defaults to FAIL (Deps.cmake, cmake.md)

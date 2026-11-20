@@ -126,11 +126,12 @@ Library dependencies of any CMake project; no function carries a `qjs_` prefix.
 - `dep_include_dirs|libraries|link_flags|targets(name suffix OUT)` give the dep and what it was built with, link
   order kept; `dep_tree`, `dep_print_tree`; `dep_summary(DEFER)` prints one row per dependency and suffix when the
   configure ends: where it came from, and what it was built with.
-- Build policy (who decides whether a missing library is built), `BUILD_<lib>` and `MODULE_<m>` are ON/OFF/AUTO:
-  `BUILD_<lib>=ON` builds, `OFF` never; `MODULE_<m>=ON` builds a missing library (error when it cannot),
-  `AUTO` does not and switches the module off with a warning naming `-DMODULE_<m>=OFF` and `-DBUILD_<lib>=ON`.
-  `DEPS_BUILD` = `REQUESTED` (default: only what the two ask for) | `NONE` (a request is an error) | `CMAKE` (also
-  every missing library with a CMake build) | `ALL`. `DEPS_MISSING` = `DISABLE` (default) | `FAIL`.
+- Build policy (who decides whether a missing library is built): `BUILD_<lib>` is ON/OFF/AUTO, `MODULE_<m>` is a
+  boolean, ON or OFF only (`AUTO` is an error: a module is never chosen by which libraries are installed).
+  `BUILD_<lib>=ON` builds, `OFF` never; `MODULE_<m>=ON` builds the module and a missing library (error when it
+  cannot); `MODULE_<m>=OFF` drops it. `DEPS_BUILD` = `REQUESTED` (default: only what the two ask for) | `NONE` (a
+  request is an error) | `CMAKE` (also every missing library with a CMake build) | `ALL`. `DEPS_MISSING` = `FAIL`
+  (default) | `DISABLE` (an explicit opt-in: the module is switched off with a warning).
   A build kind the machine cannot run is never built (autotools on MSVC; `TOOLS` and `sh`/`make` must exist).
 - `dep_mode(value out)`, `dep_module_mode(module out)`, `dep_builder_usable(builder out [TOOLS ...])` (sets
   `<out>_WHY`), `dep_gate(lib MODULE m BUILDER b [TOOLS ...] FOUND bool OUT var [OPTION BUILD_x])` yields

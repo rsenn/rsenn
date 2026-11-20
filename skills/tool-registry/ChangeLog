@@ -82,3 +82,5 @@
   added pelist, impgen, pkgcfg, cofflist and omflist (c-utils) with remote-targets and release-management uses
 - 2026-11-20
   added qstack, a kconfig menu (vendored from Buildroot) that assembles a QuickJS stack and prints cmake arguments, with tools.yaml entry and a remote-targets use
+- 2026-11-20
+  qstack moved out to ~/Sources/js-engines (tools/kconfig, make menuconfig); entry and uses removed from here

@@ -4,3 +4,5 @@
   tools stanza: debug a script on a device without a tty via qjsm-debugger -e -c over an ssh tunnel
 - 2026-10-22
   mingw: wine console tests need a tty (tmux), event injection, exit hang after focus event injection
+- 2026-11-20
+  termux: cfg-termux (c-utils/cfg.sh) now cross-builds with NDK r27c against the sshfs-mounted sysroot; ssh to the phone answered a changed host key, run on device pending

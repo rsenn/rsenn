@@ -285,10 +285,6 @@ release-management:
 
 
 remote-targets:
-  - tool: qstack
-    when: "a build for a non-host target (musl, mingw, termux, wasi) needs a module/dependency selection chosen and remembered"
-    how: "qstack menu ; qstack args   (pass the per-project lines to each project's cmake)"
-    state: proposed
   - tool: nm-symbols
     when: "a cross build (musl, dietlibc, cosmo, mingw) is larger than the native one; see what each target pulls in"
     how: "nm-symbols build-<target>/lib<x>.a"

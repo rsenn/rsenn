@@ -80,3 +80,5 @@
   genmakefile entry now lists the xc8-cc options, ninja/shell/batch support, the path caveat and how the picstick build uses it (gen script pattern)
 - 2026-11-14
   added pelist, impgen, pkgcfg, cofflist and omflist (c-utils) with remote-targets and release-management uses
+- 2026-11-20
+  added qstack, a kconfig menu (vendored from Buildroot) that assembles a QuickJS stack and prints cmake arguments, with tools.yaml entry and a remote-targets use

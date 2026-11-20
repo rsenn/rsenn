@@ -1,0 +1,68 @@
+mainmenu "QuickJS runtime stack"
+
+# Symbol naming (see README.md): a plain symbol is a global cmake variable (-DNAME=ON, or
+# its string value). NAME__VALUE inside a choice means -DNAME=VALUE. PROJ_<p> switches a
+# project on, PROJ_<p>__<VAR> is a -D<VAR> for that project only (p = name without qjs-).
+
+menu "Engine"
+choice
+	prompt "QuickJS flavour"
+	default ENGINE__QUICKJS_NG
+config ENGINE__QUICKJS
+	bool "quickjs (bellard)"
+config ENGINE__QUICKJS_NG
+	bool "quickjs-ng"
+endchoice
+config BUILD_QUICKJS
+	bool "build QuickJS from source (BUILD_QUICKJS)"
+	default y
+endmenu
+
+menu "Target"
+choice
+	prompt "Target"
+	default TARGET__HOST
+config TARGET__HOST
+	bool "host"
+config TARGET__MUSL
+	bool "musl"
+config TARGET__MINGW
+	bool "mingw-w64"
+config TARGET__TERMUX
+	bool "Termux (aarch64)"
+config TARGET__WASI
+	bool "wasi"
+endchoice
+config STATIC_LINK
+	bool "link statically"
+	default y if TARGET__MUSL
+config TOOLCHAIN_PREFIX
+	string "toolchain prefix (TOOLCHAIN_PREFIX)"
+endmenu
+
+menu "Dependencies"
+choice
+	prompt "Which missing libraries may be built from source (DEPS_BUILD)"
+	default DEPS_BUILD__REQUESTED
+config DEPS_BUILD__REQUESTED
+	bool "REQUESTED"
+config DEPS_BUILD__NONE
+	bool "NONE"
+config DEPS_BUILD__CMAKE
+	bool "CMAKE"
+config DEPS_BUILD__ALL
+	bool "ALL"
+endchoice
+choice
+	prompt "A missing library that is not built (DEPS_MISSING)"
+	default DEPS_MISSING__DISABLE
+config DEPS_MISSING__DISABLE
+	bool "DISABLE the module"
+config DEPS_MISSING__FAIL
+	bool "FAIL the configure"
+endchoice
+endmenu
+
+menu "Projects"
+source "modules/Config.in"
+endmenu

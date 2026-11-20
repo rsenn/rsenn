@@ -1,0 +1,64 @@
+#!/bin/sh
+# qstack - configure a QuickJS runtime stack with a menuconfig menu, print the cmake arguments.
+#   qstack menu                       interactive menu (mconf), writes ./.qstack.config
+#   qstack nmenu | gmenu | qmenu      the same with nconf / gconf / qconf (if built)
+#   qstack defconfig FILE             load FILE (a few NAME=y lines) over the defaults
+#   qstack save [FILE]                write a minimal defconfig (default ./qstack.defconfig)
+#   qstack args [CONFIG]              .qstack.config -> "<project> -D..." lines
+#   qstack --check                    build the kconfig tools and run a smoke test
+# The kconfig copy is vendored from Buildroot (support/kconfig, GPL-2.0), see qstack/README.md.
+# It is built once into ${QSTACK_BUILD:-~/.cache/qstack} with the host compiler.
+set -eu
+here=$(cd "$(dirname "$0")/.." && pwd)
+src=$here/qstack
+build=${QSTACK_BUILD:-${XDG_CACHE_HOME:-$HOME/.cache}/qstack}
+# the Buildroot copy of kconfig reads the config file name from BR2_CONFIG (not KCONFIG_CONFIG)
+export BR2_CONFIG=${QSTACK_CONFIG:-.qstack.config}
+export srctree=$src   # kconfig resolves source "modules/Config.in" against it
+# the GNU make that is first on PATH is not always the right one (MPLAB X ships 4.2)
+mk=$(command -v /usr/bin/make || command -v make)
+
+tool() {  # tool conf|mconf|nconf|qconf|gconf: build on demand, print the path
+  [ -x "$build/$1" ] && [ "$src/kconfig/Makefile" -ot "$build/$1" ] && { echo "$build/$1"; return; }
+  mkdir -p "$build/lxdialog"
+  "$mk" -C "$src/kconfig" -f Makefile.br CONFIG_SHELL=/bin/sh CC="${CC:-gcc}" HOSTCC="${CC:-gcc}" \
+      obj="$build" "$1" >"$build/$1.log" 2>&1 || { echo "qstack: building $1 failed, see $build/$1.log" >&2; exit 1; }
+  echo "$build/$1"
+}
+
+args() {
+  awk -F= '
+  function proj(n) { if (!(n in seen)) { seen[n] = 1; order[++np] = n } }
+  /^# [A-Za-z0-9_]+ is not set$/ { next }
+  /^#/ || /^$/ { next }
+  { k = $1; v = $2; sub(/^"/, "", v); sub(/"$/, "", v) }
+  k ~ /^PROJ_[a-z0-9]+$/ { if (v == "y") { n = substr(k, 6); proj(n) } ; next }
+  k ~ /^PROJ_/ {
+    split(substr(k, 6), a, "__"); n = a[1]; var = a[2]
+    if (v == "y") proj_args[n] = proj_args[n] " -D" var "=ON"
+    else if (v != "") proj_args[n] = proj_args[n] " -D" var "=" v
+    next }
+  k ~ /__/ { split(k, a, "__"); if (v == "y") glob = glob " -D" a[1] "=" a[2]; next }
+  v == "y" { glob = glob " -D" k "=ON"; next }
+  v != "" { glob = glob " -D" k "=" v }
+  END { print "global" glob; for (i = 1; i <= np; i++) print "qjs-" order[i] proj_args[order[i]] }
+  ' "${1:-$BR2_CONFIG}"
+}
+
+cmd=${1:-menu}; [ $# -gt 0 ] && shift
+case "$cmd" in
+  menu)      exec "$(tool mconf)" Config.in ;;
+  nmenu)     exec "$(tool nconf)" Config.in ;;
+  gmenu)     exec "$(tool gconf)" Config.in ;;
+  qmenu)     exec "$(tool qconf)" Config.in ;;
+  defconfig) [ $# -ge 1 ] || { echo "usage: qstack defconfig FILE" >&2; exit 2; }
+             "$(tool conf)" --defconfig="$1" Config.in >/dev/null ;;
+  save)      "$(tool conf)" --savedefconfig="${1:-qstack.defconfig}" Config.in ;;
+  args)      args "$@" ;;
+  --check)   tmp=$(mktemp -d); trap 'rm -rf "$tmp"' EXIT; cd "$tmp"
+             printf '%s\n' TARGET__MUSL=y PROJ_lws=y >t.defconfig
+             "$(tool conf)" --defconfig=t.defconfig Config.in >/dev/null
+             out=$(args) ; echo "$out"
+             case "$out" in *"-DTARGET=MUSL"*"qjs-modules"*"qjs-lws -DWITH_SSL=ON"*) echo "ok";; *) echo "FAILED" >&2; exit 1;; esac ;;
+  *) echo "usage: qstack menu|nmenu|gmenu|qmenu|defconfig FILE|save [FILE]|args [CONFIG]|--check" >&2; exit 2 ;;
+esac

@@ -647,3 +647,23 @@ tools:
     gotchas:
       - "Only --help was run, on a PE file it prints the usage again."
     verified: "2026-11-14 --help"
+
+  qstack:
+    path: scripts/qstack
+    project: tool-registry
+    group: build-config
+    rating: 3
+    status: partial
+    what: >-
+      Menuconfig (Buildroot's vendored kconfig, lxdialog UI) for assembling a QuickJS runtime stack:
+      engine, target, dependency policy, qjs-* projects and their options. Prints the cmake -D arguments
+      per project. Menu in qstack/Config.in and qstack/modules/Config.in, see qstack/README.md.
+    modes:
+      menu: qstack menu                  # interactive, writes ./.qstack.config
+      scripted: qstack defconfig my.defconfig && qstack args
+      minimal: qstack save my.defconfig  # only the differences from the defaults
+      check: qstack --check
+    gotchas:
+      - "The config file name comes from BR2_CONFIG (Buildroot patch), not KCONFIG_CONFIG; qstack sets it."
+      - "modules/Config.in was read from the projects' option() lines, not tested against real builds."
+    verified: "2026-11-20 --check (musl+lws scenario), save, args; mconf drawn in a pty; no real cmake configure yet"

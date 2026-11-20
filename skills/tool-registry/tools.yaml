@@ -520,7 +520,7 @@ tools:
       - "After a steer, the cancelled request prints `error: interrupted` in the session output; the `send` that was running exits 124 (its -t) rather than 0, as the session stays busy with the steering line."
       - "Tool results of cached/declined repeat calls emit no 'toolresult' activity event."
       - "Installing: use the build dir (cd build/x86_64-linux-gnu && cmake --build . && cmake --install .). A `cmake --install .` in the source root fails on the missing lws.so AFTER removing the installed one (2026-11-20 incident); lws.so then has to be rebuilt and reinstalled."
-    verified: "2026-11-20 live on a js-engines session (freellm, auto): monitor showed request, reasoning, tool call (list_directory) and result, then steer cancelled the running request (error: interrupted), the steering line became the next request and its reasoning, answer and idle followed; restart; also against a bare ControlSocket"
+    verified: "2026-11-20 live on js-engines (freellm, auto), twice, the second time on the rebased build (qjs-lws ac8d717): monitor showed request, reasoning, tool call (list_directory) with its result, answer, idle; steer sent mid-request (before any reasoning arrived) cancelled the running request (interrupted in both send and steer output) and the steering line ran as the next request to its answer; a steer on an idle session behaves as send; restart of the live session; also against a bare ControlSocket"
 
   chat-bridge:
     path: /usr/local/bin/chat-bridge

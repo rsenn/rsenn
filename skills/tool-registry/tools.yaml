@@ -481,8 +481,9 @@ tools:
       models: ollama-repl --provider ollama --model list         # = `ollama list`
       one_job: printf '%s\n/exit\n' "$PROMPT" | ollama-repl --model M --root DIR   # run_command asks y/N on the next line
       batch: "printf '/each <cmd printing one item per line> :: <task, {} = item>\n/exit\n' | ollama-repl --model M --root DIR"
+      free_web_models: "chat-bridge serve gives ollama-repl a model per chat site (--provider openai, OPENAI_API_URL=http://127.0.0.1:8089/v1); see the chat-bridge entry"
       inspect: "/diff and /undo (restore what the last prompt changed) as lines of the same pipe"
-      shared_session: "user runs `ollama-repl --listen [--no-system] [--name NAME]` in a terminal (Claude never starts it; ollama-repl-ctl waits for one and says so on stderr) in a terminal; Claude Code runs `ollama-repl-ctl list` | `ollama-repl-ctl [-s NAME|PID|MODEL] send LINE` (prints the reply, exit 0 when idle, 3 = session waits for the user's y/N or ask_user answer, 124 timeout) | `ollama-repl-ctl watch`. Same conversation as on the terminal; lines show there as `[remote]> ...`."
+      shared_session: "user runs `ollama-repl --listen [--no-system] [--name NAME]` in a terminal (Claude never starts it; ollama-repl-ctl waits for one and says so on stderr) in a terminal; Claude Code runs `ollama-repl-ctl list` | `ollama-repl-ctl [-s NAME|PID|MODEL] send LINE` (prints the reply, exit 0 when idle, 3 = session waits for the user's y/N or ask_user answer, 124 timeout) | `ollama-repl-ctl watch` | `monitor` (live reasoning/answer/tool calls) | `steer LINE` (inject like Ctrl-X Ctrl-S, cancels the running request) | `restart`; details under ollama-repl-ctl. Same conversation as on the terminal; lines show there as `[remote]> ...`."
     gotchas:
       - "Session state is written to the CURRENT directory, not --root: <model>.json (resumed next run! use /clear first, or run from a scratch cwd) and <model>-<tag>.log. Run it from a scratch directory."
       - "A small model (4B) is only reliable per item: use /each (fresh conversation per item), never 'do all 25' in one prompt. Default num_ctx 16384 (--num-ctx)."
@@ -493,6 +494,57 @@ tools:
       - "Control socket (--listen): only the terminal user can answer run_command approvals / ask_user; `send` exits 3 and tells so, do not retry it. A remote line discards what the user has half-typed. Sessions live in $XDG_RUNTIME_DIR/ollama-repl/ (<pid>.sock/.json); `list` drops stale ones."
       - "Output order in pipe mode: the reply streams to stdout between two prompts; with --stream tokens arrive as they are produced."
     verified: "2026-10-30 --no-system + delegate flow (/system file, edit job, /clear) with qwen2.5-coder; three named sessions at once (-s NAME, ambiguity error), ctl waiting for a session that starts 3 s later; pipe mode, prompt, /model /tools /system /clear /exit, --model list; --listen + ollama-repl-ctl list/send (/model, /tools, a qwen2.5-coder read_file round trip, exit 0); NOT run: --yes jobs (denied by the permission classifier), the exit-3 path"
+
+  ollama-repl-ctl:
+    path: /usr/local/bin/ollama-repl-ctl
+    project: qjs-lws
+    group: delegate
+    rating: 4
+    status: partial
+    what: >-
+      Client of a running `ollama-repl --listen` session (control socket in $XDG_RUNTIME_DIR/ollama-repl/).
+      Lets Claude Code type into the user's session, watch what the model reasons, answers and
+      calls, steer it mid-request and restart it. Same conversation the user sees on the terminal.
+    modes:
+      list: ollama-repl-ctl list                                  # name, pid, provider/model, root, socket
+      send: ollama-repl-ctl [-s NAME|PID|MODEL] [-t SECS] send LINE   # queued like typed text; prints output until idle
+      monitor: ollama-repl-ctl [-s NAME] [-t SECS] monitor        # structured live view: -- reasoning / -- answer / -- tool call ARGS / -- tool result / -- idle, streamed as it happens; -t ends it with exit 0, --json prints the raw 'activity' events
+      steer: ollama-repl-ctl [-s NAME] steer LINE                 # = Ctrl-X Ctrl-S on the terminal: LINE goes ahead of the queue and cancels the running request, then waits like send
+      restart: ollama-repl-ctl [-s NAME] -t 120 restart           # /restart: smoke test, new process, same conversation; waits for the session to come back (exit 1 when refused)
+      parallel_watch: "(ollama-repl-ctl -s NAME -t 60 monitor > mon.txt &); ollama-repl-ctl -s NAME send '...'   # monitor from one process while another sends or steers"
+    gotchas:
+      - "Exit codes: 0 idle again, 3 the session waits for the user at the terminal (y/N or ask_user), 124 timeout (the session keeps working), 1 error."
+      - "monitor and steer need an ollama-repl that has the 'activity' events (2026-11-20 on); an older installed copy streams nothing to monitor. After editing examples/ollama-repl, reinstall AND restart the session, restart reuses the installed copy."
+      - "steer cancels the running request: the model's partial answer is lost and the steering line becomes the next prompt. Use send to queue politely, steer to correct a model that is going the wrong way."
+      - "The wire format of steer is a line starting with \\x18\\x13 (Ctrl-X Ctrl-S); a plain client can speak it over the socket. Events are one JSON object per line (see lib/control-socket.js header)."
+      - "After a steer, the cancelled request prints `error: interrupted` in the session output; the `send` that was running exits 124 (its -t) rather than 0, as the session stays busy with the steering line."
+      - "Tool results of cached/declined repeat calls emit no 'toolresult' activity event."
+      - "Installing: use the build dir (cd build/x86_64-linux-gnu && cmake --build . && cmake --install .). A `cmake --install .` in the source root fails on the missing lws.so AFTER removing the installed one (2026-11-20 incident); lws.so then has to be rebuilt and reinstalled."
+    verified: "2026-11-20 live on a js-engines session (freellm, auto): monitor showed request, reasoning, tool call (list_directory) and result, then steer cancelled the running request (error: interrupted), the steering line became the next request and its reasoning, answer and idle followed; restart; also against a bare ControlSocket"
+
+  chat-bridge:
+    path: /usr/local/bin/chat-bridge
+    project: qjs-lws
+    group: delegate
+    rating: 3
+    status: partial
+    what: >-
+      Drives a chatbot web page (DeepSeek, Qwen, Gemini, Kimi, ChatGPT, Duck.ai, DeepAI, OpenRouter,
+      Mistral) in a real, logged-in browser over CDP and exposes it as `send "prompt"` or as an
+      OpenAI-compatible HTTP endpoint (`serve`, default port 8089). Together with ollama-repl it makes
+      the free web tiers usable as a model: the model name selects the site. The user has to start the
+      browser (dedicated profile, --remote-debugging-port=9222, logged in once); Claude never does.
+    modes:
+      serve: qjsm chat-bridge.js [--listen 8089] [--max 3] serve        # OpenAI-style server, one chat tab per conversation
+      send: qjsm chat-bridge.js --site deepseek send "prompt"            # type, submit, print the reply
+      list: qjsm chat-bridge.js list                                     # open page tabs
+      with_ollama_repl: "OPENAI_API_URL=http://127.0.0.1:8089/v1 OPENAI_API_KEY=x ollama-repl --provider openai --model deepseek --listen --name NAME   # then drive it with ollama-repl-ctl as for any other model"
+    gotchas:
+      - "Source and docs: qjs-lws examples/chat-bridge/ (README.md, PROVIDERS.md per-site quirks and billing, TODO.md). Read PROVIDERS.md before choosing a site."
+      - "--allow-paid is needed for pay-as-you-go sites (openrouter); refused by default. Never pass it without the user's say."
+      - "A reply counts as done when the page text has not changed for --idle seconds (2.5): slow sites can be cut short, raise --idle."
+      - "Tool calls reach the model as text and come back parsed from the reply (examples/chat-bridge/tool-calls.js), so tool use is less reliable than with a real API; check results with /diff."
+    verified: "not run in this registry; entry written from the project README and chat-bridge.js header (2026-11-20)"
 
   search:
     path: /usr/local/bin/search

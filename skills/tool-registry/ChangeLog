@@ -84,3 +84,5 @@
   added qstack, a kconfig menu (vendored from Buildroot) that assembles a QuickJS stack and prints cmake arguments, with tools.yaml entry and a remote-targets use
 - 2026-11-20
   qstack moved out to ~/Sources/js-engines (tools/kconfig, make menuconfig); entry and uses removed from here
+- 2026-11-20
+  added ollama-repl-ctl (monitor, steer, restart modes, exit codes, install gotcha) and chat-bridge entries to tools.yaml and ASSESSMENT.md, linked from the ollama-repl entry

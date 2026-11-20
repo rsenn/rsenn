@@ -31,6 +31,8 @@ Rating: 5 = reach for it routinely, 3 = good when the situation fits, 1 = skip.
 | **qjs-ffi-describe.js** | qjsm-only entry of describe | 3 | help | prefer the .sh |
 | **opencv-imgproc** | photo cutout and tap-to-segment (u2netp, MobileSAM/SAM), NDJSON output, RGBA with soft alpha | 4 | duck, flower, fur, two cats; 13 tests | scripting (image jobs), the wild-beauty collage server |
 | **ollama-repl** | local-LLM coding agent with file tools; piped line mode so Claude Code can hand it repetitive edits | 3 | pipe mode and commands; model round trip not run | delegating bulk mechanical edits (per-function comments, renames) on a throwaway copy |
+| **ollama-repl-ctl** | client of a running ollama-repl session: send, live monitor of reasoning/answer/tool calls, steer (Ctrl-X Ctrl-S), restart | 4 | list/send/restart live; monitor/steer on a bare control socket, live model run pending | supervising a delegated local model: watch it and correct course without the user typing |
+| **chat-bridge** | free chat-site web tiers (DeepSeek, Qwen, Gemini, ...) as an OpenAI endpoint for ollama-repl via a logged-in browser and CDP | 3 | read from README, not run here | delegation when no local model is good enough and the user has a browser session logged in |
 | **search** | SerpApi web search | 2 | not run (paid API) | scripted batch research only |
 | **extract-structs** | legacy struct extractor | 1 | help only | none; use `extract-c -t` |
 | **pelist** | PE/DLL reader without Windows: dependencies, imports, exports, sections | 4 | -d -e -i on an MSYS2 DLL | remote-targets (mingw/msys), release-management (Windows bundles) |

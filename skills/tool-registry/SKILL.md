@@ -99,6 +99,12 @@ job; [`MODELS.md`](MODELS.md) holds the per-model conclusions (system prompt tha
    over many things: `send '/each <cmd listing items> :: <task, {} = item>'` (fresh conversation per
    item). Check the result yourself (`send /diff`, read the file): a small model reports success
    that did not happen.
+   **Watch and steer.** `ollama-repl-ctl -s NAME monitor` (run in the background with `-t SECS`) shows what
+   the model reasons, answers and calls while a `send` runs; `ollama-repl-ctl -s NAME steer '<correction>'`
+   injects a line ahead of the queue and cancels the running request (Ctrl-X Ctrl-S). Use steer when the
+   model is going the wrong way, send when the line can wait. Details: `tools.yaml` entry `ollama-repl-ctl`.
+   A model without a good local option: `chat-bridge` (entry in `tools.yaml`) serves the user's logged-in chat sites
+   as an OpenAI endpoint; the user starts it and the browser.
 4. **Not as wanted?** Try again from nothing: `send /clear` (drops context, system prompt and
    project scan), re-send `/system`, rephrase the job smaller; `/undo` restores what the last prompt
    changed. Try another model before a third attempt: `send '/model NAME'` (installed models only; `send '/model list'`), then `/clear` if the old context should not carry over. `send /system +<text>` adds a
